@@ -2074,6 +2074,51 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-confidential-escrow"
+version = "0.1.0"
+dependencies = [
+ "confidential-assets-primitives",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-confidential-htlc"
+version = "0.1.0"
+dependencies = [
+ "confidential-assets-primitives",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-confidential-intents-dex"
+version = "0.1.0"
+dependencies = [
+ "confidential-assets-primitives",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-confidential-swaps"
 version = "0.1.0"
 dependencies = [
@@ -2104,7 +2149,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-hash-timelock"
+name = "pallet-escrow"
+version = "0.1.0"
+dependencies = [
+ "confidential-assets-primitives",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-htlc"
 version = "0.1.0"
 dependencies = [
  "confidential-assets-primitives",

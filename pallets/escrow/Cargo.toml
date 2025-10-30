@@ -1,7 +1,7 @@
 [package]
-name = "pallet-hash-timelock"
+name = "pallet-escrow"
 authors = { workspace = true }
-description = "pallet implementing hash timelocks for cross-chain atomic swaps"
+description = "pallet implementing trustless multi-asset (plaintext) escrow"
 edition = { workspace = true }
 license = { workspace = true }
 repository = { workspace = true }

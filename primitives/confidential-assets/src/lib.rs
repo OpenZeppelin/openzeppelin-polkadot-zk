@@ -22,6 +22,7 @@ pub type MaxPubKeyLen = ConstU32<64>;
 pub type PublicKeyBytes = BoundedVec<u8, MaxPubKeyLen>;
 
 /// Backend that holds the **truth** for totals, balances, public keys, and executes transfers.
+// TODO: consider extracting any functions require public balances generic type to simplify
 pub trait ConfidentialBackend<AccountId, AssetId, Balance> {
     fn set_public_key(who: &AccountId, elgamal_pk: &PublicKeyBytes) -> Result<(), DispatchError>;
 
@@ -63,20 +64,65 @@ pub trait ConfidentialBackend<AccountId, AssetId, Balance> {
     ) -> Result<Balance, DispatchError>;
 }
 
-/// Trait to expose functionality implemented in confidential swaps pallet
-pub trait ConfidentialSwap<AccountId, AssetId, Balance> {
-    type SwapId: Parameter + Copy + Default;
+/// Adaptor signature functionality required for trustless cross chain atomic swaps
+pub trait AdaptorSigBackend {
+    /// The secret used to satisfy the hashlock (e.g., a Ristretto scalar encoding).
+    type Secret: Parameter + MaxEncodedLen + TypeInfo + Copy + Default;
 
-    /// Execute a Confidential↔Confidential swap by accepting an existing intent `id`.
-    /// The caller (`who`) must be the `counterparty` stored in the intent.
-    ///
-    /// Returns (id, encrypted_amount_received_by_who).
-    fn swap_confidential_exact_in(
+    /// The hashlock type stored/compared in the pallet (often `[u8; 32]`).
+    type HashLock: Parameter + MaxEncodedLen + TypeInfo + Copy + Default;
+
+    /// Compute the hashlock `H(secret)`.
+    fn hash_secret(secret: &Self::Secret) -> Self::HashLock;
+
+    /// Given (partial, final) Schnorr signatures on the same message,
+    /// recover the secret: `s = (s_final - s_partial) mod n`.
+    fn recover_secret_from_sigs(
+        partial_sig: &[u8; 64],
+        final_sig: &[u8; 64],
+    ) -> Result<Self::Secret, DispatchError>;
+
+    /// Verify adaptor signature correctness inside no_std.
+    fn verify_adaptor_sig(
+        msg: &[u8],
+        pubkey: &[u8; 32],
+        adaptor_partial: &[u8; 64],
+    ) -> Result<(), DispatchError>;
+}
+
+pub trait EscrowTrust<AccountId, AssetId, Balance> {
+    /// Move value from `who` into pallet escrow.
+    fn escrow_lock(asset: AssetId, who: &AccountId, amount: Balance) -> Result<(), DispatchError>;
+
+    /// Release escrowed value to `to` (on successful redeem).
+    fn escrow_release(asset: AssetId, to: &AccountId, amount: Balance)
+        -> Result<(), DispatchError>;
+
+    /// Refund escrowed value to `to` (after timeout).
+    fn escrow_refund(asset: AssetId, to: &AccountId, amount: Balance) -> Result<(), DispatchError>;
+}
+
+/// Trait so other pallets can open/cancel intents without extrinsics.
+pub trait ConfidentialSwapIntents<AccountId, AssetId> {
+    type SwapId;
+    fn open_intent_cc(
+        maker: &AccountId,
+        counterparty: &AccountId,
+        asset_a: AssetId,
+        asset_b: AssetId,
+        a_to_b_ct: EncryptedAmount,
+        a_to_b_proof: InputProof,
+        terms_hash: Option<[u8; 32]>,
+    ) -> Result<Self::SwapId, DispatchError>;
+
+    fn execute_intent_cc(
         who: &AccountId,
         id: Self::SwapId,
         b_to_a_ct: EncryptedAmount,
         b_to_a_proof: InputProof,
     ) -> Result<(Self::SwapId, EncryptedAmount), DispatchError>;
+
+    fn cancel_intent_cc(maker: &AccountId, id: Self::SwapId) -> DispatchResult;
 }
 
 /// Off/On-ramp for the public side of an asset.
@@ -233,4 +279,39 @@ impl<AccountId, AssetId, Balance> AclProvider<AccountId, AssetId, Balance> for (
     fn authorize(_: Op, _: &AclCtx<Balance, AccountId, AssetId>) -> Result<(), DispatchError> {
         Ok(())
     }
+}
+
+pub trait BridgeHtlc<AccountId, AssetId, Amount> {
+    type HashLock;
+    type Secret;
+
+    /// Create + fund an HTLC. Returns an identifier you can mirror cross-chain.
+    fn open_htlc(
+        maker: &AccountId,
+        taker: Option<AccountId>,
+        asset: AssetId,
+        amount: Amount,
+        hashlock: Self::HashLock,
+        // absolute expiry block; refunds become valid at `>= expiry`
+        expiry: u32,
+        // Optional partial/adaptor signature commitment (for adaptor flow).
+        adaptor_partial: Option<Vec<u8>>,
+    ) -> Result<u64, DispatchError>;
+
+    /// Redeem by preimage (classic HTLC). Returns the secret (for relaying).
+    fn redeem_with_secret(
+        who: &AccountId,
+        htlc_id: u64,
+        secret: Self::Secret,
+    ) -> Result<Self::Secret, DispatchError>;
+
+    /// Redeem by final signature; pallet recovers the secret and returns it.
+    fn redeem_with_adaptor_sig(
+        who: &AccountId,
+        htlc_id: u64,
+        final_sig: Vec<u8>,
+    ) -> Result<Self::Secret, DispatchError>;
+
+    /// Refund after expiry (maker only).
+    fn refund(who: &AccountId, htlc_id: u64) -> DispatchResult;
 }

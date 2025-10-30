@@ -1,15 +1,20 @@
 [workspace]
 members = [
-	# permissions
+	# Confidential Pallets
+	"pallets/confidential-assets",
+	"pallets/confidential-escrow",
+	"pallets/confidential-htlc",
+	"pallets/confidential-xcm-bridge",
+	"pallets/confidential-swaps",
+	"pallets/confidential-intents-dex",
+	# ZK-El Gamal Authenticated Storage Backend
+    "pallets/zkhe",
+	# Plaintext multi-asset mirrors for some confidential pallets:
+	"pallets/escrow",
+	"pallets/htlc",
+	# Permissions knobs for IERC 7984
 	"pallets/acl",
 	"pallets/operators",
-	# core
-	"pallets/confidential-assets",
-	"pallets/confidential-swaps",
-	"pallets/hash-timelock",
-	"pallets/confidential-xcm-bridge",
-	# backend
-    "pallets/zkhe",
 	# primitives
     "primitives/confidential-assets",
 	"primitives/zkhe",
