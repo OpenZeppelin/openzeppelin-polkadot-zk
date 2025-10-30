@@ -22,18 +22,6 @@ pub mod pallet {
         <T as Config>::Balance,
     >>::SwapId;
 
-    /// Backend extension used when crediting an incoming encrypted delta on the destination chain.
-    pub trait BridgeBackend<AccountId, AssetId, Balance>:
-        ConfidentialBackend<AccountId, AssetId, Balance>
-    {
-        fn credit_incoming_encrypted(
-            asset: AssetId,
-            who: &AccountId,
-            delta: EncryptedAmount,
-            proof: InputProof,
-        ) -> Result<EncryptedAmount, DispatchError>;
-    }
-
     /// Very small abstraction so this pallet doesn’t hard-code any XCM version or pallet.
     /// Implement in the runtime by delegating to pallet-xcm or Moonbeam’s xcm-transactor.
     pub trait XcmRouter {
@@ -88,7 +76,7 @@ pub mod pallet {
         type Balance: Parameter + Member + Copy + Ord + MaxEncodedLen + TypeInfo + Default;
 
         /// Your backend must also support crediting incoming deltas.
-        type Backend: BridgeBackend<Self::AccountId, Self::AssetId, Self::Balance>;
+        type Backend: ConfidentialBackend<Self::AccountId, Self::AssetId, Self::Balance>;
 
         /// Existing on/off-ramp abstraction (not used by this pallet yet, but kept for symmetry).
         type Ramp: Ramp<Self::AccountId, Self::AssetId, Self::Balance>;
@@ -268,12 +256,11 @@ pub mod pallet {
             sender_on_src: [u8; 32],
             dest_account: T::AccountId,
             asset: T::AssetId,
-            delta_ciphertext: EncryptedAmount,
             proof: InputProof,
         ) -> DispatchResult {
             ensure_root(origin).map_err(|_| Error::<T>::BadOriginForXcm)?;
 
-            T::Backend::credit_incoming_encrypted(asset, &dest_account, delta_ciphertext, proof)
+            T::Backend::mint_encrypted(asset, &dest_account, proof)
                 .map_err(|_| Error::<T>::BackendError)?;
 
             Self::deposit_event(Event::XcmConfTransferApplied {

@@ -335,10 +335,8 @@ pub mod pallet {
         fn mint_encrypted(
             asset: T::AssetId,
             to: &T::AccountId,
-            amount: T::Balance,
             input_proof: InputProof,
         ) -> Result<EncryptedAmount, DispatchError> {
-            // KISS mint path:
             // - verify_mint proves: pending(to) += v, total_supply(asset) += v
             // - it also returns the freshly minted ciphertext for the recipient UTXO list
             let to_pk = PublicKey::<T>::get(to).ok_or(Error::<T>::NoPublicKey)?;
@@ -368,7 +366,6 @@ pub mod pallet {
                 &to_pk,
                 to_old_pending,
                 total_old,
-                &amount.using_encoded(|b| b.to_vec()),
                 input_proof.as_slice(),
             )
             .map_err(|_| Error::<T>::InvalidProof)?;
@@ -489,7 +486,6 @@ pub mod pallet {
             let env: InputProof = rest.to_vec().try_into().map_err(|_| ())?;
             Ok((ids, env))
         }
-
         fn do_accept_pending(
             who: T::AccountId,
             asset: T::AssetId,

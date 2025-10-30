@@ -205,7 +205,6 @@ impl ZkVerifier for ZkheVerifier {
         to_pk_bytes: &PublicKeyBytes,
         to_old_pending_bytes: &[u8],
         total_old_bytes: &[u8],
-        _amount_be: &[u8],
         proof_bytes: &[u8],
     ) -> Result<(Vec<u8>, Vec<u8>, EncryptedAmount), Self::Error> {
         // parse keys/olds

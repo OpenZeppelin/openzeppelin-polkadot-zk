@@ -167,7 +167,7 @@ pub mod pallet {
             T::Ramp::burn(&who, &asset, amount).map_err(|_| Error::<T>::RampFailed)?;
 
             // credit confidential balance
-            let encrypted_amount = T::Backend::mint_encrypted(asset, &who, amount, proof)?;
+            let encrypted_amount = T::Backend::mint_encrypted(asset, &who, proof)?;
 
             Self::deposit_event(Event::Deposited {
                 who,

@@ -602,14 +602,12 @@ fn mint_round_trip() {
     let to_pk_bv = PublicKeyBytes::try_from(compress(&pk_to).to_vec()).expect("pk bv");
 
     // old commits are identity => pass empty slices
-    let amount_be: [u8; 0] = []; // verifier ignores for now
     let (to_new_bytes, total_new_bytes, minted_ct_bytes) =
         <ZkheVerifier as ZkVerifierTrait>::verify_mint(
             &asset_id,
             &to_pk_bv,
             &[], // to_old_pending
             &[], // total_old
-            &amount_be,
             &mout.proof_bytes,
         )
         .expect("mint verify");

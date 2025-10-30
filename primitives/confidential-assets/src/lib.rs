@@ -52,7 +52,6 @@ pub trait ConfidentialBackend<AccountId, AssetId, Balance> {
     fn mint_encrypted(
         asset: AssetId,
         to: &AccountId,
-        amount: Balance,
         input_proof: InputProof,
     ) -> Result<EncryptedAmount, DispatchError>;
 
@@ -158,7 +157,6 @@ pub trait ZkVerifier {
         to_pk: &PublicKeyBytes,
         to_old_pending: &[u8],
         total_old: &[u8],
-        amount_be: &[u8], // SCALE-encoded T::Balance (you used .using_encoded)
         proof: &[u8],
     ) -> Result<(Vec<u8>, Vec<u8>, EncryptedAmount), ()>;
 
