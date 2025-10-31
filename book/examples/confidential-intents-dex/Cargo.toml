@@ -1,7 +1,7 @@
 [package]
-name = "pallet-confidential-xcm-bridge"
+name = "pallet-confidential-intents-dex"
 authors = { workspace = true }
-description = "pallet supporting xcm confidential transfers"
+description = "confidential assets intents DEX using confidential swaps"
 edition = { workspace = true }
 license = { workspace = true }
 repository = { workspace = true }
@@ -18,7 +18,7 @@ sp-runtime    = { workspace = true }
 sp-std = { workspace = true }
 sp-io = { workspace = true }
 
-confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
+confidential-assets-primitives = { path = "../../../primitives/confidential-assets", default-features = false }
 
 [features]
 default = ["std"]

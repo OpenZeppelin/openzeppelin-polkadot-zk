@@ -1,0 +1,5 @@
+[book]
+authors = ["4meta5"]
+language = "en"
+src = "src"
+title = "Confidential Cookbook"

@@ -1,27 +1,27 @@
 [workspace]
 members = [
-	# Confidential Pallets
+	# Frontend Pallets
 	"pallets/confidential-assets",
-	"pallets/confidential-escrow",
-	"pallets/confidential-htlc",
-	"pallets/confidential-xcm-bridge",
-	"pallets/confidential-swaps",
-	"pallets/confidential-intents-dex",
-	# ZK-El Gamal Authenticated Storage Backend
-    "pallets/zkhe",
-	# Plaintext multi-asset mirrors for some confidential pallets:
-	"pallets/escrow",
-	"pallets/htlc",
-	# Permissions knobs for IERC 7984
+	#"pallets/confidential-bridge",
+	# Backend Pallets
 	"pallets/acl",
+	"pallets/confidential-escrow",
 	"pallets/operators",
-	# primitives
+    "pallets/zkhe",
+	# Primitives
     "primitives/confidential-assets",
 	"primitives/zkhe",
 	# client
 	"zkhe-prover",
 	# no_std on-chain verifier
 	"zkhe-verifier",
+	# Example Extensions
+	"book/examples/confidential-htlc",
+	"book/examples/confidential-xcm-bridge",
+	"book/examples/confidential-swaps",
+	"book/examples/confidential-intents-dex",
+	"book/examples/escrow",
+	"book/examples/htlc",
 ]
 resolver = "2"
 

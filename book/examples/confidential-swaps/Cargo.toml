@@ -1,7 +1,7 @@
 [package]
-name = "pallet-confidential-htlc"
+name = "pallet-confidential-swaps"
 authors = { workspace = true }
-description = "pallet implementing hash timelocks using multi-asset confidential escrows"
+description = "pallet supporting confidential swaps"
 edition = { workspace = true }
 license = { workspace = true }
 repository = { workspace = true }
@@ -18,7 +18,7 @@ sp-runtime    = { workspace = true }
 sp-std = { workspace = true }
 sp-io = { workspace = true }
 
-confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
+confidential-assets-primitives = { path = "../../../primitives/confidential-assets", default-features = false }
 
 [features]
 default = ["std"]
