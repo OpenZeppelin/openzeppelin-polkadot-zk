@@ -1,30 +1,30 @@
 [workspace]
 members = [
+	# Example Extensions
+	"book/examples/confidential-htlc",
+	"book/examples/confidential-intents-dex",
+	"book/examples/confidential-swaps",
+	"book/examples/confidential-xcm-bridge",
+	"book/examples/escrow",
+	"book/examples/htlc",
+	"demo",
+	# Backend Pallets
+	"pallets/acl",
 	# Frontend Pallets
 	"pallets/confidential-assets",
 	"pallets/confidential-bridge",
-	# Backend Pallets
-	"pallets/acl",
 	"pallets/confidential-escrow",
 	"pallets/operators",
-    "pallets/zkhe",
+	"pallets/zkhe",
 	# Primitives
-    "primitives/confidential-assets",
+	"primitives/confidential-assets",
 	"primitives/zkhe",
+	# Demo Artifacts
+	"runtime",
 	# client
 	"zkhe-prover",
 	# no_std on-chain verifier
 	"zkhe-verifier",
-	# Demo Artifacts
-	"runtime",
-	"demo",
-	# Example Extensions
-	"book/examples/confidential-htlc",
-	"book/examples/confidential-xcm-bridge",
-	"book/examples/confidential-swaps",
-	"book/examples/confidential-intents-dex",
-	"book/examples/escrow",
-	"book/examples/htlc",
 ]
 resolver = "2"
 
@@ -54,7 +54,6 @@ serde_derive = { version = "1.0.121", default-features = false }
 serde_json = { version = "1.0.121", default-features = false }
 smallvec = "1.11.0"
 
-polkadot-sdk = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 frame-benchmarking-cli = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 frame-executive = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
@@ -88,6 +87,7 @@ pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/parityt
 pallet-treasury = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 pallet-utility = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 pallet-whitelist = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
+polkadot-sdk = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 sc-basic-authorship = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 sc-chain-spec = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 sc-cli = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
@@ -236,7 +236,6 @@ tc-consensus = { git = "https://github.com/KitHat/tanssi", branch = "polkadot-st
 large_enum_variant = "allow"
 too_many_arguments = "allow"
 type_complexity = "allow"
-
 [profile.production]
 codegen-units = 1
 inherits = "release"

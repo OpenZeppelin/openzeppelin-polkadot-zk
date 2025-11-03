@@ -6,39 +6,38 @@ edition = { workspace = true }
 license = { workspace = true }
 repository = { workspace = true }
 version = "0.1.0"
-
 [dependencies]
 # no_std crypto
-bulletproofs      = { version = "4", default-features = false }
-curve25519-dalek = { version = "4.1.3", default-features = false, features = ["alloc"] }
 blake2 = { version = "0.10", default-features = false }
+bulletproofs      = { version = "4", default-features = false }
+curve25519-dalek = { version = "4.1.3", default-features = false, features = [ "alloc" ] }
+curve25519-dalek-ng = { version = "4.1.1", default-features = false, features = [ "alloc" ] }
 merlin            = { version = "3", default-features = false }
-subtle            = { version = "2", default-features = false }
-curve25519-dalek-ng = { version = "4.1.1", default-features = false, features = ["alloc"] }
-rand_core = { version = "0.6", default-features = false } # only for traits
 rand_chacha = { version = "0.3", default-features = false }
+rand_core = { version = "0.6", default-features = false }
+subtle            = { version = "2", default-features = false }
 
 confidential-assets-primitives = { path = "../primitives/confidential-assets", default-features = false }
-zkhe-primitives = { path = "../primitives/zkhe", default-features = false }
 sha2 = { version = "0.10.9", default-features = false }
+zkhe-primitives = { path = "../primitives/zkhe", default-features = false }
 
 [dev-dependencies]
-zkhe-prover = { path = "../zkhe-prover" }
+rand              = { version = "0.9.2", features = [ "std", "std_rng" ] }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
-rand              = { version = "0.9.2", features = ["std", "std_rng"] }
+zkhe-prover = { path = "../zkhe-prover" }
 
 [features]
-default = ["std"]
+default = [ "std" ]
 std = [
-  "blake2/std",
-  "confidential-assets-primitives/std",
-  "zkhe-primitives/std",
-  "merlin/std",
-  "subtle/std",
-  "sha2/std",
-  "curve25519-dalek-ng/std",
-  "bulletproofs/std",
-  "rand_core/std",
-  "rand_chacha/std",
+	"blake2/std",
+	"bulletproofs/std",
+	"confidential-assets-primitives/std",
+	"curve25519-dalek-ng/std",
+	"merlin/std",
+	"rand_chacha/std",
+	"rand_core/std",
+	"sha2/std",
+	"subtle/std",
+	"zkhe-primitives/std",
 ]

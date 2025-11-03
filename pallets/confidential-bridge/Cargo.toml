@@ -1,33 +1,32 @@
 [package]
 name = "pallet-confidential-bridge"
-description = "pallet supporting confidential cross-chain transfers"
 authors = { workspace = true }
+description = "pallet supporting confidential cross-chain transfers"
 edition = { workspace = true }
 license = { workspace = true }
 repository = { workspace = true }
 version = "0.1.0"
-
 [dependencies]
-serde = { workspace = true, features = ["derive"], optional = true }
+serde = { workspace = true, optional = true, features = [ "derive" ] }
 
-parity-scale-codec = { workspace = true }
-scale-info = { workspace = true }
 frame-support = { workspace = true }
 frame-system  = { workspace = true }
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
 sp-runtime    = { workspace = true }
 sp-std = { workspace = true }
 
 confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
 
 [features]
-default = ["std"]
+default = [ "std" ]
 std = [
-  "frame-support/std",
-  "frame-system/std",
-  "sp-runtime/std",
-  "sp-std/std",
-  "parity-scale-codec/std",
-  "scale-info/std",
-  "dep:serde",
-  "confidential-assets-primitives/std",
+	"confidential-assets-primitives/std",
+	"dep:serde",
+	"frame-support/std",
+	"frame-system/std",
+	"parity-scale-codec/std",
+	"scale-info/std",
+	"sp-runtime/std",
+	"sp-std/std",
 ]
