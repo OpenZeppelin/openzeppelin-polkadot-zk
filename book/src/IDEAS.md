@@ -1,4 +1,4 @@
-# Ideas
+# What's Next?
 
 - confidential-betting
 - confidential-airdrop
@@ -6,7 +6,7 @@
 - confidential-uniswap-dex
 - confidential-perp-dex
 
-Useful primitives:
+Useful primitives and protocols:
 - merkle-trees
 - KITE for ZK private voting
-- shielded UTXO pool (i.e. zswap, penumbra)
+- shielded UTXO pool (i.e. zswap by penumbra)

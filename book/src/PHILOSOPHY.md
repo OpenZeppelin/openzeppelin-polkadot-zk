@@ -1,0 +1,29 @@
+# Design Deep Dive
+
+## Principles
+
+Following these principles have kept overall design sane and surprisingly extensible:
+1. Implement Confidentiality; do NOT implement or enable user anonymity.
+- account addresses must be public
+- confidential amounts are private to all except the asset owner and accounts authorized by the owner
+2. Keep separate paths for confidential and public assets. Do not mix usage nor logic.
+- mixing handling of confidential and plaintext assets is inefficient in the best case and insecure in the worst case
+3. Verify all changes to encrypted on-chain state by executing ZKP verification on-chain.
+- updates to encrypted balances enforce ALL expectations including validity of new sender and receiver balanaces as well as conservation of total supply
+- owners use their keys to generate ZKPs that are verified on-chain for all changes to encrypted balances stored on-chain
+
+## Choice of ZK-ElGamal Backend
+
+The ZK-ElGamal scheme was selected for its close alignment with the ERC-7984 Confidential Contracts standard and its proven use in Solana’s Confidential Token implementation.
+
+Advantages
+	•	Address transparency: Sender and receiver remain visible, satisfying regulatory and interoperability constraints while keeping transfer amounts confidential.
+	•	Verifiable execution: Zero-knowledge proofs guarantee that encrypted transfers preserve balance correctness without revealing plaintext amounts.
+	•	Account model compatibility: Works naturally with Substrate’s account-based state and existing asset registries, avoiding UTXO complexity.
+	•	Extensibility: Better suited for composable systems, account abstraction, and future programmable privacy use cases compared to MimbleWimble-style designs.
+	•	Proven production precedent: Mirrors Solana’s Confidential Token architecture, leveraging the same twisted ElGamal + Pedersen commitment combination for efficient on-chain verification.
+
+Compared to MimbleWimble
+	•	MimbleWimble hides sender and receiver information, making it unsuitable for general-purpose on-chain use or composable smart contract environments.
+	•	MimbleWimble’s cut-through model favors off-chain transaction aggregation rather than real-time execution and event emission expected in ERC-compatible systems.
+	•	ZK-ElGamal provides deterministic, verifiable encrypted transactions that integrate smoothly with runtime logic, governance, and cross-chain standards.
