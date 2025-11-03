@@ -90,6 +90,7 @@ pub trait AdaptorSigBackend {
     ) -> Result<(), DispatchError>;
 }
 
+/// Plaintext Escrow trust
 pub trait EscrowTrust<AccountId, AssetId, Balance> {
     /// Move value from `who` into pallet escrow.
     fn escrow_lock(asset: AssetId, who: &AccountId, amount: Balance) -> Result<(), DispatchError>;
@@ -100,6 +101,33 @@ pub trait EscrowTrust<AccountId, AssetId, Balance> {
 
     /// Refund escrowed value to `to` (after timeout).
     fn escrow_refund(asset: AssetId, to: &AccountId, amount: Balance) -> Result<(), DispatchError>;
+}
+
+/// Confidential escrow
+pub trait ConfidentialEscrow<AccountId, AssetId> {
+    /// Move value from `who` into pallet escrow.
+    fn escrow_lock(
+        asset: AssetId,
+        who: &AccountId,
+        encrypted_amount: EncryptedAmount,
+        proof: InputProof,
+    ) -> Result<(), DispatchError>;
+
+    /// Release escrowed value to `to` (on successful redeem).
+    fn escrow_release(
+        asset: AssetId,
+        to: &AccountId,
+        encrypted_amount: EncryptedAmount,
+        proof: InputProof,
+    ) -> Result<(), DispatchError>;
+
+    /// Refund escrowed value to `to` (after timeout).
+    fn escrow_refund(
+        asset: AssetId,
+        to: &AccountId,
+        encrypted_amount: EncryptedAmount,
+        proof: InputProof,
+    ) -> Result<(), DispatchError>;
 }
 
 /// Trait so other pallets can open/cancel intents without extrinsics.
@@ -280,6 +308,50 @@ impl<AccountId, AssetId, Balance> AclProvider<AccountId, AssetId, Balance> for (
         Ok(())
     }
 }
+
+// Confidential Bridge types and traits
+
+/// Local HRMP messenger abstraction used by confidential-bridge pallet
+/// Minimal abstraction so runtimes can plug in pallet-xcm HRMP or any messenger.
+/// Implement this in the runtime using pallet-xcm's `SendXcm` or a custom adapter.
+pub trait HrmpMessenger {
+    /// Send an opaque SCALE-encoded payload to `dest_para`.
+    fn send(dest_para: u32, payload: Vec<u8>) -> Result<(), ()>;
+}
+
+/// Unique id for each outbound transfer.
+pub type TransferId = u64;
+
+/// A tiny packet we send over HRMP.
+#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen)]
+pub struct BridgePacket<AccountId, AssetId> {
+    /// Bridge transfer identifier (source side).
+    pub transfer_id: TransferId,
+    /// Destination account (assume 32 bytes for simplicity)
+    pub dest_account: AccountId,
+    /// Asset to move.
+    pub asset: AssetId,
+    /// 64-byte ElGamal ciphertext for the amount being bridged.
+    pub encrypted_amount: EncryptedAmount,
+    /// Opaque "accept/credit" envelope/proof for the destination backend.
+    pub accept_envelope: InputProof,
+}
+
+/// Internal ledger of a pending outbound transfer.
+#[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen)]
+pub struct PendingTransfer<AccountId, AssetId, BlockNumber> {
+    pub from: AccountId,
+    pub dest_para: u32,
+    pub dest_account: AccountId,
+    pub asset: AssetId,
+    pub encrypted_amount: EncryptedAmount,
+    /// Block number after which the sender may cancel and refund.
+    pub deadline: BlockNumber,
+    /// True once a finalize path (success or refund) executed.
+    pub completed: bool,
+}
+
+// Confidential cross-chain atomic swaps (see examples/confidential-xcm-bridge)
 
 pub trait BridgeHtlc<AccountId, AssetId, Amount> {
     type HashLock;

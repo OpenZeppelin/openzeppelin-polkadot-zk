@@ -1,6 +1,5 @@
-//! pallet-confidential-escrow — escrow adapter that moves encrypted balances
-//! via the ConfidentialBackend. It shares the same EscrowTrust trait by
-//! assigning generic `Balance = (EncryptedAmount, InputProof)`.
+//! pallet-confidential-escrow — escrow adapter that escrows encrypted balances
+//! using a derived pallet account and ConfidentialBackend.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -11,7 +10,7 @@ use sp_runtime::traits::AccountIdConversion;
 use sp_std::prelude::*;
 
 use confidential_assets_primitives::{
-    ConfidentialBackend, EncryptedAmount, EscrowTrust, InputProof,
+    ConfidentialBackend, ConfidentialEscrow, EncryptedAmount, InputProof,
 };
 use frame_support::PalletId;
 
@@ -24,12 +23,10 @@ pub mod pallet {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
         type AssetId: Parameter + Member + Copy + Ord + MaxEncodedLen;
-        // Required by ConfidentialBackend otherwise unused
         type Balance: Parameter + Member + Copy + Default + MaxEncodedLen;
 
         type Backend: ConfidentialBackend<Self::AccountId, Self::AssetId, Self::Balance>;
 
-        /// PalletId to derive a stable escrow account.
         #[pallet::constant]
         type PalletId: Get<PalletId>;
     }
@@ -69,20 +66,17 @@ pub mod pallet {
         }
     }
 
-    // ------------ EscrowTrust (confidential specialization) ------------
-    //
-    // Param is exactly what the backend needs to authorize the transfer:
-    // (EncryptedAmount delta, InputProof proving its validity).
-    //
-    impl<T: Config> EscrowTrust<T::AccountId, T::AssetId, (EncryptedAmount, InputProof)> for Pallet<T> {
+    impl<T: Config> ConfidentialEscrow<T::AccountId, T::AssetId> for Pallet<T> {
         fn escrow_lock(
             asset: T::AssetId,
             who: &T::AccountId,
-            (delta, proof): (EncryptedAmount, InputProof),
+            encrypted_amount: EncryptedAmount,
+            proof: InputProof,
         ) -> Result<(), DispatchError> {
             let escrow = Self::escrow_account();
-            let encrypted = T::Backend::transfer_encrypted(asset, who, &escrow, delta, proof)
-                .map_err(|_| Error::<T>::BackendError)?;
+            let encrypted =
+                T::Backend::transfer_encrypted(asset, who, &escrow, encrypted_amount, proof)
+                    .map_err(|_| Error::<T>::BackendError)?;
             Self::deposit_event(Event::EscrowLocked {
                 asset,
                 from: who.clone(),
@@ -94,11 +88,13 @@ pub mod pallet {
         fn escrow_release(
             asset: T::AssetId,
             to: &T::AccountId,
-            (delta, proof): (EncryptedAmount, InputProof),
+            encrypted_amount: EncryptedAmount,
+            proof: InputProof,
         ) -> Result<(), DispatchError> {
             let escrow = Self::escrow_account();
-            let encrypted = T::Backend::transfer_encrypted(asset, &escrow, to, delta, proof)
-                .map_err(|_| Error::<T>::BackendError)?;
+            let encrypted =
+                T::Backend::transfer_encrypted(asset, &escrow, to, encrypted_amount, proof)
+                    .map_err(|_| Error::<T>::BackendError)?;
             Self::deposit_event(Event::EscrowReleased {
                 asset,
                 to: to.clone(),
@@ -110,11 +106,13 @@ pub mod pallet {
         fn escrow_refund(
             asset: T::AssetId,
             to: &T::AccountId,
-            (delta, proof): (EncryptedAmount, InputProof),
+            encrypted_amount: EncryptedAmount,
+            proof: InputProof,
         ) -> Result<(), DispatchError> {
             let escrow = Self::escrow_account();
-            let encrypted = T::Backend::transfer_encrypted(asset, &escrow, to, delta, proof)
-                .map_err(|_| Error::<T>::BackendError)?;
+            let encrypted =
+                T::Backend::transfer_encrypted(asset, &escrow, to, encrypted_amount, proof)
+                    .map_err(|_| Error::<T>::BackendError)?;
             Self::deposit_event(Event::EscrowRefunded {
                 asset,
                 to: to.clone(),

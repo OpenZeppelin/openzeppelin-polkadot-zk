@@ -2,7 +2,7 @@
 members = [
 	# Frontend Pallets
 	"pallets/confidential-assets",
-	#"pallets/confidential-bridge",
+	"pallets/confidential-bridge",
 	# Backend Pallets
 	"pallets/acl",
 	"pallets/confidential-escrow",
