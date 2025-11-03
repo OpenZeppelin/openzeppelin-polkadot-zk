@@ -1,10 +1,8 @@
-# Polkadot Zero Knowledge
+# Polkadot Confidential Assets Framework
 
 **WARNING: This is beta software that has NOT been audited and is NOT ready for production. Use at your own risk!**
 
-Rust libraries for executing and verifying computations on encrypted data directly on-chain, leveraging Polkadot's interoperability and Zero-Knowledge Proofs for privacy and verifiability.
-
-## Code Overview
+Rust libraries for verifying computation executed on encrypted data directly on-chain, leveraging Polkadot's interoperability and Zero-Knowledge Proofs for privacy and verifiability.
 
 **Pallets**
 1. `pallet-confidential-assets`: confidential transfers interface following IERC7984 by OpenZeppelin, generic over cryptographic backend (ZK, FHE, TEE)
@@ -20,7 +18,7 @@ Rust libraries for executing and verifying computations on encrypted data direct
 
 ## Examples
 
-Read [the extension pallets](./book/examples/) for examples leveraging and extending the confidential framework.
+Read [the extension pallets](./book/examples/) for examples leveraging and extending the confidential assets framework.
 
 ## References
 
