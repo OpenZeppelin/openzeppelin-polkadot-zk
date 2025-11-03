@@ -15,6 +15,9 @@ members = [
 	"zkhe-prover",
 	# no_std on-chain verifier
 	"zkhe-verifier",
+	# Demo Artifacts
+	"runtime",
+	"demo",
 	# Example Extensions
 	"book/examples/confidential-htlc",
 	"book/examples/confidential-xcm-bridge",
@@ -51,6 +54,7 @@ serde_derive = { version = "1.0.121", default-features = false }
 serde_json = { version = "1.0.121", default-features = false }
 smallvec = "1.11.0"
 
+polkadot-sdk = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 frame-benchmarking-cli = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 frame-executive = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
