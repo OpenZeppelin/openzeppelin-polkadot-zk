@@ -312,6 +312,11 @@ mod runtime {
     pub type CumulusXcm = cumulus_pallet_xcm;
     #[runtime::pallet_index(33)]
     pub type MessageQueue = pallet_message_queue;
+
+    #[runtime::pallet_index(40)]
+    pub type Zkhe = pallet_zkhe;
+    #[runtime::pallet_index(41)]
+    pub type ConfidentialEscrow = pallet_confidential_escrow;
 }
 
 #[docify::export(register_validate_block)]

@@ -1,18 +1,44 @@
 //! Confidential Framework Implementation for Runtime.
+use crate::{Balance, Runtime, RuntimeEvent, Zkhe};
+use frame_support::{parameter_types, PalletId};
+use polkadot_sdk::{frame_support, xcm_builder};
+use xcm_builder::EnsureXcmOrigin;
 
-// 1. add all to Cargo.toml including zkhe_verifier
-// 2. implement all for Runtime
-use crate::{
-    RuntimeEvent, AssetId, Balance, Runtime,
-};
-
+// TODO: replace with pallet_assets and pallet_balances
+pub type AssetId = u128;
+parameter_types! {
+    pub const EscrowPalletId: PalletId = PalletId(*b"CaEscrow");
+    pub const BridgePalletId: PalletId = PalletId(*b"CaBridge");
+}
 
 impl pallet_zkhe::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type AssetId = AssetId;
+    type AssetId = u128;
     type Balance = Balance;
     type Verifier = zkhe_verifier::ZkheVerifier;
+    type WeightInfo = ();
 }
+impl pallet_confidential_escrow::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type AssetId = AssetId;
+    type Balance = Balance;
+    type Backend = Zkhe;
+    type PalletId = EscrowPalletId;
+}
+
+// impl pallet_confidential_bridge::Config for Runtime {
+//     type RuntimeEvent = RuntimeEvent;
+//     type AssetId = AssetId;
+//     type Balance = Balance;
+//     type Backend = Zkhe;
+//     type Escrow = ConfidentialEscrow;
+//     type Messenger = ();//HrmpMessenger;
+//     type BurnPalletId = BridgePalletId;
+//     type DefaultTimeout = ConstU32<{50}>;
+//     // Origin allowed to confirm/cancel on behalf of destination responses.
+//     type ConfirmOrigin = EnsureXcmOrigin<RuntimeOrigin, super::LocalOriginToLocation>;
+//     type WeightInfo = ();
+// }
 
 // TODO: implement Ramp for Runtime using pallet-assets and pallet-balances
 
@@ -39,44 +65,7 @@ impl pallet_zkhe::Config for Runtime {
 //     type WeightInfo = ();
 // }
 
-// impl pallet_confidential_escrow::Config for Runtime {
-//     type RuntimeEvent = RuntimeEvent;
-//     type AssetId = AssetId;
-//     type Balance = Balance;
-//     type Backend = Zkhe;
-
-//     #[pallet::constant]
-//     type PalletId: Get<PalletId>;
-// }
-
 // // TODO: impl HrmpMessenger for Runtime
 
-// impl pallet_confidential_bridge::Config for Runtime {
-//     type RuntimeEvent = RuntimeEvent;
-//     type AssetId = AssetId;
-//     type Balance = Balance;
-//     type Backend = Zkhe;
-//     type Escrow = ConfidentialEscrow;
-
-//     /// HRMP messenger adapter (runtime supplies an implementation).
-//     type Messenger: HrmpMessenger;
-
-//     /// PalletId used to derive the *burn account* for finalization.
-//     /// We first escrow-release to this account (with a transfer proof),
-//     /// then burn from it (with a burn proof).
-//     #[pallet::constant]
-//     type BurnPalletId: Get<PalletId>;
-
-//     /// Default timeout in blocks for pending transfers.
-//     #[pallet::constant]
-//     type DefaultTimeout: Get<BlockNumberFor<Self>>;
-
-//     /// Origin allowed to confirm/cancel on behalf of destination responses.
-//     /// In production wire this to an XCM origin filter (e.g., EnsureXcm<…>).
-//     type ConfirmOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
-//     /// Weight info (minimal defaults provided below).
-//     type WeightInfo = ();
-// }
 //
 // // optional: pallet-acl, pallet-operators

@@ -7,7 +7,6 @@ license = { workspace = true }
 repository = { workspace = true }
 version = "0.1.0"
 [dependencies]
-serde = { workspace = true, optional = true, features = [ "derive" ] }
 
 frame-support = { workspace = true }
 frame-system  = { workspace = true }
@@ -22,7 +21,6 @@ confidential-assets-primitives = { path = "../../primitives/confidential-assets"
 default = [ "std" ]
 std = [
 	"confidential-assets-primitives/std",
-	"dep:serde",
 	"frame-support/std",
 	"frame-system/std",
 	"parity-scale-codec/std",

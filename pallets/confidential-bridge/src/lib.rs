@@ -40,6 +40,8 @@ use confidential_assets_primitives::{
     InputProof, PendingTransfer, TransferId,
 };
 
+pub use pallet::*;
+
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;

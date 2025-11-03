@@ -1,4 +1,6 @@
 //! Types and traits for confidential assets crates
+#![cfg_attr(not(feature = "std"), no_std)]
+
 use frame_support::{pallet_prelude::*, BoundedVec};
 use sp_std::prelude::*;
 

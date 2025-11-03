@@ -2301,8 +2301,6 @@ dependencies = [
 name = "confidential-assets-primitives"
 version = "0.1.0"
 dependencies = [
- "blake2 0.10.6",
- "curve25519-dalek",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -2316,6 +2314,7 @@ name = "confidential-demo"
 version = "0.1.0"
 dependencies = [
  "confidential-assets-primitives",
+ "confidential-runtime",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -2333,12 +2332,17 @@ dependencies = [
  "docify",
  "hex-literal",
  "log",
+ "pallet-confidential-assets",
+ "pallet-confidential-bridge",
+ "pallet-confidential-escrow",
+ "pallet-zkhe",
  "parity-scale-codec",
  "polkadot-sdk 2503.0.1",
  "scale-info",
  "serde_json",
  "smallvec",
  "substrate-wasm-builder",
+ "zkhe-verifier",
 ]
 
 [[package]]
@@ -7814,7 +7818,6 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "serde",
  "sp-runtime",
  "sp-std",
 ]
@@ -8333,7 +8336,6 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "serde",
  "sp-runtime",
  "sp-std",
 ]
@@ -8347,7 +8349,6 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "serde",
  "sp-runtime",
  "sp-std",
 ]
@@ -8361,7 +8362,6 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "serde",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -9073,7 +9073,6 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "serde",
  "sp-runtime",
  "sp-std",
 ]
@@ -9849,7 +9848,6 @@ version = "0.1.0"
 dependencies = [
  "blake2 0.10.6",
  "confidential-assets-primitives",
- "curve25519-dalek",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -19223,7 +19221,6 @@ dependencies = [
 name = "zkhe-primitives"
 version = "0.1.0"
 dependencies = [
- "blake2 0.10.6",
  "curve25519-dalek",
  "frame-support",
  "frame-system",

@@ -14,6 +14,8 @@ use confidential_assets_primitives::{
 };
 use frame_support::PalletId;
 
+pub use pallet::*;
+
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;

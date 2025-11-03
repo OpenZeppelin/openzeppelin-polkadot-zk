@@ -22,6 +22,8 @@ use frame_system::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_std::prelude::*;
 
+pub use pallet::*;
+
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;

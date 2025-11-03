@@ -1,5 +1,6 @@
 //! Range Proof Verifier (no_std compatible)
 
+use alloc::string::String;
 use core::result::Result;
 use merlin::Transcript;
 use zkhe_primitives::RangeProofVerifier;

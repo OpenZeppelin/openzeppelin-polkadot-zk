@@ -1,5 +1,5 @@
+mod confidential;
 mod xcm_config;
-//mod confidential;
 
 use polkadot_sdk::{staging_parachain_info as parachain_info, staging_xcm as xcm, *};
 #[cfg(not(feature = "runtime-benchmarks"))]
@@ -41,7 +41,7 @@ use super::{
     System, WeightToFee, XcmpQueue, AVERAGE_ON_INITIALIZE_RATIO, EXISTENTIAL_DEPOSIT, HOURS,
     MAXIMUM_BLOCK_WEIGHT, MICRO_UNIT, NORMAL_DISPATCH_RATIO, SLOT_DURATION, VERSION,
 };
-use xcm_config::{RelayLocation, XcmOriginToTransactDispatchOrigin};
+use xcm_config::{LocalOriginToLocation, RelayLocation, XcmOriginToTransactDispatchOrigin};
 
 parameter_types! {
     pub const Version: RuntimeVersion = VERSION;
