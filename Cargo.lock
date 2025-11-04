@@ -2348,6 +2348,7 @@ dependencies = [
  "pallet-zkhe",
  "parity-scale-codec",
  "polkadot-sdk 2503.0.1",
+ "relay-runtime",
  "scale-info",
  "serde_json",
  "smallvec",
