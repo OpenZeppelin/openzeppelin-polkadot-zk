@@ -8,8 +8,8 @@ use crate::{
 use alloc::{boxed::Box, vec, vec::Vec};
 use confidential_assets_primitives::{HrmpMessenger, Ramp};
 use frame_support::traits::{
-    tokens::fungibles::{Mutate as MultiMutate, Transfer as MultiTransfer},
-    tokens::WithdrawReasons,
+    tokens::fungibles::Mutate as MultiTransfer,
+    tokens::{Fortitude, Precision, Preservation, WithdrawReasons},
     Currency, ExistenceRequirement,
 };
 use frame_support::{
@@ -22,7 +22,10 @@ use polkadot_sdk::{
     frame_support, pallet_assets, pallet_balances, sp_runtime, staging_xcm as xcm,
     staging_xcm_builder as xcm_builder,
 };
-use sp_runtime::{traits::AccountIdConversion, BoundedVec};
+use sp_runtime::{
+    DispatchError,
+    {traits::AccountIdConversion, BoundedVec},
+};
 use xcm::latest::prelude::*;
 use xcm::{VersionedLocation, VersionedXcm};
 use xcm_builder::EnsureXcmOrigin;
@@ -41,11 +44,8 @@ impl pallet_confidential_assets::Config for Runtime {
     type Backend = Zkhe;
     type Ramp = PublicRamp;
     type PalletId = AssetsPalletId;
-    // prod configure using pallet-assets/balances but not needed for demo
     type AssetMetadata = ();
-    // Optional ACL (default = ()).
     type Acl = ();
-    // Operator layer. Defaults to always returning false when assigned ().
     type Operators = ();
     type WeightInfo = ();
 }
@@ -112,7 +112,11 @@ impl Ramp<AccountId, AssetId, Balance> for PublicRamp {
         } else {
             // Non-native: via fungibles::Transfer on pallet_assets
             <Assets as MultiTransfer<AccountId>>::transfer(
-                asset, from, to, amount, /* keep_alive: */ true,
+                asset,
+                from,
+                to,
+                amount,
+                Preservation::Expendable,
             )?;
         }
         Ok(())
@@ -123,12 +127,11 @@ impl Ramp<AccountId, AssetId, Balance> for PublicRamp {
             // Native “mint”: deposit_creating increases issuance, returns a PositiveImbalance which
             // is burned when dropped if your Currency implements Balanced. Just ignore it here.
             let _imbalance = <Balances as Currency<AccountId>>::deposit_creating(to, amount);
-            Ok(())
         } else {
             // Non-native mint
-            <Assets as MultiMutate<AccountId>>::mint_into(*asset, to, amount)?;
-            Ok(())
+            <Assets as MultiTransfer<AccountId>>::mint_into(*asset, to, amount)?;
         }
+        Ok(())
     }
 
     fn burn(from: &AccountId, asset: &AssetId, amount: Balance) -> Result<(), Self::Error> {
@@ -140,12 +143,18 @@ impl Ramp<AccountId, AssetId, Balance> for PublicRamp {
                 WithdrawReasons::TRANSFER,
                 ExistenceRequirement::AllowDeath,
             )?;
-            Ok(())
         } else {
             // Non-native burn
-            <Assets as MultiMutate<AccountId>>::burn_from(*asset, from, amount)?;
-            Ok(())
+            <Assets as MultiTransfer<AccountId>>::burn_from(
+                *asset,
+                from,
+                amount,
+                Preservation::Expendable,
+                Precision::BestEffort,
+                Fortitude::Polite,
+            )?;
         }
+        Ok(())
     }
 }
 
