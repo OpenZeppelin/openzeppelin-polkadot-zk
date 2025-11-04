@@ -1,0 +1,90 @@
+[package]
+name = "relay-runtime"
+authors = { workspace = true }
+description = "relay chain runtime"
+edition = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+version = "0.1.0"
+
+[dependencies]
+docify = { workspace = true }
+log = { workspace = true }
+parity-scale-codec = { workspace = true, features = [ "derive" ] }
+polkadot-sdk = { workspace = true, default-features = false, features = [
+  "frame-election-provider-support",
+  "frame-executive",
+  "frame-support",
+  "frame-system",
+  "frame-system-rpc-runtime-api",
+  "pallet-authority-discovery",
+  "pallet-authorship",
+  "pallet-babe",
+  "pallet-balances",
+  "pallet-grandpa",
+  "pallet-indices",
+  "pallet-offences",
+  "pallet-session",
+  "pallet-staking",
+  "pallet-staking-reward-curve",
+  "pallet-sudo",
+  "pallet-timestamp",
+  "pallet-transaction-payment",
+  "pallet-transaction-payment-rpc-runtime-api",
+  "pallet-vesting",
+  "pallet-xcm",
+  "polkadot-primitives",
+  "polkadot-runtime-common",
+  "polkadot-runtime-parachains",
+  "sp-api",
+  "sp-authority-discovery",
+  "sp-block-builder",
+  "sp-consensus-babe",
+  "sp-consensus-beefy",
+  "sp-core",
+  "sp-genesis-builder",
+  "sp-inherents",
+  "sp-io",
+  "sp-mmr-primitives",
+  "sp-offchain",
+  "sp-runtime",
+  "sp-session",
+  "sp-staking",
+  "sp-transaction-pool",
+  "sp-version",
+  "staging-xcm",
+  "staging-xcm-builder",
+  "staging-xcm-executor",
+] }
+scale-info = { workspace = true, features = [ "derive" ] }
+serde_json = { workspace = true, default-features = false, features = [ "alloc" ] }
+smallvec = { workspace = true, default-features = true }
+runtime-constants = { path = "src/constants", default-features = false }
+
+[build-dependencies]
+docify = { workspace = true }
+substrate-wasm-builder = { workspace = true, default-features = true, optional = true }
+
+[features]
+default = [ "std" ]
+std = [
+	"log/std",
+	"parity-scale-codec/std",
+	"polkadot-sdk/std",
+	"runtime-constants/std",
+	"scale-info/std",
+	"serde_json/std",
+	"substrate-wasm-builder",
+]
+
+runtime-benchmarks = [
+	"polkadot-sdk/runtime-benchmarks",
+]
+
+# Enable the metadata hash generation in the wasm builder.
+metadata-hash = [ "substrate-wasm-builder/metadata-hash" ]
+
+# A feature that should be enabled when the runtime should be built for on-chain
+# deployment. This will disable stuff that shouldn't be part of the on-chain wasm
+# to make it smaller, like logging for example.
+on-chain-release-build = [ "metadata-hash" ]

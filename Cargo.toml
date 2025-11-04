@@ -7,7 +7,6 @@ members = [
 	"book/examples/confidential-xcm-bridge",
 	"book/examples/escrow",
 	"book/examples/htlc",
-	"demo",
 	# Backend Pallets
 	"pallets/acl",
 	# Frontend Pallets
@@ -19,8 +18,11 @@ members = [
 	# Primitives
 	"primitives/confidential-assets",
 	"primitives/zkhe",
-	# Demo Artifacts
-	"runtime",
+	# Demo + Runtimes
+	"runtimes/asset-hub",
+	"runtimes/confidential",
+	"runtimes/demo",
+	"runtimes/relay",
 	# client
 	"zkhe-prover",
 	# no_std on-chain verifier
