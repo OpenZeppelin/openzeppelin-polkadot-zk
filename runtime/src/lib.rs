@@ -316,7 +316,11 @@ mod runtime {
     #[runtime::pallet_index(40)]
     pub type Zkhe = pallet_zkhe;
     #[runtime::pallet_index(41)]
+    pub type ConfidentialAssets = pallet_confidential_assets;
+    #[runtime::pallet_index(42)]
     pub type ConfidentialEscrow = pallet_confidential_escrow;
+    #[runtime::pallet_index(43)]
+    pub type ConfidentialBridge = pallet_confidential_bridge;
 }
 
 #[docify::export(register_validate_block)]

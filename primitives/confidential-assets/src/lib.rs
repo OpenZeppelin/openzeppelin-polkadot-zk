@@ -24,7 +24,6 @@ pub type MaxPubKeyLen = ConstU32<64>;
 pub type PublicKeyBytes = BoundedVec<u8, MaxPubKeyLen>;
 
 /// Backend that holds the **truth** for totals, balances, public keys, and executes transfers.
-// TODO: consider extracting any functions require public balances generic type to simplify
 pub trait ConfidentialBackend<AccountId, AssetId, Balance> {
     fn set_public_key(who: &AccountId, elgamal_pk: &PublicKeyBytes) -> Result<(), DispatchError>;
 
@@ -183,6 +182,21 @@ pub trait AssetMetadataProvider<AssetId> {
     fn contract_uri(asset: AssetId) -> Vec<u8>;
 }
 
+impl<AssetId> AssetMetadataProvider<AssetId> for () {
+    fn name(_asset: AssetId) -> Vec<u8> {
+        Vec::new()
+    }
+    fn symbol(_asset: AssetId) -> Vec<u8> {
+        Vec::new()
+    }
+    fn decimals(_asset: AssetId) -> u8 {
+        0u8
+    }
+    fn contract_uri(_asset: AssetId) -> Vec<u8> {
+        Vec::new()
+    }
+}
+
 /// Abstract verifier boundary. Implement in the runtime.
 ///
 // TODO:
@@ -325,6 +339,8 @@ pub trait HrmpMessenger {
 pub type TransferId = u64;
 
 /// A tiny packet we send over HRMP.
+// For safety should include a dest_deadline to ensure execution occurs within an expected span of time.
+// This requires local knowledge of foreign block time which is out of scope for simple demo purposes.
 #[derive(Clone, Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub struct BridgePacket<AccountId, AssetId> {
     /// Bridge transfer identifier (source side).

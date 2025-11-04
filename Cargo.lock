@@ -2328,6 +2328,7 @@ dependencies = [
 name = "confidential-runtime"
 version = "0.1.0"
 dependencies = [
+ "confidential-assets-primitives",
  "cumulus-pallet-parachain-system",
  "docify",
  "hex-literal",

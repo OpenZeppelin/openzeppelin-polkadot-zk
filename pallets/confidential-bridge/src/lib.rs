@@ -1,3 +1,4 @@
+//! THIS IS INTENTIONALLY UNSAFE FOR DEMO PURPOSES DO NOT USE IN PRODUCTION
 //! **pallet-confidential-bridge**
 //!
 //! Goal: Bridge adapter that coordinates confidential, multi-asset
@@ -28,7 +29,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{pallet_prelude::*, traits::Get, PalletId};
+use frame_support::{pallet_prelude::*, traits::Get, transactional, PalletId};
 use frame_system::pallet_prelude::*;
 use parity_scale_codec::{Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -51,6 +52,8 @@ pub mod pallet {
         /// Emit events.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
+        // ---------------------------- Confidential Assets Types and Traits ----------------------------
+
         /// Asset and balance types for the confidential backend.
         type AssetId: Parameter + Member + Copy + Ord + MaxEncodedLen + TypeInfo;
         type Balance: Parameter + Member + Copy + Default + MaxEncodedLen + TypeInfo;
@@ -61,8 +64,17 @@ pub mod pallet {
         /// Confidential escrow adapter (lock, release, refund).
         type Escrow: ConfidentialEscrow<Self::AccountId, Self::AssetId>;
 
+        // ---------------------------- XCM Types and Traits ----------------------------
+
+        /// Origin allowed to confirm/cancel on behalf of destination responses.
+        /// In production wire this to an XCM origin filter (e.g., EnsureXcm<…>).
+        type XcmOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
         /// HRMP messenger adapter (runtime supplies an implementation).
         type Messenger: HrmpMessenger;
+
+        #[pallet::constant]
+        type SelfParaId: Get<u32>; // in prod use compact encoded u32: polkadot_parachain_primitives::Id
 
         /// PalletId used to derive the *burn account* for finalization.
         /// We first escrow-release to this account (with a transfer proof),
@@ -74,10 +86,6 @@ pub mod pallet {
         #[pallet::constant]
         type DefaultTimeout: Get<BlockNumberFor<Self>>;
 
-        /// Origin allowed to confirm/cancel on behalf of destination responses.
-        /// In production wire this to an XCM origin filter (e.g., EnsureXcm<…>).
-        type ConfirmOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
         /// Weight info (minimal defaults provided below).
         type WeightInfo: WeightData;
     }
@@ -87,6 +95,7 @@ pub mod pallet {
         fn send() -> Weight;
         fn confirm_success() -> Weight;
         fn cancel_and_refund() -> Weight;
+        fn receive() -> Weight;
     }
     impl WeightData for () {
         fn send() -> Weight {
@@ -97,6 +106,9 @@ pub mod pallet {
         }
         fn cancel_and_refund() -> Weight {
             Weight::from_parts(60_000, 0)
+        }
+        fn receive() -> Weight {
+            Weight::from_parts(100_000, 0)
         }
     }
 
@@ -123,34 +135,33 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         /// Outbound transfer was initiated and escrowed locally.
-        TransferInitiated {
+        OutboundTransferInitiated {
             id: TransferId,
             from: T::AccountId,
             dest_para: u32,
             asset: T::AssetId,
         },
         /// Destination reported success; local escrow burned (supply reduced).
-        TransferConfirmed { id: TransferId, asset: T::AssetId },
+        OutboundTransferConfirmed { id: TransferId, asset: T::AssetId },
         /// Sender reclaimed escrow after timeout or explicit cancel.
-        TransferRefunded { id: TransferId, asset: T::AssetId },
-        /// HRMP packet was attempted (success/failure), for observability.
-        HrmpSent {
+        OutboundTransferRefunded { id: TransferId, asset: T::AssetId },
+        /// Incoming Transfer Executed
+        InboundTransferExecuted {
             id: TransferId,
-            dest_para: u32,
-            ok: bool,
+            asset: T::AssetId,
+            minted: EncryptedAmount,
         },
     }
 
     #[pallet::error]
     pub enum Error<T> {
         NotFound,
-        AlreadyCompleted,
         NotExpired,
-        MessengerFailed,
-        /// Generic backend/escrow error path.
-        BackendError,
-        /// Only the original sender may self-cancel after deadline.
         NotSender,
+        NoSelfBridge,
+        AlreadyCompleted,
+        MessengerFailed,
+        BackendError,
     }
 
     // --------------------------- Helpers ----------------------------------------------
@@ -186,6 +197,7 @@ pub mod pallet {
         /// - Or the sender cancels after the deadline with `cancel_and_refund`.
         #[pallet::call_index(0)]
         #[pallet::weight(T::WeightInfo::send())]
+        #[transactional]
         pub fn send_confidential(
             origin: T::RuntimeOrigin,
             dest_para: u32,
@@ -198,57 +210,37 @@ pub mod pallet {
             accept_envelope: InputProof,
         ) -> DispatchResult {
             let who = ensure_signed(origin)?;
-
-            // 1) Escrow the ciphertext from `who`.
+            ensure!(T::SelfParaId::get() != dest_para, Error::<T>::NoSelfBridge);
+            let id = Self::new_transfer_id();
+            let packet = BridgePacket::<T::AccountId, T::AssetId> {
+                transfer_id: id,
+                dest_account: dest_account.clone(),
+                asset,
+                encrypted_amount,
+                accept_envelope,
+            };
+            let payload = packet.encode();
+            ensure!(
+                T::Messenger::send(dest_para, payload).is_ok(),
+                Error::<T>::MessengerFailed
+            );
             T::Escrow::escrow_lock(asset, &who, encrypted_amount, lock_proof)
                 .map_err(|_| Error::<T>::BackendError)?;
-
-            // 2) Record pending transfer with deadline.
-            let id = Self::new_transfer_id();
-            let now = <frame_system::Pallet<T>>::block_number();
-            let deadline = now + T::DefaultTimeout::get();
-
+            // Insert Pending Transfer Into Storage
+            let deadline = <frame_system::Pallet<T>>::block_number() + T::DefaultTimeout::get();
             Pending::<T>::insert(
                 id,
                 PendingTransfer::<T::AccountId, T::AssetId, BlockNumberFor<T>> {
                     from: who.clone(),
                     dest_para,
-                    dest_account: dest_account.clone(),
+                    dest_account,
                     asset,
                     encrypted_amount,
                     deadline,
                     completed: false,
                 },
             );
-
-            // 3) Send HRMP packet (opaque to this pallet).
-            let packet = BridgePacket::<T::AccountId, T::AssetId> {
-                transfer_id: id,
-                dest_account,
-                asset,
-                encrypted_amount,
-                accept_envelope,
-            };
-            let payload = packet.encode();
-            let ok = T::Messenger::send(dest_para, payload).is_ok();
-            if !ok {
-                // Keep the pending record; sender may cancel/refund later.
-                Self::deposit_event(Event::HrmpSent {
-                    id,
-                    dest_para,
-                    ok: false,
-                });
-                // We do NOT roll back escrow to keep logic simple; the sender can cancel on timeout.
-                // (Integrators can choose to eagerly refund here if desired.)
-            } else {
-                Self::deposit_event(Event::HrmpSent {
-                    id,
-                    dest_para,
-                    ok: true,
-                });
-            }
-
-            Self::deposit_event(Event::TransferInitiated {
+            Self::deposit_event(Event::OutboundTransferInitiated {
                 id,
                 from: who,
                 dest_para,
@@ -270,6 +262,7 @@ pub mod pallet {
         /// If both succeed, the pending record is cleared.
         #[pallet::call_index(1)]
         #[pallet::weight(T::WeightInfo::confirm_success())]
+        #[transactional]
         pub fn confirm_success(
             origin: T::RuntimeOrigin,
             id: TransferId,
@@ -278,8 +271,7 @@ pub mod pallet {
             // Proof to burn from burn account (backend burn proof).
             burn_proof: InputProof,
         ) -> DispatchResult {
-            // Ensure an origin authorized by the runtime (ideally an EnsureXcm origin).
-            T::ConfirmOrigin::ensure_origin(origin)?;
+            T::XcmOrigin::ensure_origin(origin)?;
 
             let mut rec = Pending::<T>::get(id).ok_or(Error::<T>::NotFound)?;
             ensure!(!rec.completed, Error::<T>::AlreadyCompleted);
@@ -299,7 +291,7 @@ pub mod pallet {
             Pending::<T>::insert(id, &rec);
             Pending::<T>::remove(id);
 
-            Self::deposit_event(Event::TransferConfirmed {
+            Self::deposit_event(Event::OutboundTransferConfirmed {
                 id,
                 asset: rec.asset,
             });
@@ -311,7 +303,7 @@ pub mod pallet {
         ///
         /// Steps:
         /// - If called by the original sender and the deadline has passed, refund escrow → sender.
-        /// - If called by `ConfirmOrigin` at any time, refund escrow → sender.
+        /// - If called by `XcmOrigin` at any time, refund escrow → sender.
         ///
         /// Requires a transfer proof (`refund_proof`) to move ciphertext from escrow
         /// back to the original `from`.
@@ -330,16 +322,14 @@ pub mod pallet {
             // Two options for authority:
             // 1) Original sender *after* deadline.
             // 2) Privileged confirm origin (e.g., an XCM admin) at any time.
-            let sender_ok = if let Ok(who) = ensure_signed(caller.clone()) {
+            if let Ok(who) = ensure_signed(caller.clone()) {
                 ensure!(who == rec.from, Error::<T>::NotSender);
                 let now = <frame_system::Pallet<T>>::block_number();
                 ensure!(now >= rec.deadline, Error::<T>::NotExpired);
-                true
             } else {
                 // If not signed, require the confirm origin.
-                T::ConfirmOrigin::ensure_origin(caller).is_ok()
-            };
-            ensure!(sender_ok, Error::<T>::NotExpired);
+                T::XcmOrigin::ensure_origin(caller)?;
+            }
 
             // Refund escrow → original sender.
             T::Escrow::escrow_refund(rec.asset, &rec.from, rec.encrypted_amount, refund_proof)
@@ -349,10 +339,42 @@ pub mod pallet {
             Pending::<T>::insert(id, &rec);
             Pending::<T>::remove(id);
 
-            Self::deposit_event(Event::TransferRefunded {
+            Self::deposit_event(Event::OutboundTransferRefunded {
                 id,
                 asset: rec.asset,
             });
+            Ok(())
+        }
+
+        /// Optimistically handle incoming confidential transfers from sibling parachains.
+        /// THIS IS INTENTIONALLY UNSAFE FOR DEMO PURPOSES DO NOT USE IN PRODUCTION
+        /// Called automatically when an XCM Transact arrives with
+        /// `RuntimeCall::ConfidentialBridge::on_incoming_packet`.
+        #[pallet::call_index(3)] // just ensure unique index
+        #[pallet::weight(T::WeightInfo::cancel_and_refund())]
+        pub fn receive_confidential(
+            origin: T::RuntimeOrigin,
+            payload: BoundedVec<u8, ConstU32<1024>>, //make constant MAX_BRIDGE_PAYLOAD = 1024
+        ) -> DispatchResult {
+            T::XcmOrigin::ensure_origin(origin)?;
+
+            // Decode the BridgePacket
+            let packet: BridgePacket<T::AccountId, T::AssetId> =
+                parity_scale_codec::Decode::decode(&mut &payload[..])
+                    .map_err(|_| Error::<T>::BackendError)?;
+            // Mint encrypted balance locally
+            let minted = T::Backend::mint_encrypted(
+                packet.asset,
+                &packet.dest_account,
+                packet.accept_envelope,
+            )?;
+
+            Self::deposit_event(Event::InboundTransferExecuted {
+                id: packet.transfer_id,
+                asset: packet.asset,
+                minted,
+            });
+
             Ok(())
         }
     }

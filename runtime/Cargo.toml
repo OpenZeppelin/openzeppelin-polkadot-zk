@@ -11,18 +11,19 @@ version = "0.1.0"
 targets = [ "x86_64-unknown-linux-gnu" ]
 
 [dependencies]
+confidential-assets-primitives = { path = "../primitives/confidential-assets", default-features = false }
 docify = { workspace = true }
 hex-literal = { workspace = true, default-features = true, optional = true }
 log = { workspace = true }
+pallet-confidential-assets = { path = "../pallets/confidential-assets", default-features = false }
+pallet-confidential-bridge = { path = "../pallets/confidential-bridge", default-features = false }
+pallet-confidential-escrow = { path = "../pallets/confidential-escrow", default-features = false }
+pallet-zkhe = { path = "../pallets/zkhe", default-features = false }
 parity-scale-codec = { workspace = true, features = [ "derive" ] }
 polkadot-sdk = { workspace = true, default-features = false, features = [ "cumulus-pallet-aura-ext", "cumulus-pallet-session-benchmarking", "cumulus-pallet-weight-reclaim", "cumulus-pallet-xcm", "cumulus-pallet-xcmp-queue", "cumulus-primitives-aura", "cumulus-primitives-core", "cumulus-primitives-utility", "pallet-aura", "pallet-authorship", "pallet-balances", "pallet-collator-selection", "pallet-message-queue", "pallet-session", "pallet-sudo", "pallet-timestamp", "pallet-transaction-payment", "pallet-transaction-payment-rpc-runtime-api", "pallet-xcm", "parachains-common", "polkadot-parachain-primitives", "polkadot-runtime-common", "runtime", "staging-parachain-info", "staging-xcm", "staging-xcm-builder", "staging-xcm-executor" ] }
 scale-info = { workspace = true, features = [ "derive" ] }
 serde_json = { workspace = true, default-features = false, features = [ "alloc" ] }
 smallvec = { workspace = true, default-features = true }
-pallet-confidential-assets = { path = "../pallets/confidential-assets", default-features = false }
-pallet-confidential-bridge = { path = "../pallets/confidential-bridge", default-features = false }
-pallet-confidential-escrow = { path = "../pallets/confidential-escrow", default-features = false }
-pallet-zkhe = { path = "../pallets/zkhe", default-features = false }
 zkhe-verifier = { path = "../zkhe-verifier", default-features = false }
 
 [dependencies.cumulus-pallet-parachain-system]
@@ -35,6 +36,7 @@ substrate-wasm-builder = { workspace = true, default-features = true, optional =
 [features]
 default = [ "std" ]
 std = [
+	"confidential-assets-primitives/std",
 	"cumulus-pallet-parachain-system/std",
 	"log/std",
 	"pallet-confidential-assets/std",
