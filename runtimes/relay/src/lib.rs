@@ -94,6 +94,7 @@ pub use sp_runtime::BuildStorage;
 /// Constant values used within the runtime.
 use runtime_constants::{currency::*, fee::*, time::*};
 pub mod xcm_config;
+pub use xcm_config::LocationConverter;
 
 impl_runtime_weights!(runtime_constants);
 

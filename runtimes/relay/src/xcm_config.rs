@@ -11,7 +11,8 @@ use polkadot_sdk::{
 };
 use xcm::latest::prelude::*;
 use xcm_builder::{
-    AllowUnpaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds, FrameTransactionalProcessor,
+    AccountId32Aliases, AllowUnpaidExecutionFrom, DescribeAllTerminal, DescribeFamily,
+    EnsureXcmOrigin, FixedWeightBounds, FrameTransactionalProcessor, HashedDescription,
     SignedAccountId32AsNative, SignedToAccountId32, WithUniqueTopic,
 };
 use xcm_executor::{
@@ -21,7 +22,7 @@ use xcm_executor::{
 
 parameter_types! {
     pub const BaseXcmWeight: xcm::latest::Weight = Weight::from_parts(1_000, 1_000);
-    pub const AnyNetwork: Option<NetworkId> = None;
+    pub RelayNetwork: NetworkId = ByGenesis([0; 32]);
     pub const MaxInstructions: u32 = 100;
     pub const MaxAssetsIntoHolding: u32 = 16;
     pub const UniversalLocation: xcm::latest::InteriorLocation = xcm::latest::Junctions::Here;
@@ -33,7 +34,7 @@ parameter_types! {
 /// location of this chain.
 pub type LocalOriginToLocation = (
     // And a usual Signed origin to be used in XCM as a corresponding AccountId32
-    SignedToAccountId32<crate::RuntimeOrigin, crate::AccountId, AnyNetwork>,
+    SignedToAccountId32<crate::RuntimeOrigin, crate::AccountId, RelayNetwork>,
 );
 
 /// Implementation of [`PriceForMessageDelivery`], returning a different price
@@ -110,7 +111,12 @@ impl WeightTrader for DummyWeightTrader {
 
 type OriginConverter = (
     pallet_xcm::XcmPassthrough<super::RuntimeOrigin>,
-    SignedAccountId32AsNative<AnyNetwork, super::RuntimeOrigin>,
+    SignedAccountId32AsNative<RelayNetwork, super::RuntimeOrigin>,
+);
+
+pub type LocationConverter = (
+    HashedDescription<crate::AccountId, DescribeFamily<DescribeAllTerminal>>,
+    AccountId32Aliases<RelayNetwork, crate::AccountId>,
 );
 
 pub struct XcmConfig;
@@ -167,7 +173,7 @@ impl pallet_xcm::Config for crate::Runtime {
     type Currency = crate::Balances;
     type CurrencyMatcher = ();
     type TrustedLockers = ();
-    type SovereignAccountOf = ();
+    type SovereignAccountOf = LocationConverter;
     type MaxLockers = frame_support::traits::ConstU32<8>;
     type MaxRemoteLockConsumers = frame_support::traits::ConstU32<0>;
     type RemoteLockConsumerIdentifier = ();

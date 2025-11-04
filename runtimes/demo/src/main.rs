@@ -3,7 +3,7 @@
 //! Currently demoing XCM reserve transfer: ParaA (Asset Hub) -> ParaB (Asset Hub)
 
 use log::info;
-use polkadot_sdk::{xcm_staging as xcm, *};
+use polkadot_sdk::{staging_parachain_info as parachain_info, staging_xcm as xcm, *};
 use xcm_emulator::*;
 
 use asset_hub_runtime as para_a;
@@ -40,14 +40,14 @@ fn para_b_genesis() -> sp_core::storage::Storage {
 // ---------------------- Relay definition ----------------------
 
 decl_test_relay_chains! {
-    #[api_version(4)]
+    #[api_version(13)]
     pub struct LocalRelay {
         genesis = relay_genesis(),
         on_init = {},
         runtime = relay,
         core = {
             // Use the relay runtime's Location->AccountId converter
-            SovereignAccountOf: relay::xcm_config::LocationToAccountId,
+            SovereignAccountOf: relay::xcm_config::LocationConverter,
         },
         pallets = {
             System: frame_system::Pallet<relay::Runtime>,
@@ -82,8 +82,7 @@ decl_test_parachains! {
             XcmpQueue: cumulus_pallet_xcmp_queue::Pallet<para_a::Runtime>,
             XcmPallet: pallet_xcm::Pallet<para_a::Runtime>,
         }
-    }
-
+    },
     pub struct AssetHubB {
         genesis = para_b_genesis(),
         on_init = {},
@@ -110,7 +109,10 @@ decl_test_parachains! {
 decl_test_networks! {
     pub struct LocalNet {
         relay_chain = LocalRelay,
-        parachains = vec![ AssetHubA, AssetHubB ],
+        parachains = vec![
+            AssetHubA,
+            AssetHubB,
+        ],
         bridge = ()
     }
 }
