@@ -2,22 +2,30 @@
 //!
 //! Optional: pallet-acl, pallet-operators
 use crate::{
-    AccountId, Balance, ConfidentialEscrow, ParachainInfo, PolkadotXcm, Runtime, RuntimeCall,
-    RuntimeEvent, RuntimeOrigin, Zkhe,
+    AccountId, AssetId, Balance, ConfidentialEscrow, ParachainInfo, PolkadotXcm, Runtime,
+    RuntimeCall, RuntimeEvent, RuntimeOrigin, Zkhe,
 };
 use alloc::{boxed::Box, vec, vec::Vec};
 use confidential_assets_primitives::{HrmpMessenger, Ramp};
-use frame_support::{parameter_types, traits::ConstU32, PalletId};
+use frame_support::traits::{
+    tokens::fungibles::{Mutate as MultiMutate, Transfer as MultiTransfer},
+    tokens::WithdrawReasons,
+    Currency, ExistenceRequirement,
+};
+use frame_support::{
+    parameter_types,
+    traits::{ConstU32, Get},
+    PalletId,
+};
 use parity_scale_codec::Encode;
 use polkadot_sdk::{
-    frame_support, sp_runtime, staging_xcm as xcm, staging_xcm_builder as xcm_builder,
+    frame_support, pallet_assets, pallet_balances, sp_runtime, staging_xcm as xcm,
+    staging_xcm_builder as xcm_builder,
 };
 use sp_runtime::{traits::AccountIdConversion, BoundedVec};
 use xcm::latest::prelude::*;
 use xcm::{VersionedLocation, VersionedXcm};
 use xcm_builder::EnsureXcmOrigin;
-
-pub type AssetId = u128;
 
 impl pallet_zkhe::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
@@ -26,35 +34,6 @@ impl pallet_zkhe::Config for Runtime {
     type Verifier = zkhe_verifier::ZkheVerifier;
     type WeightInfo = ();
 }
-
-// ----------------- Confidential Assets Configuration -----------------
-
-parameter_types! {
-    pub const AssetsPalletId: PalletId = PalletId(*b"CaAssets");
-}
-
-pub struct PublicRamp;
-
-impl Ramp<AccountId, AssetId, Balance> for PublicRamp {
-    type Error = ();
-
-    fn transfer_from(
-        from: &AccountId,
-        to: &AccountId,
-        asset: AssetId,
-        amount: Balance,
-    ) -> Result<(), Self::Error> {
-        Ok(())
-    }
-    fn burn(from: &AccountId, asset: &AssetId, amount: Balance) -> Result<(), Self::Error> {
-        Ok(())
-    }
-    fn mint(to: &AccountId, asset: &AssetId, amount: Balance) -> Result<(), Self::Error> {
-        Ok(())
-    }
-}
-// implement Ramp for Runtime using pallet-assets and pallet-balances
-
 impl pallet_confidential_assets::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type AssetId = AssetId;
@@ -62,7 +41,7 @@ impl pallet_confidential_assets::Config for Runtime {
     type Backend = Zkhe;
     type Ramp = PublicRamp;
     type PalletId = AssetsPalletId;
-    // should be configured using pallet-assets/balances for production not necessary for demo purposes
+    // prod configure using pallet-assets/balances but not needed for demo
     type AssetMetadata = ();
     // Optional ACL (default = ()).
     type Acl = ();
@@ -70,8 +49,107 @@ impl pallet_confidential_assets::Config for Runtime {
     type Operators = ();
     type WeightInfo = ();
 }
+impl pallet_confidential_escrow::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type AssetId = AssetId;
+    type Balance = Balance;
+    type Backend = Zkhe;
+    type PalletId = EscrowPalletId;
+}
+impl pallet_confidential_bridge::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type AssetId = AssetId;
+    type Balance = Balance;
+    type Backend = Zkhe;
+    type Escrow = ConfidentialEscrow;
+    type Messenger = XcmHrmpMessenger;
+    type BurnPalletId = BridgePalletId;
+    type DefaultTimeout = ConstU32<10>;
+    type SelfParaId = SelfParaId;
+    type XcmOrigin = EnsureXcmOrigin<RuntimeOrigin, super::LocalOriginToLocation>;
+    type WeightInfo = ();
+}
 
-// ----------------- Confidential Bridge Configuration -----------------
+// ----------------- Confidential Assets Helpers -----------------
+
+parameter_types! {
+    pub const AssetsPalletId: PalletId = PalletId(*b"CaAssets");
+}
+
+pub struct NativeAssetId;
+impl Get<AssetId> for NativeAssetId {
+    fn get() -> AssetId {
+        0u32.into()
+    } // assumes Native Asset Id is 0
+}
+
+#[inline]
+fn is_native(asset: &AssetId) -> bool {
+    *asset == NativeAssetId::get()
+}
+
+type Balances = pallet_balances::Pallet<Runtime>;
+type Assets = pallet_assets::Pallet<Runtime>;
+
+pub struct PublicRamp;
+impl Ramp<AccountId, AssetId, Balance> for PublicRamp {
+    type Error = DispatchError;
+
+    fn transfer_from(
+        from: &AccountId,
+        to: &AccountId,
+        asset: AssetId,
+        amount: Balance,
+    ) -> Result<(), Self::Error> {
+        if is_native(&asset) {
+            // Native: via Currency
+            <Balances as Currency<AccountId>>::transfer(
+                from,
+                to,
+                amount,
+                ExistenceRequirement::AllowDeath,
+            )?;
+        } else {
+            // Non-native: via fungibles::Transfer on pallet_assets
+            <Assets as MultiTransfer<AccountId>>::transfer(
+                asset, from, to, amount, /* keep_alive: */ true,
+            )?;
+        }
+        Ok(())
+    }
+
+    fn mint(to: &AccountId, asset: &AssetId, amount: Balance) -> Result<(), Self::Error> {
+        if is_native(asset) {
+            // Native “mint”: deposit_creating increases issuance, returns a PositiveImbalance which
+            // is burned when dropped if your Currency implements Balanced. Just ignore it here.
+            let _imbalance = <Balances as Currency<AccountId>>::deposit_creating(to, amount);
+            Ok(())
+        } else {
+            // Non-native mint
+            <Assets as MultiMutate<AccountId>>::mint_into(*asset, to, amount)?;
+            Ok(())
+        }
+    }
+
+    fn burn(from: &AccountId, asset: &AssetId, amount: Balance) -> Result<(), Self::Error> {
+        if is_native(asset) {
+            // Native “burn”: withdraw with reasons; dropping the NegativeImbalance reduces issuance.
+            let _imbalance = <Balances as Currency<AccountId>>::withdraw(
+                from,
+                amount,
+                WithdrawReasons::TRANSFER,
+                ExistenceRequirement::AllowDeath,
+            )?;
+            Ok(())
+        } else {
+            // Non-native burn
+            <Assets as MultiMutate<AccountId>>::burn_from(*asset, from, amount)?;
+            Ok(())
+        }
+    }
+}
+
+// ----------------- Confidential Bridge Helpers -----------------
 
 parameter_types! {
     pub const EscrowPalletId: PalletId = PalletId(*b"CaEscrow");
@@ -105,25 +183,4 @@ impl HrmpMessenger for XcmHrmpMessenger {
         .map(|_| ())
         .map_err(|_| ())
     }
-}
-
-impl pallet_confidential_escrow::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type AssetId = AssetId;
-    type Balance = Balance;
-    type Backend = Zkhe;
-    type PalletId = EscrowPalletId;
-}
-impl pallet_confidential_bridge::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type AssetId = AssetId;
-    type Balance = Balance;
-    type Backend = Zkhe;
-    type Escrow = ConfidentialEscrow;
-    type Messenger = XcmHrmpMessenger;
-    type BurnPalletId = BridgePalletId;
-    type DefaultTimeout = ConstU32<10>;
-    type SelfParaId = SelfParaId;
-    type XcmOrigin = EnsureXcmOrigin<RuntimeOrigin, super::LocalOriginToLocation>;
-    type WeightInfo = ();
 }
