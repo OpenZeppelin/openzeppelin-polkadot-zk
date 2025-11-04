@@ -46,12 +46,13 @@ decl_test_relay_chains! {
         on_init = {},
         runtime = relay,
         core = {
-            // Use the relay runtime's Location->AccountId converter
-            SovereignAccountOf: relay::xcm_config::LocationConverter,
+            SovereignAccountOf: relay::LocationConverter,
         },
         pallets = {
-            System: frame_system::Pallet<relay::Runtime>,
-            MessageQueue: pallet_message_queue::Pallet<relay::Runtime>,
+            Sudo: relay::Sudo,
+            Balances: relay::Balances,
+            XcmPallet: relay::Xcm,
+            Hrmp: relay::Hrmp,
         }
     }
 }
