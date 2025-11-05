@@ -11,39 +11,26 @@ use alloc::{
     vec,
     vec::Vec,
 };
-use pallet_transaction_payment::FungibleAdapter;
-use parity_scale_codec::Encode;
-use polkadot_runtime_parachains::{
-    assigner_coretime as parachains_assigner_coretime, configuration as parachains_configuration,
-    configuration::ActiveConfigHrmpChannelSizeAndCapacityRatio,
-    coretime, disputes as parachains_disputes,
-    disputes::slashing as parachains_slashing,
-    dmp as parachains_dmp, hrmp as parachains_hrmp, inclusion as parachains_inclusion,
-    initializer as parachains_initializer, on_demand as parachains_on_demand,
-    origin as parachains_origin, paras as parachains_paras,
-    paras_inherent as parachains_paras_inherent,
-    runtime_api_impl::{v11 as runtime_impl, vstaging as staging_runtime_impl},
-    scheduler as parachains_scheduler, session_info as parachains_session_info,
-    shared as parachains_shared,
-};
-use polkadot_sdk::{staging_xcm as xcm, *};
-
 use frame_election_provider_support::{
     bounds::{ElectionBounds, ElectionBoundsBuilder},
     onchain, SequentialPhragmen,
 };
+use frame_support::weights::WeightMeter;
 use frame_support::{
     construct_runtime, derive_impl,
     genesis_builder_helper::{build_state, get_preset},
     pallet_prelude::Get,
     parameter_types,
-    traits::{KeyOwnerProofSystem, WithdrawReasons},
+    traits::{KeyOwnerProofSystem, ProcessMessage, ProcessMessageError, WithdrawReasons},
     PalletId,
 };
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId};
 use pallet_session::historical as session_historical;
 use pallet_timestamp::Now;
+use pallet_transaction_payment::FungibleAdapter;
 use pallet_transaction_payment::{FeeDetails, RuntimeDispatchInfo};
+use parachains_inclusion::{AggregateMessageOrigin, UmpQueueId};
+use parity_scale_codec::Encode;
 use polkadot_primitives::{
     slashing,
     vstaging::{
@@ -61,6 +48,22 @@ use polkadot_runtime_common::{
     SlowAdjustingFeeUpdate,
 };
 use polkadot_runtime_parachains::reward_points::RewardValidatorsWithEraPoints;
+use polkadot_runtime_parachains::{
+    assigner_coretime as parachains_assigner_coretime, configuration as parachains_configuration,
+    configuration::ActiveConfigHrmpChannelSizeAndCapacityRatio,
+    coretime, disputes as parachains_disputes,
+    disputes::slashing as parachains_slashing,
+    dmp as parachains_dmp, hrmp as parachains_hrmp, inclusion as parachains_inclusion,
+    initializer as parachains_initializer, on_demand as parachains_on_demand,
+    origin as parachains_origin, paras as parachains_paras,
+    paras_inherent as parachains_paras_inherent,
+    runtime_api_impl::{v11 as runtime_impl, vstaging as staging_runtime_impl},
+    scheduler as parachains_scheduler, session_info as parachains_session_info,
+    shared as parachains_shared,
+};
+use polkadot_sdk::{
+    staging_xcm as xcm, staging_xcm_builder as xcm_builder, staging_xcm_executor as xcm_executor, *,
+};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_beefy::ecdsa_crypto::{AuthorityId as BeefyId, Signature as BeefySignature};
 use sp_core::{ConstU32, OpaqueMetadata};
@@ -79,7 +82,9 @@ use sp_staking::SessionIndex;
 #[cfg(any(feature = "std", test))]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use xcm::latest::{Assets, InteriorLocation, Location, SendError, SendResult, SendXcm, XcmHash};
+use xcm::latest::{
+    Assets, InteriorLocation, Junction, Location, SendError, SendResult, SendXcm, XcmHash,
+};
 
 pub use pallet_balances::Call as BalancesCall;
 #[cfg(feature = "std")]
@@ -523,7 +528,7 @@ impl parachains_inclusion::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type DisputesHandler = ParasDisputes;
     type RewardValidators = RewardValidatorsWithEraPoints<Runtime>;
-    type MessageQueue = ();
+    type MessageQueue = MessageQueue;
     type WeightInfo = ();
 }
 
@@ -590,6 +595,56 @@ impl Get<InteriorLocation> for BrokerPot {
     fn get() -> InteriorLocation {
         unimplemented!()
     }
+}
+
+parameter_types! {
+    /// Amount of weight that can be spent per block to service messages.
+    ///
+    /// # WARNING
+    ///
+    /// This is not a good value for para-chains since the `Scheduler` already uses up to 80% block weight.
+    pub MessageQueueServiceWeight: Weight = Perbill::from_percent(20) * BlockWeights::get().max_block;
+    pub const MessageQueueHeapSize: u32 = 32 * 1024;
+    pub const MessageQueueMaxStale: u32 = 96;
+}
+
+/// Message processor to handle any messages that were enqueued into the `MessageQueue` pallet.
+pub struct MessageProcessor;
+impl ProcessMessage for MessageProcessor {
+    type Origin = AggregateMessageOrigin;
+
+    fn process_message(
+        message: &[u8],
+        origin: Self::Origin,
+        meter: &mut WeightMeter,
+        id: &mut [u8; 32],
+    ) -> Result<bool, ProcessMessageError> {
+        let para = match origin {
+            AggregateMessageOrigin::Ump(UmpQueueId::Para(para)) => para,
+        };
+        xcm_builder::ProcessXcmMessage::<
+            Junction,
+            xcm_executor::XcmExecutor<xcm_config::XcmConfig>,
+            RuntimeCall,
+        >::process_message(message, Junction::Parachain(para.into()), meter, id)
+    }
+}
+
+impl pallet_message_queue::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Size = u32;
+    type HeapSize = MessageQueueHeapSize;
+    type MaxStale = MessageQueueMaxStale;
+    type ServiceWeight = MessageQueueServiceWeight;
+    type IdleMaxServiceWeight = MessageQueueServiceWeight;
+    #[cfg(not(feature = "runtime-benchmarks"))]
+    type MessageProcessor = MessageProcessor;
+    #[cfg(feature = "runtime-benchmarks")]
+    type MessageProcessor =
+        pallet_message_queue::mock_helpers::NoopMessageProcessor<AggregateMessageOrigin>;
+    type QueueChangeHandler = ParaInclusion;
+    type QueuePausedQuery = ();
+    type WeightInfo = ();
 }
 
 parameter_types! {
@@ -710,6 +765,7 @@ construct_runtime! {
         Xcm: pallet_xcm,
         ParasDisputes: parachains_disputes,
         ParasSlashing: parachains_slashing,
+        MessageQueue: pallet_message_queue,
         OnDemandAssignmentProvider: parachains_on_demand,
         CoretimeAssignmentProvider: parachains_assigner_coretime,
         Coretime: coretime,

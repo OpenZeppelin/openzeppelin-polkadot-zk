@@ -23,6 +23,7 @@ polkadot-sdk = { workspace = true, default-features = false, features = [
 	"pallet-balances",
 	"pallet-grandpa",
 	"pallet-indices",
+	"pallet-message-queue",
 	"pallet-offences",
 	"pallet-session",
 	"pallet-staking",

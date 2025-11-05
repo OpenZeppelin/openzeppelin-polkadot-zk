@@ -44,6 +44,7 @@ use super::{
     HOURS, MAXIMUM_BLOCK_WEIGHT, MICRO_UNIT, NORMAL_DISPATCH_RATIO, SLOT_DURATION, UNIT, VERSION,
 };
 use xcm_config::{LocalOriginToLocation, RelayLocation, XcmOriginToTransactDispatchOrigin};
+pub use xcm_config::LocationToAccountId;
 
 parameter_types! {
     pub const Version: RuntimeVersion = VERSION;
