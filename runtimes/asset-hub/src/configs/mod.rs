@@ -1,4 +1,3 @@
-mod confidential;
 mod xcm_config;
 
 use polkadot_sdk::{staging_parachain_info as parachain_info, staging_xcm as xcm, *};
@@ -6,6 +5,11 @@ use polkadot_sdk::{staging_parachain_info as parachain_info, staging_xcm as xcm,
 use polkadot_sdk::{staging_xcm_builder as xcm_builder, staging_xcm_executor as xcm_executor};
 
 // Substrate and Polkadot dependencies
+use assets_common::{
+    foreign_creators::ForeignCreators,
+    local_and_foreign_assets::{LocalFromLeft, TargetFromLeft},
+    AssetIdForTrustBackedAssetsConvert,
+};
 use cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use frame_support::{
@@ -13,7 +17,7 @@ use frame_support::{
     dispatch::DispatchClass,
     parameter_types,
     traits::{
-        AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse,
+        AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse, Everything,
         TransformOrigin, VariantCountOf,
     },
     weights::{ConstantMultiplier, Weight},
@@ -25,26 +29,29 @@ use frame_system::{
     EnsureRoot,
 };
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
-use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
+use parachains_common::{
+    impls::{AssetsToBlockAuthor, NonZeroIssuance},
+    message_queue::{NarrowOriginToSibling, ParaIdToSibling},
+};
 use polkadot_runtime_common::{
     xcm_sender::NoPriceForMessageDelivery, BlockHashCount, SlowAdjustingFeeUpdate,
 };
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_runtime::Perbill;
+use sp_runtime::{traits::ConvertInto, Perbill};
 use sp_version::RuntimeVersion;
 use xcm::latest::prelude::BodyId;
 
 // Local module imports
 use super::{
     weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
-    AccountId, AssetId, Aura, Balance, Balances, Block, BlockNumber, CollatorSelection,
+    AccountId, AssetId, Assets, Aura, Balance, Balances, Block, BlockNumber, CollatorSelection,
     ConsensusHook, Hash, MessageQueue, Nonce, PalletInfo, ParachainSystem, Runtime, RuntimeCall,
     RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask, Session,
     SessionKeys, System, WeightToFee, XcmpQueue, AVERAGE_ON_INITIALIZE_RATIO, EXISTENTIAL_DEPOSIT,
     HOURS, MAXIMUM_BLOCK_WEIGHT, MICRO_UNIT, NORMAL_DISPATCH_RATIO, SLOT_DURATION, UNIT, VERSION,
 };
 pub use xcm_config::LocationToAccountId;
-use xcm_config::{LocalOriginToLocation, RelayLocation, XcmOriginToTransactDispatchOrigin};
+use xcm_config::{RelayLocation, XcmOriginToTransactDispatchOrigin};
 
 parameter_types! {
     pub const Version: RuntimeVersion = VERSION;
@@ -159,7 +166,9 @@ parameter_types! {
     pub const UnitBody: BodyId = BodyId::Unit;
 }
 
-impl pallet_assets::Config for Runtime {
+pub type TrustBackedAssetsInstance = pallet_assets::Instance1;
+
+impl pallet_assets::Config<TrustBackedAssetsInstance> for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type Balance = Balance;
     type AssetId = AssetId;
@@ -183,6 +192,35 @@ impl pallet_assets::Config for Runtime {
     type BenchmarkHelper = ();
 }
 
+/// Another pallet assets instance to store foreign assets from bridgehub.
+pub type ForeignAssetsInstance = pallet_assets::Instance2;
+impl pallet_assets::Config<ForeignAssetsInstance> for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Balance = Balance;
+    type AssetId = xcm::latest::Location;
+    type AssetIdParameter = xcm::latest::Location;
+    type Currency = Balances;
+    // This is to allow any other remote location to create foreign assets. Used in tests, not
+    // recommended on real chains. In prod use pallet-asset-manager configuration.
+    type CreateOrigin =
+        ForeignCreators<Everything, LocationToAccountId, AccountId, xcm::latest::Location>;
+    type ForceOrigin = EnsureRoot<AccountId>;
+    type AssetDeposit = AssetDeposit;
+    type MetadataDepositBase = MetadataDepositBase;
+    type MetadataDepositPerByte = MetadataDepositPerByte;
+    type ApprovalDeposit = ApprovalDeposit;
+    type StringLimit = AssetsStringLimit;
+    type Holder = ();
+    type Freezer = ();
+    type Extra = ();
+    type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+    type CallbackHandle = ();
+    type AssetAccountDeposit = AssetAccountDeposit;
+    type RemoveItemsLimit = frame_support::traits::ConstU32<1000>;
+    #[cfg(feature = "runtime-benchmarks")]
+    type BenchmarkHelper = (); //xcm_config::XcmBenchmarkHelper;
+}
+
 parameter_types! {
     /// Relay Chain `TransactionByteFee` / 10
     pub const TransactionByteFee: Balance = 10 * MICRO_UNIT;
@@ -196,6 +234,36 @@ impl pallet_transaction_payment::Config for Runtime {
     type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
     type OperationalFeeMultiplier = ConstU8<5>;
     type WeightInfo = ();
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+pub struct AssetTxHelper;
+
+#[cfg(feature = "runtime-benchmarks")]
+impl pallet_asset_tx_payment::BenchmarkHelperTrait<AccountId, u32, u32> for AssetTxHelper {
+    fn create_asset_id_parameter(_id: u32) -> (u32, u32) {
+        unimplemented!("Uses default weights");
+    }
+    fn setup_balances_and_pool(_asset_id: u32, _account: AccountId) {
+        unimplemented!("Uses default weights");
+    }
+}
+
+impl pallet_asset_tx_payment::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Fungibles = Assets;
+    type OnChargeAssetTransaction = pallet_asset_tx_payment::FungiblesAdapter<
+        pallet_assets::BalanceToAssetBalance<
+            Balances,
+            Runtime,
+            ConvertInto,
+            TrustBackedAssetsInstance,
+        >,
+        AssetsToBlockAuthor<Runtime, TrustBackedAssetsInstance>,
+    >;
+    type WeightInfo = ();
+    #[cfg(feature = "runtime-benchmarks")]
+    type BenchmarkHelper = AssetTxHelper;
 }
 
 impl pallet_sudo::Config for Runtime {

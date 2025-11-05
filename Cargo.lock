@@ -960,22 +960,16 @@ checksum = "9b34d609dfbaf33d6889b2b7106d3ca345eacad44200913df5ba02bfd31d2ba9"
 name = "asset-hub-runtime"
 version = "0.1.0"
 dependencies = [
- "confidential-assets-primitives",
  "cumulus-pallet-parachain-system",
  "docify",
  "hex-literal",
  "log",
- "pallet-confidential-assets",
- "pallet-confidential-bridge",
- "pallet-confidential-escrow",
- "pallet-zkhe",
  "parity-scale-codec",
  "polkadot-sdk 2503.0.1",
  "scale-info",
  "serde_json",
  "smallvec",
  "substrate-wasm-builder",
- "zkhe-verifier",
 ]
 
 [[package]]

@@ -288,9 +288,9 @@ mod runtime {
     #[runtime::pallet_index(11)]
     pub type TransactionPayment = pallet_transaction_payment;
     #[runtime::pallet_index(12)]
-    pub type Assets = pallet_assets;
+    pub type AssetTxPayment = pallet_asset_tx_payment;
 
-    // Governance
+    // WARNING: Centralized Governance Configured for Demo and Testing
     #[runtime::pallet_index(15)]
     pub type Sudo = pallet_sudo;
 
@@ -316,14 +316,16 @@ mod runtime {
     #[runtime::pallet_index(33)]
     pub type MessageQueue = pallet_message_queue;
 
+    // The main stage.
     #[runtime::pallet_index(40)]
-    pub type Zkhe = pallet_zkhe;
+    pub type Assets = pallet_assets::Pallet<Runtime, Instance1>;
     #[runtime::pallet_index(41)]
-    pub type ConfidentialAssets = pallet_confidential_assets;
-    #[runtime::pallet_index(42)]
-    pub type ConfidentialEscrow = pallet_confidential_escrow;
-    #[runtime::pallet_index(43)]
-    pub type ConfidentialBridge = pallet_confidential_bridge;
+    pub type ForeignAssets = pallet_assets::Pallet<Runtime, Instance2>;
+    // #[runtime::pallet_index(42)]
+    // pub type PoolAssets = pallet_assets::Pallet<Runtime, Instance3>;
+    // #[runtime::pallet_index(43)]
+    // pub type AssetConversion = pallet_asset_conversion;
+    // Revive lives in separate template WIP not ready for production
 }
 
 #[docify::export(register_validate_block)]
