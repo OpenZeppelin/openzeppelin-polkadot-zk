@@ -6,24 +6,25 @@ use polkadot_sdk::{staging_xcm_builder as xcm_builder, staging_xcm_executor as x
 
 use super::{
     weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
-    AccountId, AssetId, Assets, Aura, Balance, Balances, Block, BlockNumber, CollatorSelection,
-    ConsensusHook, ForeignAssets, Hash, MessageQueue, Nonce, PalletInfo, ParachainSystem,
-    PoolAssets, Runtime, RuntimeCall, RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason,
-    RuntimeOrigin, RuntimeTask, Session, SessionKeys, System, WeightToFee, XcmpQueue,
-    AVERAGE_ON_INITIALIZE_RATIO, EXISTENTIAL_DEPOSIT, HOURS, MAXIMUM_BLOCK_WEIGHT, MICRO_UNIT,
-    NORMAL_DISPATCH_RATIO, SLOT_DURATION, UNIT, VERSION,
+    AccountId, AssetId, Assets, Aura, Balance, Balances, Block, BlockLength, BlockNumber,
+    BlockWeights, CollatorSelection, ConsensusHook, ForeignAssets, Hash, MessageQueue, Nonce,
+    PalletInfo, ParachainSystem, PoolAssets, Runtime, RuntimeCall, RuntimeEvent,
+    RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask, Session, SessionKeys,
+    System, WeightToFee, XcmpQueue, AVERAGE_ON_INITIALIZE_RATIO, EXISTENTIAL_DEPOSIT, HOURS,
+    MAXIMUM_BLOCK_WEIGHT, MICRO_UNIT, NORMAL_DISPATCH_RATIO, SLOT_DURATION, UNIT, VERSION,
 };
 use assets_common::{
     foreign_creators::ForeignCreators,
     local_and_foreign_assets::{LocalFromLeft, TargetFromLeft},
-    AssetIdForTrustBackedAssetsConvert,
+    AssetIdForPoolAssets, AssetIdForPoolAssetsConvert, AssetIdForTrustBackedAssetsConvert,
+    TrustBackedAssetsAsLocation,
 };
 use cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use frame_support::{
     derive_impl,
     dispatch::DispatchClass,
-    parameter_types,
+    ord_parameter_types, parameter_types,
     traits::{
         tokens::{fungible, fungibles, imbalance::ResolveAssetTo},
         AsEnsureOriginWithArg, ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, EitherOfDiverse,
@@ -32,11 +33,7 @@ use frame_support::{
     weights::{ConstantMultiplier, Weight},
     PalletId,
 };
-use frame_system::EnsureSigned;
-use frame_system::{
-    limits::{BlockLength, BlockWeights},
-    EnsureRoot,
-};
+use frame_system::{EnsureRoot, EnsureSigned, EnsureSignedBy};
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
 use parachains_common::{
     impls::{AssetsToBlockAuthor, NonZeroIssuance},
@@ -46,11 +43,13 @@ use polkadot_runtime_common::{
     xcm_sender::NoPriceForMessageDelivery, BlockHashCount, SlowAdjustingFeeUpdate,
 };
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_runtime::{traits::ConvertInto, Perbill, Permill};
+use sp_runtime::{traits::AccountIdConversion, traits::ConvertInto, Perbill, Permill};
 use sp_version::RuntimeVersion;
 use xcm::latest::prelude::BodyId;
 pub use xcm_config::LocationToAccountId;
-use xcm_config::{NativeCurrency, RelayLocation, XcmOriginToTransactDispatchOrigin};
+use xcm_config::{
+    NativeCurrency, PoolAssetsPalletLocation, RelayLocation, XcmOriginToTransactDispatchOrigin,
+};
 
 parameter_types! {
     pub const Version: RuntimeVersion = VERSION;
@@ -276,7 +275,7 @@ pub type LocalAndForeignAssets = fungibles::UnionOf<
 pub type NativeAndNonPoolAssets = fungible::UnionOf<
     Balances,
     LocalAndForeignAssets,
-    TargetFromLeft<NativeCurrency, xcm::latest::Location>,
+    TargetFromLeft<RelayLocation, xcm::latest::Location>,
     xcm::latest::Location,
     AccountId,
 >;
