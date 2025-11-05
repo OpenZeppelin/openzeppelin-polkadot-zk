@@ -9,11 +9,13 @@ use xcm_emulator::*;
 
 use asset_hub_runtime as para_a;
 use confidential_runtime as para_b;
+use emulated_integration_tests_common::{
+    impl_accounts_helpers_for_parachain, impl_assert_events_helpers_for_parachain,
+    impl_xcm_helpers_for_parachain, impls::Parachain,
+};
 use frame_support::assert_ok;
 use relay_runtime as relay;
 use relay_runtime::BuildStorage;
-use xcm::latest::*;
-use xcm::{VersionedAssets, VersionedLocation};
 
 macro_rules! bx {
     ($x:expr) => {
@@ -91,7 +93,7 @@ decl_test_parachains! {
             Assets: pallet_assets::Pallet<para_a::Runtime>,           // Asset Hub usually includes this
             MessageQueue: pallet_message_queue::Pallet<para_a::Runtime>,
             XcmpQueue: cumulus_pallet_xcmp_queue::Pallet<para_a::Runtime>,
-            XcmPallet: pallet_xcm::Pallet<para_a::Runtime>,
+            PolkadotXcm: pallet_xcm::Pallet<para_a::Runtime>,
         }
     },
     pub struct ConfidentialHub {
@@ -110,28 +112,19 @@ decl_test_parachains! {
             Assets: pallet_assets::Pallet<para_b::Runtime>,
             MessageQueue: pallet_message_queue::Pallet<para_b::Runtime>,
             XcmpQueue: cumulus_pallet_xcmp_queue::Pallet<para_b::Runtime>,
-            XcmPallet: pallet_xcm::Pallet<para_b::Runtime>,
+            PolkadotXcm: pallet_xcm::Pallet<para_b::Runtime>,
         }
     }
 }
 
-use emulated_integration_tests_common::{
-    impl_accounts_helpers_for_parachain, impl_assert_events_helpers_for_parachain,
-    impl_assets_helpers_for_parachain, impl_assets_helpers_for_system_parachain,
-    impl_bridge_helpers_for_chain, impl_foreign_assets_helpers_for_parachain,
-    impl_xcm_helpers_for_parachain, impls::Parachain,
-};
-
 // AssetHub helpers
 impl_accounts_helpers_for_parachain!(AssetHub);
 impl_assert_events_helpers_for_parachain!(AssetHub);
-impl_assets_helpers_for_parachain!(AssetHub);
 impl_xcm_helpers_for_parachain!(AssetHub);
 
 // ConfidentialHub helpers
 impl_accounts_helpers_for_parachain!(ConfidentialHub);
 impl_assert_events_helpers_for_parachain!(ConfidentialHub);
-impl_assets_helpers_for_parachain!(ConfidentialHub);
 impl_xcm_helpers_for_parachain!(ConfidentialHub);
 
 // ---------------------- Network (relay + two paras) ----------------------
@@ -147,7 +140,7 @@ decl_test_networks! {
     }
 }
 
-type Relay = LocalRelay<LocalNet>;
+//type Relay = LocalRelay<LocalNet>;
 type TransparentP = AssetHub<LocalNet>;
 type EncryptedP = ConfidentialHub<LocalNet>;
 
@@ -179,7 +172,6 @@ fn main() {
 
     // 2) Fund Alice on Para A (root call so we avoid genesis fuss)
     TransparentP::execute_with(|| {
-        use frame_support::traits::fungible::Mutate as _;
         // Force set Alice's free balance on Para A
         pallet_balances::Pallet::<para_a::Runtime>::force_set_balance(
             para_a::RuntimeOrigin::root(),
@@ -190,12 +182,11 @@ fn main() {
     });
 
     // Show initial balances
-    let before_a = TransparentP::execute_with(|| free_balance_a(&alice));
-    let before_b = EncryptedP::execute_with(|| free_balance_b(&bob));
-
     println!("== Before ==");
-    println!("Para A - Alice: {}", before_a);
-    println!("Para B - Bob  : {}", before_b);
+    let before_alice_balance = free_balance_a(&alice);
+    println!("AssetHub - Alice: {}", before_alice_balance);
+    let before_bob_balance = free_balance_b(&bob);
+    println!("ConfidentialHub - Bob  : {}", before_bob_balance);
 
     // 3) Build a reserve transfer from Para A -> Para B of the native asset from A
     //    (Asset Hub runtimes accept reserve transfer; fee asset item = 0; unlimited weight)
@@ -209,9 +200,13 @@ fn main() {
             id: sp_core::crypto::AccountId32::from(bob.clone()).into(),
         }],
     );
-    let assets: Assets = (Here, amount).into();
-    let fee_asset_item: u32 = 0;
-    let weight_limit = WeightLimit::Unlimited;
+    let fee = 10_000_000; // enough to cover BuyExecution on B
+
+    let assets: Assets = vec![
+        (Parent, fee).into(),  // index 0 — fee asset (relay), recognized on B
+        (Here, amount).into(), // index 1 — the reserved asset (Para A native)
+    ]
+    .into();
 
     // 4) Dispatch the XCM from Para A (signed by Alice)
     TransparentP::execute_with(|| {
@@ -219,13 +214,12 @@ fn main() {
         let v_beneficiary = xcm::VersionedLocation::from(beneficiary.clone());
         let v_assets = xcm::VersionedAssets::from(assets.clone());
         let origin = para_a::RuntimeOrigin::signed(alice.clone());
-        assert_ok!(para_a::PolkadotXcm::limited_reserve_transfer_assets(
+        assert_ok!(para_a::PolkadotXcm::reserve_transfer_assets(
             origin,
             bx!(v_dest),
             bx!(v_beneficiary),
             bx!(v_assets),
-            fee_asset_item,
-            weight_limit,
+            0, // pay fees with assets[0] (relay)
         ));
     });
 
@@ -235,22 +229,27 @@ fn main() {
 
     // 5) One `execute_with` on a parachain triggers HRMP/UMP routing in the emulator.
     //    By here, messages are processed; assert/print final balances.
-
-    let after_a = TransparentP::execute_with(|| free_balance_a(&alice));
-    let after_b = EncryptedP::execute_with(|| free_balance_b(&bob));
-
+    //
+    // // Show initial balances
     println!("\n== After ==");
-    println!("Para A - Alice: {}", after_a);
-    println!("Para B - Bob  : {}", after_b);
+    let after_alice_balance = free_balance_a(&alice);
+    println!("AssetHub - Alice: {}", before_alice_balance);
+    let after_bob_balance = free_balance_b(&bob);
+    println!("ConfidentialHub - Bob  : {}", before_bob_balance);
 
-    // Pretty delta print
-    println!("\n== Delta ==");
-    println!("Para A - sent : {}", before_a.saturating_sub(after_a));
-    println!("Para B - recv : {}", after_b.saturating_sub(before_b));
+    // After (emulator processed message queues already)
+    println!(
+        "\n== AFTER ==\nParaA::Alice={}\nParaB::Bob  ={}",
+        before_alice_balance, before_bob_balance
+    );
+    println!(
+        "\n== DELTA ==\nA sent: {}\nB recv: {}",
+        before_alice_balance.saturating_sub(after_alice_balance),
+        after_bob_balance.saturating_sub(before_bob_balance)
+    );
 
-    // Optional assert that Bob received (within simple threshold)
-    if after_b <= before_b {
-        panic!("Bob did not receive funds on Para B");
+    if after_bob_balance <= before_bob_balance {
+        panic!("Bob did not receive funds");
     }
     info!("Reserve transfer complete.");
 }

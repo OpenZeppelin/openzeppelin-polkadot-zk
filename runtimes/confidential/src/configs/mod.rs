@@ -43,8 +43,8 @@ use super::{
     SessionKeys, System, WeightToFee, XcmpQueue, AVERAGE_ON_INITIALIZE_RATIO, EXISTENTIAL_DEPOSIT,
     HOURS, MAXIMUM_BLOCK_WEIGHT, MICRO_UNIT, NORMAL_DISPATCH_RATIO, SLOT_DURATION, UNIT, VERSION,
 };
-use xcm_config::{LocalOriginToLocation, RelayLocation, XcmOriginToTransactDispatchOrigin};
 pub use xcm_config::LocationToAccountId;
+use xcm_config::{LocalOriginToLocation, RelayLocation, XcmOriginToTransactDispatchOrigin};
 
 parameter_types! {
     pub const Version: RuntimeVersion = VERSION;
