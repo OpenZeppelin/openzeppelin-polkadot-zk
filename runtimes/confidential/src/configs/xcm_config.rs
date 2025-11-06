@@ -20,36 +20,42 @@ use polkadot_sdk::{
     polkadot_sdk_frame::traits::Disabled,
     staging_xcm_builder::{DenyRecursively, DenyThenTry},
 };
-use xcm::latest::prelude::*;
+use xcm::latest::{prelude::*, WESTEND_GENESIS_HASH};
 use xcm_builder::{
-    AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowTopLevelPaidExecutionFrom,
-    DenyReserveTransferToRelayChain, EnsureXcmOrigin, FixedWeightBounds,
-    FrameTransactionalProcessor, FungibleAdapter, IsConcrete, NativeAsset, ParentIsPreset,
-    RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-    SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
-    TrailingSetTopicAsId, UsingComponents, WithComputedOrigin, WithUniqueTopic,
+    AccountId32Aliases, AllowHrmpNotificationsFromRelayChain, AllowKnownQueryResponses,
+    AllowSubscriptionsFrom, AllowTopLevelPaidExecutionFrom, DescribeAllTerminal, DescribeFamily,
+    EnsureXcmOrigin, ExternalConsensusLocationsConverterFor, FixedWeightBounds,
+    FrameTransactionalProcessor, FungibleAdapter, FungiblesAdapter, HashedDescription, IsConcrete,
+    LocalMint, NativeAsset, NoChecking, ParentIsPreset, SiblingParachainAsNative,
+    SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
+    SovereignSignedViaLocation, StartsWith, TakeWeightCredit, TrailingSetTopicAsId,
+    UsingComponents, WithComputedOrigin, WithUniqueTopic,
 };
 use xcm_executor::XcmExecutor;
 
 parameter_types! {
     pub const RelayLocation: Location = Location::parent();
-    pub const RelayNetwork: Option<NetworkId> = None;
+    // Local native currency which is stored in `pallet_balances`
+    pub const NativeCurrency: Location = Location::here();
+    // This runtime is used for testing; default network is Westend by genesis hash.
+    pub storage RelayNetworkId: NetworkId = NetworkId::ByGenesis(WESTEND_GENESIS_HASH);
+    pub RelayNetwork: Option<NetworkId> = Some(RelayNetworkId::get());
     pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
-    // For the real deployment, it is recommended to set `RelayNetwork` according to the relay chain
-    // and prepend `UniversalLocation` with `GlobalConsensus(RelayNetwork::get())`.
-    pub UniversalLocation: InteriorLocation = Parachain(ParachainInfo::parachain_id().into()).into();
+    pub UniversalLocation: InteriorLocation = [
+        GlobalConsensus(RelayNetworkId::get()),
+        Parachain(ParachainInfo::parachain_id().into())
+    ].into();
+    pub UniversalLocationNetworkId: NetworkId = UniversalLocation::get().global_consensus().unwrap();
+    pub CheckingAccount: AccountId = PolkadotXcm::check_account();
 }
 
-/// Type for specifying how a `Location` can be converted into an `AccountId`. This is used
-/// when determining ownership of accounts for asset transacting and when attempting to use XCM
-/// `Transact` in order to determine the dispatch Origin.
+/// Map `Location` → `AccountId`
 pub type LocationToAccountId = (
-    // The parent (Relay-chain) origin converts to the parent `AccountId`.
     ParentIsPreset<AccountId>,
-    // Sibling parachain origins convert to AccountId via the `ParaId::into`.
     SiblingParachainConvertsVia<Sibling, AccountId>,
-    // Straight up local `AccountId32` origins just alias directly to `AccountId`.
     AccountId32Aliases<RelayNetwork, AccountId>,
+    HashedDescription<AccountId, DescribeFamily<DescribeAllTerminal>>,
+    ExternalConsensusLocationsConverterFor<UniversalLocation, AccountId>,
 );
 
 /// Means for transacting assets on this chain.
@@ -57,7 +63,7 @@ pub type LocalAssetTransactor = FungibleAdapter<
     // Use this currency:
     Balances,
     // Use this currency when it is a fungible asset matching the given location or name:
-    IsConcrete<RelayLocation>,
+    IsConcrete<NativeCurrency>,
     // Do a simple punn to convert an AccountId32 Location into a native chain account ID:
     LocationToAccountId,
     // Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -74,9 +80,6 @@ pub type XcmOriginToTransactDispatchOrigin = (
     // using `LocationToAccountId` and then turn that into the usual `Signed` origin. Useful for
     // foreign chains who want to have a local sovereign account on this chain which they control.
     SovereignSignedViaLocation<LocationToAccountId, RuntimeOrigin>,
-    // Native converter for Relay-chain (Parent) location; will convert to a `Relay` origin when
-    // recognized.
-    RelayChainAsNative<RelayChainOrigin, RuntimeOrigin>,
     // Native converter for sibling Parachains; will convert to a `SiblingPara` origin when
     // recognized.
     SiblingParachainAsNative<cumulus_pallet_xcm::Origin, RuntimeOrigin>,
@@ -111,23 +114,19 @@ impl Contains<Location> for ParentOrParentsExecutivePlurality {
     }
 }
 
-pub type Barrier = TrailingSetTopicAsId<
-    DenyThenTry<
-        DenyRecursively<DenyReserveTransferToRelayChain>,
+pub type Barrier = TrailingSetTopicAsId<(
+    TakeWeightCredit,
+    AllowKnownQueryResponses<PolkadotXcm>,
+    WithComputedOrigin<
         (
-            TakeWeightCredit,
-            WithComputedOrigin<
-                (
-                    AllowTopLevelPaidExecutionFrom<Everything>,
-                    AllowExplicitUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
-                    // ^^^ Parent and its exec plurality get free execution
-                ),
-                UniversalLocation,
-                ConstU32<8>,
-            >,
+            AllowTopLevelPaidExecutionFrom<Everything>,
+            AllowSubscriptionsFrom<Everything>,
+            AllowHrmpNotificationsFromRelayChain,
         ),
+        UniversalLocation,
+        ConstU32<8>,
     >,
->;
+)>;
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
@@ -142,8 +141,7 @@ impl xcm_executor::Config for XcmConfig {
     type UniversalLocation = UniversalLocation;
     type Barrier = Barrier;
     type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
-    type Trader =
-        UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, ToAuthor<Runtime>>;
+    type Trader = ();//UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, ToAuthor<Runtime>>;
     type ResponseHandler = PolkadotXcm;
     type AssetTrap = PolkadotXcm;
     type AssetClaims = PolkadotXcm;

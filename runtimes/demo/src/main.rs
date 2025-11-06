@@ -213,8 +213,8 @@ fn main() {
     let fee = 10_000_000; // enough to cover BuyExecution on B
 
     let assets: Assets = vec![
-        (dest.clone(), fee).into(), // index 0 — fee asset (relay), recognized on B
-        (Here, amount).into(),      // index 1 — the reserved asset (Para A native)
+        (dest.clone(), 1).into(), // index 0 — fee asset recognized on B
+        (Here, amount).into(),    // index 1 — the reserved asset (Para A native)
     ]
     .into();
 
