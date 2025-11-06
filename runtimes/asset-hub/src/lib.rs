@@ -289,6 +289,8 @@ mod runtime {
     pub type TransactionPayment = pallet_transaction_payment;
     #[runtime::pallet_index(12)]
     pub type AssetTxPayment = pallet_asset_tx_payment;
+    #[runtime::pallet_index(13)]
+    pub type Treasury = pallet_treasury;
 
     // WARNING: Centralized Governance Configured for Demo and Testing
     #[runtime::pallet_index(15)]
@@ -321,10 +323,10 @@ mod runtime {
     pub type Assets = pallet_assets::Pallet<Runtime, Instance1>;
     #[runtime::pallet_index(41)]
     pub type ForeignAssets = pallet_assets::Pallet<Runtime, Instance2>;
-    #[runtime::pallet_index(42)]
-    pub type PoolAssets = pallet_assets::Pallet<Runtime, Instance3>;
-    #[runtime::pallet_index(43)]
-    pub type AssetConversion = pallet_asset_conversion;
+    // #[runtime::pallet_index(42)]
+    // pub type PoolAssets = pallet_assets::Pallet<Runtime, Instance3>;
+    // #[runtime::pallet_index(43)]
+    // pub type AssetConversion = pallet_asset_conversion;
 
     // Revive (PolkaVM) is intentionally NOT configured in this runtime
 }

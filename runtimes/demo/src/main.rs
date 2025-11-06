@@ -4,24 +4,20 @@
 //! - XCM reserve transfer of plaintext asset from AssetHub (Asset Hub) -> ConfidentialHub (Confidential Hub)
 
 use log::info;
-use polkadot_sdk::{staging_parachain_info as parachain_info, staging_xcm as xcm, *};
+use polkadot_sdk::{staging_xcm as xcm, *};
 use xcm_emulator::*;
 
 use asset_hub_runtime as para_a;
 use confidential_runtime as para_b;
 use emulated_integration_tests_common::{
-    impl_accounts_helpers_for_parachain, impl_assert_events_helpers_for_parachain,
+    impl_accounts_helpers_for_parachain, impl_accounts_helpers_for_relay_chain,
+    impl_assert_events_helpers_for_parachain, impl_assert_events_helpers_for_relay_chain,
+    impl_hrmp_channels_helpers_for_relay_chain, impl_send_transact_helpers_for_relay_chain,
     impl_xcm_helpers_for_parachain, impls::Parachain,
 };
 use frame_support::assert_ok;
 use relay_runtime as relay;
 use relay_runtime::BuildStorage;
-
-macro_rules! bx {
-    ($x:expr) => {
-        Box::new($x)
-    };
-}
 
 // Handy aliases for clarity
 type Balance = parachains_common::Balance;
@@ -62,57 +58,70 @@ decl_test_relay_chains! {
         pallets = {
             Sudo: relay::Sudo,
             Balances: relay::Balances,
-            XcmPallet: relay::Xcm,
+            XcmPallet: relay::XcmPallet,
             MessageQueue: relay::MessageQueue,
             Hrmp: relay::Hrmp,
         }
     }
 }
 
+impl_accounts_helpers_for_relay_chain!(LocalRelay);
+impl_assert_events_helpers_for_relay_chain!(LocalRelay);
+impl_hrmp_channels_helpers_for_relay_chain!(LocalRelay);
+impl_send_transact_helpers_for_relay_chain!(LocalRelay);
+
 // ---------------------- Parachain definitions ----------------------
 
 decl_test_parachains! {
     pub struct AssetHub {
         genesis = para_a_genesis(),
-        on_init = {},
+        on_init = {
+            <para_a::AuraExt as frame_support::traits::OnInitialize<u32>>::on_initialize(1);
+        },
         runtime = para_a,
         core = {
             // Accept and route XCMP/HrMP on the parachain:
-            XcmpMessageHandler: cumulus_pallet_xcmp_queue::Pallet<para_a::Runtime>,
+            XcmpMessageHandler: para_a::XcmpQueue,
             // Convert MultiLocation -> AccountId
             LocationToAccountId: para_a::configs::LocationToAccountId,
             // Must return this para's id
-            ParachainInfo: parachain_info::Pallet<para_a::Runtime>,
+            ParachainInfo: para_a::ParachainInfo,
             // Message origin type for MQ on parachain side
             MessageOrigin: cumulus_primitives_core::AggregateMessageOrigin,
-            // Optional digest provider; omit to use default `()`
+            // Optional digest provider
+            DigestProvider: (),
         },
         pallets = {
-            System: frame_system::Pallet<para_a::Runtime>,
-            Balances: pallet_balances::Pallet<para_a::Runtime>,
-            Assets: pallet_assets::Pallet<para_a::Runtime>,           // Asset Hub usually includes this
-            MessageQueue: pallet_message_queue::Pallet<para_a::Runtime>,
-            XcmpQueue: cumulus_pallet_xcmp_queue::Pallet<para_a::Runtime>,
-            PolkadotXcm: pallet_xcm::Pallet<para_a::Runtime>,
+            PolkadotXcm: para_a::PolkadotXcm,
+            System: para_a::System,
+            Balances: para_a::Balances,
+            Assets: para_a::Assets,
+            ForeignAssets: para_a::ForeignAssets,
         }
     },
     pub struct ConfidentialHub {
         genesis = para_b_genesis(),
-        on_init = {},
+        on_init = {
+            <para_a::AuraExt as frame_support::traits::OnInitialize<u32>>::on_initialize(1);
+        },
         runtime = para_b,
         core = {
-            XcmpMessageHandler: cumulus_pallet_xcmp_queue::Pallet<para_b::Runtime>,
+            // Accept and route XCMP/HrMP on the parachain:
+            XcmpMessageHandler: para_b::XcmpQueue,
+            // Convert MultiLocation -> AccountId
             LocationToAccountId: para_b::configs::LocationToAccountId,
-            ParachainInfo: parachain_info::Pallet<para_b::Runtime>,
+            // Must return this para's id
+            ParachainInfo: para_b::ParachainInfo,
+            // Message origin type for MQ on parachain side
             MessageOrigin: cumulus_primitives_core::AggregateMessageOrigin,
+            // Optional digest provider
+            DigestProvider: (),
         },
         pallets = {
-            System: frame_system::Pallet<para_b::Runtime>,
-            Balances: pallet_balances::Pallet<para_b::Runtime>,
-            Assets: pallet_assets::Pallet<para_b::Runtime>,
-            MessageQueue: pallet_message_queue::Pallet<para_b::Runtime>,
-            XcmpQueue: cumulus_pallet_xcmp_queue::Pallet<para_b::Runtime>,
-            PolkadotXcm: pallet_xcm::Pallet<para_b::Runtime>,
+            PolkadotXcm: para_b::PolkadotXcm,
+            System: para_b::System,
+            Balances: para_b::Balances,
+            Assets: para_b::Assets,
         }
     }
 }
@@ -179,6 +188,7 @@ fn main() {
             amount * 10, // give her more than she'll send
         )
         .expect("force_set_balance ok");
+        // TODO: Force set Alice's free balance on Para A for Reserve Asset of Para B
     });
 
     // Show initial balances
@@ -203,8 +213,8 @@ fn main() {
     let fee = 10_000_000; // enough to cover BuyExecution on B
 
     let assets: Assets = vec![
-        (Parent, fee).into(),  // index 0 — fee asset (relay), recognized on B
-        (Here, amount).into(), // index 1 — the reserved asset (Para A native)
+        (dest.clone(), fee).into(), // index 0 — fee asset (relay), recognized on B
+        (Here, amount).into(),      // index 1 — the reserved asset (Para A native)
     ]
     .into();
 
@@ -214,12 +224,13 @@ fn main() {
         let v_beneficiary = xcm::VersionedLocation::from(beneficiary.clone());
         let v_assets = xcm::VersionedAssets::from(assets.clone());
         let origin = para_a::RuntimeOrigin::signed(alice.clone());
-        assert_ok!(para_a::PolkadotXcm::reserve_transfer_assets(
+        assert_ok!(para_a::PolkadotXcm::transfer_assets(
             origin,
             bx!(v_dest),
             bx!(v_beneficiary),
             bx!(v_assets),
             0, // pay fees with assets[0] (relay)
+            None.into(),
         ));
     });
 

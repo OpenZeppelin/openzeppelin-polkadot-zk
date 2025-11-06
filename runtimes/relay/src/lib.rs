@@ -669,7 +669,7 @@ impl parachains_hrmp::Config for Runtime {
         Runtime,
         HrmpChannelSizeAndCapacityWithSystemRatio,
     >;
-    type VersionWrapper = crate::Xcm;
+    type VersionWrapper = XcmPallet;
     type WeightInfo = parachains_hrmp::TestWeightInfo;
 }
 
@@ -762,7 +762,7 @@ construct_runtime! {
         ParaSessionInfo: parachains_session_info,
         Hrmp: parachains_hrmp,
         Dmp: parachains_dmp,
-        Xcm: pallet_xcm,
+        XcmPallet: pallet_xcm,
         ParasDisputes: parachains_disputes,
         ParasSlashing: parachains_slashing,
         MessageQueue: pallet_message_queue,

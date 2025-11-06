@@ -71,7 +71,7 @@ pub type PriceForChildParachainDelivery = TestDeliveryPrice<FeeAssetId, super::D
 /// individual routers.
 pub type XcmRouter = WithUniqueTopic<
     // Only one router so far - use DMP to communicate with child parachains.
-    ChildParachainRouter<super::Runtime, super::Xcm, PriceForChildParachainDelivery>,
+    ChildParachainRouter<super::Runtime, super::XcmPallet, PriceForChildParachainDelivery>,
 >;
 
 pub type Barrier = AllowUnpaidExecutionFrom<Everything>;
@@ -123,7 +123,7 @@ pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
     type RuntimeCall = super::RuntimeCall;
     type XcmSender = XcmRouter;
-    type XcmEventEmitter = super::Xcm;
+    type XcmEventEmitter = super::XcmPallet;
     type AssetTransactor = DummyAssetTransactor;
     type OriginConverter = OriginConverter;
     type IsReserve = ();
@@ -132,12 +132,12 @@ impl xcm_executor::Config for XcmConfig {
     type Barrier = Barrier;
     type Weigher = FixedWeightBounds<BaseXcmWeight, super::RuntimeCall, MaxInstructions>;
     type Trader = DummyWeightTrader;
-    type ResponseHandler = super::Xcm;
-    type AssetTrap = super::Xcm;
+    type ResponseHandler = super::XcmPallet;
+    type AssetTrap = super::XcmPallet;
     type AssetLocker = ();
     type AssetExchanger = ();
-    type AssetClaims = super::Xcm;
-    type SubscriptionService = super::Xcm;
+    type AssetClaims = super::XcmPallet;
+    type SubscriptionService = super::XcmPallet;
     type PalletInstancesInfo = ();
     type MaxAssetsIntoHolding = MaxAssetsIntoHolding;
     type FeeManager = ();
