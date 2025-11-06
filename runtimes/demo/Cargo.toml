@@ -12,6 +12,7 @@ asset-hub-runtime = { path = "../asset-hub", default-features = false }
 confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
 confidential-runtime = { path = "../confidential", default-features = false }
 docify = { workspace = true }
+futures.workspace = true
 hex-literal = { workspace = true, default-features = true, optional = true }
 log = { workspace = true }
 pallet-confidential-assets = { path = "../../pallets/confidential-assets", default-features = false }
@@ -19,7 +20,7 @@ pallet-confidential-bridge = { path = "../../pallets/confidential-bridge", defau
 pallet-confidential-escrow = { path = "../../pallets/confidential-escrow", default-features = false }
 pallet-zkhe = { path = "../../pallets/zkhe", default-features = false }
 parity-scale-codec = { workspace = true, features = [ "derive" ] }
-polkadot-sdk = { workspace = true, default-features = false, features = [ "cumulus-pallet-aura-ext", "cumulus-pallet-session-benchmarking", "cumulus-pallet-weight-reclaim", "cumulus-pallet-xcm", "cumulus-pallet-xcmp-queue", "cumulus-primitives-aura", "cumulus-primitives-core", "cumulus-primitives-utility", "emulated-integration-tests-common", "pallet-assets", "pallet-aura", "pallet-authorship", "pallet-balances", "pallet-collator-selection", "pallet-message-queue", "pallet-session", "pallet-sudo", "pallet-timestamp", "pallet-transaction-payment", "pallet-transaction-payment-rpc-runtime-api", "pallet-xcm", "parachains-common", "polkadot-parachain-primitives", "polkadot-runtime-common", "runtime", "sp-core", "staging-parachain-info", "staging-xcm", "staging-xcm-builder", "staging-xcm-executor", "xcm-emulator", "emulated-integration-tests-common" ] }
+polkadot-sdk = { workspace = true, default-features = false, features = [ "cumulus-pallet-aura-ext", "cumulus-client-parachain-inherent", "cumulus-primitives-parachain-inherent", "cumulus-pallet-session-benchmarking", "cumulus-pallet-weight-reclaim", "cumulus-pallet-xcm", "cumulus-pallet-xcmp-queue", "cumulus-primitives-aura", "cumulus-primitives-core", "cumulus-primitives-utility", "emulated-integration-tests-common", "pallet-assets", "pallet-aura", "pallet-authorship", "pallet-balances", "pallet-collator-selection", "pallet-message-queue", "pallet-session", "pallet-sudo", "pallet-timestamp", "pallet-transaction-payment", "pallet-transaction-payment-rpc-runtime-api", "pallet-xcm", "parachains-common", "polkadot-parachain-primitives", "polkadot-runtime-common", "runtime", "sp-core", "staging-parachain-info", "staging-xcm", "staging-xcm-builder", "staging-xcm-executor", "xcm-emulator", "emulated-integration-tests-common", "bridge-hub-test-utils" ] }
 relay-runtime = { path = "../relay", default-features = false }
 scale-info = { workspace = true, features = [ "derive" ] }
 serde_json = { workspace = true, default-features = false, features = [ "alloc" ] }

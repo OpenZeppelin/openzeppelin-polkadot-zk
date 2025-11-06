@@ -3,6 +3,9 @@
 //! Tests include:
 //! - XCM reserve transfer of plaintext asset from AssetHub (Asset Hub) -> ConfidentialHub (Confidential Hub)
 
+// stuff that should be usable from substrate but are NOT due to poor design wrt extensibility and usability
+pub mod substrate;
+
 use asset_hub_runtime as para_a;
 use confidential_runtime as para_b;
 use emulated_integration_tests_common::{
@@ -71,6 +74,7 @@ decl_test_relay_chains! {
         },
         pallets = {
             Sudo: relay::Sudo,
+            SystemConfig: relay::System,
             Balances: relay::Balances,
             XcmPallet: relay::XcmPallet,
             MessageQueue: relay::MessageQueue,
@@ -221,8 +225,21 @@ fn register_paras_then_open_hrmp() {
             ValidationCode(vec![0u8; MIN_CODE_SIZE.try_into().unwrap()]),
         ));
         println!("-- parachains successfully force registered");
-
-        println!("-- 2. Onboard Parachains");
+        let e_state = relay::Paras::lifecycle(EncryptedP::para_id())
+            .expect("no parachain state for ConfidentialHub");
+        let t_state = relay::Paras::lifecycle(TransparentP::para_id())
+            .expect("no parachain state for AssetHub");
+        assert!(
+            e_state.is_onboarding() && t_state.is_onboarding(),
+            "Both parachains are onboarding"
+        );
+        let blocks_to_run = 6;
+        println!("-- 2. Onboard Parachains --- run {blocks_to_run} blocks");
+        let included_head = substrate::RuntimeHelper::<
+            relay::Runtime,
+            relay::AllPalletsWithoutSystem,
+        >::run_to_block(blocks_to_run);
+        println!("-- ran {blocks_to_run} blocks now lets check if onboarding has happened yet");
         // TODO: everything needed for onboarding holy actual fuck
         let e_state = relay::Paras::lifecycle(EncryptedP::para_id())
             .expect("no parachain state for ConfidentialHub");
