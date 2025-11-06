@@ -44,7 +44,7 @@ use polkadot_primitives::{
     ValidatorIndex, PARACHAIN_KEY_TYPE_ID,
 };
 use polkadot_runtime_common::{
-    claims, impl_runtime_weights, paras_sudo_wrapper, BlockHashCount, BlockLength,
+    claims, impl_runtime_weights, paras_registrar, paras_sudo_wrapper, BlockHashCount, BlockLength,
     SlowAdjustingFeeUpdate,
 };
 use polkadot_runtime_parachains::reward_points::RewardValidatorsWithEraPoints;
@@ -581,8 +581,22 @@ impl parachains_paras::Config for Runtime {
     type UnsignedPriority = ParasUnsignedPriority;
     type QueueFootprinter = ParaInclusion;
     type NextSessionRotation = Babe;
-    type OnNewHead = ();
+    type OnNewHead = Registrar;
     type AssignCoretime = CoretimeAssignmentProvider;
+}
+
+parameter_types! {
+    pub const ZeroDeposit: Balance = 0;
+}
+
+impl paras_registrar::Config for Runtime {
+    type RuntimeOrigin = RuntimeOrigin;
+    type RuntimeEvent = RuntimeEvent;
+    type Currency = Balances;
+    type OnSwap = ();
+    type ParaDeposit = ZeroDeposit;
+    type DataDepositPerByte = ZeroDeposit;
+    type WeightInfo = paras_registrar::TestWeightInfo;
 }
 
 parameter_types! {
@@ -755,6 +769,7 @@ construct_runtime! {
         ParaInherent: parachains_paras_inherent,
         Initializer: parachains_initializer,
         Paras: parachains_paras,
+        Registrar: paras_registrar,
         ParasShared: parachains_shared,
         Scheduler: parachains_scheduler,
         ParasSudoWrapper: paras_sudo_wrapper,

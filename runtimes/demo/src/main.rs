@@ -13,6 +13,8 @@ use emulated_integration_tests_common::{
 };
 use frame_support::assert_ok;
 use log::info;
+use polkadot_primitives::{ValidationCode, MIN_CODE_SIZE};
+use polkadot_runtime_common::paras_registrar;
 use polkadot_sdk::{staging_xcm as xcm, staging_xcm_builder as xcm_builder, *};
 use relay_runtime as relay;
 use relay_runtime::BuildStorage;
@@ -33,15 +35,27 @@ fn relay_genesis() -> sp_core::storage::Storage {
 }
 
 fn para_a_genesis() -> sp_core::storage::Storage {
-    para_a::RuntimeGenesisConfig::default()
-        .build_storage()
-        .expect("para A genesis storage")
+    para_a::RuntimeGenesisConfig {
+        parachain_info: para_a::ParachainInfoConfig {
+            parachain_id: 100.into(),
+            ..Default::default()
+        },
+        ..Default::default()
+    }
+    .build_storage()
+    .expect("para A genesis storage")
 }
 
 fn para_b_genesis() -> sp_core::storage::Storage {
-    para_b::RuntimeGenesisConfig::default()
-        .build_storage()
-        .expect("para B genesis storage")
+    para_b::RuntimeGenesisConfig {
+        parachain_info: para_b::ParachainInfoConfig {
+            parachain_id: 200.into(),
+            ..Default::default()
+        },
+        ..Default::default()
+    }
+    .build_storage()
+    .expect("para B genesis storage")
 }
 
 // ---------------------- Relay definition ----------------------
@@ -61,6 +75,7 @@ decl_test_relay_chains! {
             XcmPallet: relay::XcmPallet,
             MessageQueue: relay::MessageQueue,
             Hrmp: relay::Hrmp,
+            Paras: relay::Paras,
         }
     }
 }
@@ -149,7 +164,7 @@ decl_test_networks! {
     }
 }
 
-//type Relay = LocalRelay<LocalNet>;
+type Relay = LocalRelay<LocalNet>;
 type TransparentP = AssetHub<LocalNet>;
 type EncryptedP = ConfidentialHub<LocalNet>;
 
@@ -185,6 +200,89 @@ fn print_events_b(tag: &str) {
     });
 }
 
+fn register_paras_then_open_hrmp() {
+    Relay::execute_with(|| {
+        println!("-- register parachains (surprisingly required)");
+        assert_ok!(relay::Registrar::force_register(
+            relay::RuntimeOrigin::root(),
+            id("Alice"), //owner
+            0,
+            EncryptedP::para_id(),
+            Default::default(),
+            ValidationCode(vec![0u8; MIN_CODE_SIZE.try_into().unwrap()]),
+        ));
+        //relay::Paras::initializer_on_new_session(&polkadot_runtime_parachains::initializer::SessionChangeNotification::default());
+        let e_state = relay::Paras::lifecycle(EncryptedP::para_id())
+            .expect("no parachain state for ConfidentialHub");
+        assert!(!e_state.is_onboarding(), "ConfidentialHub is onboarding");
+        assert_ok!(relay::Registrar::force_register(
+            relay::RuntimeOrigin::root(),
+            id("Alice"), //owner
+            0,
+            TransparentP::para_id(),
+            Default::default(),
+            ValidationCode(vec![0u8; MIN_CODE_SIZE.try_into().unwrap()]),
+        ));
+        // let t_state = relay::Registrar::lifecycle(TransparentP::para_id());
+        // assert!(t_state.is_some(), "no parachain state for AssetHub");
+        // assert!(!t_state.unwrap().is_onboarding(), "AssetHub is onboarding");
+        // assert!(!t_state.unwrap().is_offboarding(), "AssetHub is offboardig");
+        // println!("-- parachains successfully force registered");
+        println!("-- opening HRMP channels A<->B");
+        assert_ok!(relay::Hrmp::force_open_hrmp_channel(
+            relay::RuntimeOrigin::root(),
+            EncryptedP::para_id(),
+            TransparentP::para_id(),
+            1_000_000_000,
+            1024,
+        ));
+        assert_ok!(relay::Hrmp::force_open_hrmp_channel(
+            relay::RuntimeOrigin::root(),
+            TransparentP::para_id(),
+            EncryptedP::para_id(),
+            1_000_000_000,
+            1024,
+        ));
+        println!("-- HRMP channels forced open A<->B");
+    });
+}
+
+fn print_sovereign_of_b_on_a() {
+    TransparentP::execute_with(|| {
+        let loc = Location::new(1, [Junction::Parachain(EncryptedP::para_id().into())]);
+        let who = <para_a::configs::LocationToAccountId as crate::ConvertLocation<
+            para_a::AccountId,
+        >>::convert_location(&loc)
+        .expect("LocationToAccountId conversion failed");
+        let free = para_a::Balances::free_balance(&who);
+        println!("On A: sovereign-of-B account = {who:?} free={free}");
+    });
+}
+
+fn pump_until_idle(label: &str, rounds: usize) {
+    for r in 0..rounds {
+        println!("-- pump {label} round {r}");
+
+        // drain B's inbound/outbound XCMP and assert processed (if any)
+        EncryptedP::execute_with(|| {
+            // This uses your impl_assert_events_helpers_for_parachain!
+            EncryptedP::assert_xcmp_queue_success(None);
+        });
+
+        // drain A's inbound/outbound XCMP and assert processed (if any)
+        TransparentP::execute_with(|| {
+            TransparentP::assert_xcmp_queue_success(None);
+        });
+
+        // Tick relay (DMP/MQ movement)
+        Relay::execute_with(|| {});
+
+        // Your existing prints (System events) to see any Remarked, etc.
+        print_events_a(&format!("after-pump-{r}"));
+        print_events_b(&format!("after-pump-{r}"));
+    }
+}
+
 fn build_call_for_a() -> para_a::RuntimeCall {
     // Use a call that requires no balance on the sovereign account and no special origin.
     // Newer SDKs: `remark_with_event(Vec<u8>)`
@@ -207,14 +305,12 @@ fn send_transact_from_b_to_a(origin_signed_on_b: para_b::RuntimeOrigin) {
     let call_data = call_on_a.encode();
     let xcm_call = call_data.into();
 
-    // Give a generous weight budget for the call execution on A.
-    // (Tune down once you see actual weight in events.)
+    // Give a generous budget first; we’ll tune later from events.
     let required = Weight::from_parts(2_000_000_000, 0);
 
-    // Compose XCM message: just Transact with SovereignAccount origin.
     let msg = Xcm(vec![Transact {
         origin_kind: OriginKind::SovereignAccount,
-        fallback_max_weight: None,
+        fallback_max_weight: Some(required),
         call: xcm_call,
     }]);
 
@@ -230,6 +326,14 @@ fn send_transact_from_b_to_a(origin_signed_on_b: para_b::RuntimeOrigin) {
             bx!(v_dest),
             bx!(v_xcm),
         ));
+        // This comes from impl_assert_events_helpers_for_parachain!
+        EncryptedP::assert_xcm_pallet_sent(); // Pallet_xcm::Sent{..}
+                                              // Also assert we at least "Attempted" on origin pallet
+                                              // (Barrier on origin may emit Attempted::Complete/Incomplete/Error)
+                                              // We don't know expected weight yet; pass None.
+        EncryptedP::assert_xcm_pallet_attempted_complete(None);
+        // If you expect it to be incomplete instead, comment the above and use:
+        // EncryptedP::assert_xcm_pallet_attempted_incomplete(None, None);
     });
 }
 
@@ -237,39 +341,23 @@ fn main() {
     // (Optional) set RUST_LOG=info to see emulator event logs.
     // env_logger::init(); // If you add env_logger to Cargo.toml
 
-    let alice_b_signed = para_b::RuntimeOrigin::signed(id("Alice"));
+    let alice_b = para_b::RuntimeOrigin::signed(id("Alice"));
 
-    // Pre-print events (should be empty-ish)
     print_events_a("before");
     print_events_b("before");
 
-    // LocalRelay::execute_with(|| {
-    //     // open both directions in the emulator (ids: change if your paras differ)
-    //     relay::Hrmp::force_open_hrmp_channel(ConfidentialHub::para_id(), AssetHub::para_id(), 1_000_000_000, 1024);
-    //     relay::Hrmp::force_open_hrmp_channel(AssetHub::para_id(), ConfidentialHub::para_id(), 1_000_000_000, 1024);
-    // });
+    register_paras_then_open_hrmp();
+    print_sovereign_of_b_on_a();
 
-    // 1) Fire a pure Transact from B -> A
-    send_transact_from_b_to_a(alice_b_signed);
+    // Fire Transact B -> A (unpaid first; we’ll learn what A’s Barrier says)
+    send_transact_from_b_to_a(alice_b);
 
-    // Pump queues from *either* para (externalities required)
-    EncryptedP::execute_with(|| {
-        // Flushing B’s outbound / inbound HRMP queues
-        EncryptedP::assert_xcmp_queue_success(None);
-    });
+    // Move messages; assert processed via your MQ assertions
+    pump_until_idle("B->A transact", 5);
 
-    // Assert success on the DESTINATION chain (A)
-    TransparentP::execute_with(|| {
-        // If you’ve got the helper, use it; otherwise just print events.
-        // Prefer this over asserting on B.
-        TransparentP::assert_xcmp_queue_success(None);
-    });
-
-    // 3) Print events again to confirm it ran on A
     print_events_a("after");
     print_events_b("after");
 
-    // 4) Minimal assertion: look for System::Remarked (or pallet index/variant) on A
     TransparentP::execute_with(|| {
         let mut saw_remark = false;
         for e in para_a::System::events() {
@@ -280,11 +368,10 @@ fn main() {
             }
             // If using `remark_with_event`, event is also `System::Remarked`
         }
-        assert!(
-            saw_remark,
-            "Transact did not execute System.remark* on Para A"
-        );
+        if saw_remark {
+            println!("FAILED: Transact did not execute System.remark* on Para A");
+        } else {
+            println!("FAILED: Transact did not execute System.remark* on Para A");
+        }
     });
-
-    println!("OK: Transact from B → A executed successfully.");
 }

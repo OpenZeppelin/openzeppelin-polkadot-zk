@@ -139,7 +139,9 @@ impl xcm_executor::Config for XcmConfig {
     type IsReserve = NativeAsset;
     type IsTeleporter = (); // Teleporting is disabled.
     type UniversalLocation = UniversalLocation;
-    type Barrier = Barrier;
+    // This is not safe, you should use `xcm_builder::AllowTopLevelPaidExecutionFrom<T>` in a
+    // production chain
+    type Barrier = xcm_builder::AllowUnpaidExecutionFrom<Everything>;
     type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
     type Trader = (); //UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, ToAuthor<Runtime>>;
     type ResponseHandler = PolkadotXcm;
