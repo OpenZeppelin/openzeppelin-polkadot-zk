@@ -3,10 +3,6 @@
 //! Tests include:
 //! - XCM reserve transfer of plaintext asset from AssetHub (Asset Hub) -> ConfidentialHub (Confidential Hub)
 
-use log::info;
-use polkadot_sdk::{staging_xcm as xcm, *};
-use xcm_emulator::*;
-
 use asset_hub_runtime as para_a;
 use confidential_runtime as para_b;
 use emulated_integration_tests_common::{
@@ -16,8 +12,12 @@ use emulated_integration_tests_common::{
     impl_xcm_helpers_for_parachain, impls::Parachain,
 };
 use frame_support::assert_ok;
+use log::info;
+use polkadot_sdk::{staging_xcm as xcm, staging_xcm_builder as xcm_builder, *};
 use relay_runtime as relay;
 use relay_runtime::BuildStorage;
+use xcm_builder::test_utils::*;
+use xcm_emulator::*;
 
 // Handy aliases for clarity
 type Balance = parachains_common::Balance;
@@ -168,99 +168,123 @@ fn free_balance_b(who: &AccountId) -> Balance {
     <EncryptedP as Chain>::account_data_of(who.clone()).free
 }
 
-// ---------------------- Demo flow ----------------------
+fn print_events_a(tag: &str) {
+    TransparentP::execute_with(|| {
+        println!("--- events on AssetHub ({tag}) ---");
+        for e in para_a::System::events() {
+            println!("{:?}", e.event);
+        }
+    });
+}
+fn print_events_b(tag: &str) {
+    EncryptedP::execute_with(|| {
+        println!("--- events on ConfidentialHub ({tag}) ---");
+        for e in para_b::System::events() {
+            println!("{:?}", e.event);
+        }
+    });
+}
+
+fn build_call_for_a() -> para_a::RuntimeCall {
+    // Use a call that requires no balance on the sovereign account and no special origin.
+    // Newer SDKs: `remark_with_event(Vec<u8>)`
+    para_a::RuntimeCall::System(frame_system::Call::<para_a::Runtime>::remark_with_event {
+        remark: b"hello-from-B-via-Transact".to_vec(),
+    })
+    // If your System pallet doesn't have `remark_with_event`, use:
+    // para_a::RuntimeCall::System(frame_system::Call::<para_a::Runtime>::remark { remark: b"...".to_vec() })
+}
+
+// ---------- Send Transact from B -> A ----------
+fn send_transact_from_b_to_a(origin_signed_on_b: para_b::RuntimeOrigin) {
+    // Destination: Parent, Parachain(A)
+    let dest_to_a: Location = EncryptedP::sibling_location_of(TransparentP::para_id());
+    println!("dest_to_a = {:?}", dest_to_a);
+
+    // Build the call that will execute on A.
+    let call_on_a: para_a::RuntimeCall = build_call_for_a();
+    // Wrap it for XCM Transact
+    let call_data = call_on_a.encode();
+    let xcm_call = call_data.into();
+
+    // Give a generous weight budget for the call execution on A.
+    // (Tune down once you see actual weight in events.)
+    let required = Weight::from_parts(2_000_000_000, 0);
+
+    // Compose XCM message: just Transact with SovereignAccount origin.
+    let msg = Xcm(vec![Transact {
+        origin_kind: OriginKind::SovereignAccount,
+        fallback_max_weight: None,
+        call: xcm_call,
+    }]);
+
+    // Send from B
+    EncryptedP::execute_with(|| {
+        println!("-- sending XCM Transact from B to A");
+        let v_dest = xcm::VersionedLocation::from(dest_to_a.clone());
+        let v_xcm = xcm::VersionedXcm::from(msg.clone());
+
+        // Most parachains allow Signed to send XCM; if not, switch to Root for this test.
+        assert_ok!(para_b::PolkadotXcm::send(
+            origin_signed_on_b, // e.g., RuntimeOrigin::signed(Alice)
+            bx!(v_dest),
+            bx!(v_xcm),
+        ));
+    });
+}
 
 fn main() {
     // (Optional) set RUST_LOG=info to see emulator event logs.
     // env_logger::init(); // If you add env_logger to Cargo.toml
 
-    // 1) Pick participants & amount
-    let alice = id("Alice");
-    let bob = id("Bob"); // same id on both paras
-    let amount: Balance = 1_000_000_000_000;
+    let alice_b_signed = para_b::RuntimeOrigin::signed(id("Alice"));
 
-    // 2) Fund Alice on Para A (root call so we avoid genesis fuss)
-    TransparentP::execute_with(|| {
-        // Force set Alice's free balance on Para A
-        pallet_balances::Pallet::<para_a::Runtime>::force_set_balance(
-            para_a::RuntimeOrigin::root(),
-            alice.clone().into(),
-            amount * 10, // give her more than she'll send
-        )
-        .expect("force_set_balance ok");
-        // TODO: Force set Alice's free balance on Para A for Reserve Asset of Para B
+    // Pre-print events (should be empty-ish)
+    print_events_a("before");
+    print_events_b("before");
+
+    // LocalRelay::execute_with(|| {
+    //     // open both directions in the emulator (ids: change if your paras differ)
+    //     relay::Hrmp::force_open_hrmp_channel(ConfidentialHub::para_id(), AssetHub::para_id(), 1_000_000_000, 1024);
+    //     relay::Hrmp::force_open_hrmp_channel(AssetHub::para_id(), ConfidentialHub::para_id(), 1_000_000_000, 1024);
+    // });
+
+    // 1) Fire a pure Transact from B -> A
+    send_transact_from_b_to_a(alice_b_signed);
+
+    // Pump queues from *either* para (externalities required)
+    EncryptedP::execute_with(|| {
+        // Flushing B’s outbound / inbound HRMP queues
+        EncryptedP::assert_xcmp_queue_success(None);
     });
 
-    // Show initial balances
-    println!("== Before ==");
-    let before_alice_balance = free_balance_a(&alice);
-    println!("AssetHub - Alice: {}", before_alice_balance);
-    let before_bob_balance = free_balance_b(&bob);
-    println!("ConfidentialHub - Bob  : {}", before_bob_balance);
-
-    // 3) Build a reserve transfer from Para A -> Para B of the native asset from A
-    //    (Asset Hub runtimes accept reserve transfer; fee asset item = 0; unlimited weight)
-    use xcm::latest::prelude::*;
-
-    let dest = EncryptedP::sibling_location_of(EncryptedP::para_id()); // Parent, Parachain(B)
-    let beneficiary: Location = Location::new(
-        0, // parents
-        [Junction::AccountId32 {
-            network: None,
-            id: sp_core::crypto::AccountId32::from(bob.clone()).into(),
-        }],
-    );
-    let fee = 10_000_000; // enough to cover BuyExecution on B
-
-    let assets: Assets = vec![
-        (dest.clone(), 1).into(), // index 0 — fee asset recognized on B
-        (Here, amount).into(),    // index 1 — the reserved asset (Para A native)
-    ]
-    .into();
-
-    // 4) Dispatch the XCM from Para A (signed by Alice)
+    // Assert success on the DESTINATION chain (A)
     TransparentP::execute_with(|| {
-        let v_dest = xcm::VersionedLocation::from(dest.clone());
-        let v_beneficiary = xcm::VersionedLocation::from(beneficiary.clone());
-        let v_assets = xcm::VersionedAssets::from(assets.clone());
-        let origin = para_a::RuntimeOrigin::signed(alice.clone());
-        assert_ok!(para_a::PolkadotXcm::transfer_assets(
-            origin,
-            bx!(v_dest),
-            bx!(v_beneficiary),
-            bx!(v_assets),
-            0, // pay fees with assets[0] (relay)
-            None.into(),
-        ));
+        // If you’ve got the helper, use it; otherwise just print events.
+        // Prefer this over asserting on B.
+        TransparentP::assert_xcmp_queue_success(None);
     });
 
-    // Process HRMP/UMP/XCMP once we're OUT of the AssetHub externalities.
-    // Any chain's `execute_with` will pump the queues; the relay is standard.
-    EncryptedP::assert_xcmp_queue_success(None);
+    // 3) Print events again to confirm it ran on A
+    print_events_a("after");
+    print_events_b("after");
 
-    // 5) One `execute_with` on a parachain triggers HRMP/UMP routing in the emulator.
-    //    By here, messages are processed; assert/print final balances.
-    //
-    // // Show initial balances
-    println!("\n== After ==");
-    let after_alice_balance = free_balance_a(&alice);
-    println!("AssetHub - Alice: {}", before_alice_balance);
-    let after_bob_balance = free_balance_b(&bob);
-    println!("ConfidentialHub - Bob  : {}", before_bob_balance);
+    // 4) Minimal assertion: look for System::Remarked (or pallet index/variant) on A
+    TransparentP::execute_with(|| {
+        let mut saw_remark = false;
+        for e in para_a::System::events() {
+            // Match on your SDK's event enum
+            if let para_a::RuntimeEvent::System(frame_system::Event::Remarked { .. }) = e.event {
+                saw_remark = true;
+                break;
+            }
+            // If using `remark_with_event`, event is also `System::Remarked`
+        }
+        assert!(
+            saw_remark,
+            "Transact did not execute System.remark* on Para A"
+        );
+    });
 
-    // After (emulator processed message queues already)
-    println!(
-        "\n== AFTER ==\nParaA::Alice={}\nParaB::Bob  ={}",
-        before_alice_balance, before_bob_balance
-    );
-    println!(
-        "\n== DELTA ==\nA sent: {}\nB recv: {}",
-        before_alice_balance.saturating_sub(after_alice_balance),
-        after_bob_balance.saturating_sub(before_bob_balance)
-    );
-
-    if after_bob_balance <= before_bob_balance {
-        panic!("Bob did not receive funds");
-    }
-    info!("Reserve transfer complete.");
+    println!("OK: Transact from B → A executed successfully.");
 }
