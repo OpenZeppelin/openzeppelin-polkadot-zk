@@ -200,9 +200,10 @@ fn print_events_b(tag: &str) {
     });
 }
 
+// No wonder nobody uses Polkadot its an absolute PoS framework drowning in complexity
 fn register_paras_then_open_hrmp() {
     Relay::execute_with(|| {
-        println!("-- register parachains (surprisingly required)");
+        println!("-- 1. Register Parachains");
         assert_ok!(relay::Registrar::force_register(
             relay::RuntimeOrigin::root(),
             id("Alice"), //owner
@@ -211,10 +212,6 @@ fn register_paras_then_open_hrmp() {
             Default::default(),
             ValidationCode(vec![0u8; MIN_CODE_SIZE.try_into().unwrap()]),
         ));
-        //relay::Paras::initializer_on_new_session(&polkadot_runtime_parachains::initializer::SessionChangeNotification::default());
-        let e_state = relay::Paras::lifecycle(EncryptedP::para_id())
-            .expect("no parachain state for ConfidentialHub");
-        assert!(!e_state.is_onboarding(), "ConfidentialHub is onboarding");
         assert_ok!(relay::Registrar::force_register(
             relay::RuntimeOrigin::root(),
             id("Alice"), //owner
@@ -223,12 +220,16 @@ fn register_paras_then_open_hrmp() {
             Default::default(),
             ValidationCode(vec![0u8; MIN_CODE_SIZE.try_into().unwrap()]),
         ));
-        // let t_state = relay::Registrar::lifecycle(TransparentP::para_id());
-        // assert!(t_state.is_some(), "no parachain state for AssetHub");
-        // assert!(!t_state.unwrap().is_onboarding(), "AssetHub is onboarding");
-        // assert!(!t_state.unwrap().is_offboarding(), "AssetHub is offboardig");
-        // println!("-- parachains successfully force registered");
-        println!("-- opening HRMP channels A<->B");
+        println!("-- parachains successfully force registered");
+
+        println!("-- 2. Onboard Parachains");
+        // TODO: everything needed for onboarding holy actual fuck
+        let e_state = relay::Paras::lifecycle(EncryptedP::para_id())
+            .expect("no parachain state for ConfidentialHub");
+        assert!(!e_state.is_onboarding(), "ConfidentialHub is onboarding");
+        println!("-- parachains successfully onboarded");
+
+        println!("-- 3. Open HRMP channels A<->B");
         assert_ok!(relay::Hrmp::force_open_hrmp_channel(
             relay::RuntimeOrigin::root(),
             EncryptedP::para_id(),
