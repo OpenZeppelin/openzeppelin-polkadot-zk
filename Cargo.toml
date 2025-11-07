@@ -18,11 +18,13 @@ members = [
 	# Primitives
 	"primitives/confidential-assets",
 	"primitives/zkhe",
-	# Demo + Runtimes
+	# Runtimes
 	"runtimes/asset-hub",
 	"runtimes/confidential",
-	"runtimes/demo",
 	"runtimes/relay",
+	# Integration Tests
+	"tests/xcm-emulator",
+	"tests/zombienet",
 	# client
 	"zkhe-prover",
 	# no_std on-chain verifier

@@ -19409,6 +19409,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "zombienet-sdk-tests"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "polkadot-primitives",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "zstd"
 version = "0.11.2+zstd.1.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

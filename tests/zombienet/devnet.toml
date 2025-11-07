@@ -1,0 +1,35 @@
+[relaychain]
+chain = "rococo-local"
+# TODO: compile binary for polkadot node at commit used in workspace
+default_command = "./bin/polkadot"
+
+[[relaychain.nodes]]
+name = "alice"
+validator = true
+
+[[relaychain.nodes]]
+name = "bob"
+validator = true
+
+[[parachains]]
+id = 1000
+addToGenesis = true
+cumulus_based = true
+chain = "dev"
+force_decorator = "generic-evm"
+
+[[parachains.collators]]
+name = "collator01"
+# TODO use Omni Node
+command = "./bin-stable2503-2/evm-template-node"
+ws_port = 9933
+rpc_port = 8833
+args = ["--rpc-max-connections 10000"]
+
+[[parachains.collators]]
+name = "collator02"
+ws_port = 9822
+rpc_port = 8822
+# TODO use Omni Node
+command = "./target/release/evm-template-node"
+args = ["--rpc-max-connections 10000"]
