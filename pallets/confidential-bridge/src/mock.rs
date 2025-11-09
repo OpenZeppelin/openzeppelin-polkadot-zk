@@ -1,8 +1,12 @@
 use crate::pallet as pallet_confidential_bridge;
 use confidential_assets_primitives::{
-    ConfidentialBackend, EncryptedAmount, InputProof, PublicKeyBytes, ZkVerifier,
+    ConfidentialBackend, EncryptedAmount, HrmpMessenger, InputProof, PublicKeyBytes, ZkVerifier,
 };
-use frame_support::{construct_runtime, derive_impl, parameter_types, PalletId};
+use frame_support::{
+    construct_runtime, derive_impl, parameter_types,
+    traits::{ConstU32, ConstU64},
+    PalletId,
+};
 use sp_runtime::BuildStorage;
 
 pub type AccountId = u64;
@@ -10,7 +14,6 @@ pub type AssetId = u32;
 pub type Balance = u64;
 pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
-pub const CHARLIE: AccountId = 3;
 pub const ASSET: AssetId = 7;
 
 // --- A very simple, always-OK mock verifier ---------------------------------
@@ -77,6 +80,14 @@ impl ZkVerifier for AlwaysOkVerifier {
     }
 }
 
+pub struct MockMessenger;
+impl HrmpMessenger for MockMessenger {
+    /// Send an opaque SCALE-encoded payload to `dest_para`.
+    fn send(_dest_para: u32, _payload: Vec<u8>) -> Result<(), ()> {
+        Ok(())
+    }
+}
+
 #[derive_impl(frame_system::config_preludes::TestDefaultConfig)]
 impl frame_system::Config for Runtime {
     type Block = frame_system::mocking::MockBlock<Runtime>;
@@ -91,6 +102,7 @@ impl pallet_zkhe::Config for Runtime {
 }
 parameter_types! {
     pub const EscrowPalletId: PalletId = PalletId(*b"CaEscrow");
+    pub const BridgePalletId: PalletId = PalletId(*b"CaBridge");
 }
 impl pallet_confidential_escrow::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
@@ -99,13 +111,26 @@ impl pallet_confidential_escrow::Config for Runtime {
     type Backend = Zkhe;
     type PalletId = EscrowPalletId;
 }
+impl pallet_confidential_bridge::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type AssetId = AssetId;
+    type Balance = Balance;
+    type Backend = Zkhe;
+    type Escrow = ConfidentialEscrow;
+    type Messenger = MockMessenger;
+    type BurnPalletId = BridgePalletId;
+    type DefaultTimeout = ConstU64<10>;
+    type SelfParaId = ConstU32<1>;
+    type XcmOrigin = frame_system::EnsureRoot<AccountId>;
+    type WeightInfo = ();
+}
 
 construct_runtime!(
     pub enum Runtime {
         System: frame_system,
         Zkhe: pallet_zkhe,
         ConfidentialEscrow: pallet_confidential_escrow,
-        //ConfidentialBridge: pallet_confidential_bridge,
+        ConfidentialBridge: pallet_confidential_bridge,
     }
 );
 
@@ -129,16 +154,4 @@ pub fn set_pk(who: AccountId) {
 // Construct InputProof from raw bytes using TryFrom<Vec<u8>>
 pub fn proof(bytes: &[u8]) -> InputProof {
     bytes.to_vec().try_into().expect("bounded vec")
-}
-
-// Accept envelope encoding: u16 count || ids (u64 LE) * count || rest (opaque)
-pub fn accept_input(ids: &[u64], rest: &[u8]) -> InputProof {
-    let mut v = Vec::with_capacity(2 + ids.len() * 8 + rest.len());
-    let count = ids.len() as u16;
-    v.extend_from_slice(&count.to_le_bytes());
-    for id in ids {
-        v.extend_from_slice(&id.to_le_bytes());
-    }
-    v.extend_from_slice(rest);
-    proof(&v)
 }

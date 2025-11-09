@@ -29,6 +29,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 use frame_support::{pallet_prelude::*, traits::Get, transactional, PalletId};
 use frame_system::pallet_prelude::*;
 use parity_scale_codec::{Encode, MaxEncodedLen};

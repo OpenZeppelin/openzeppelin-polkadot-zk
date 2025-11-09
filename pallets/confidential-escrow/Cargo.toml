@@ -19,8 +19,8 @@ sp-std = { workspace = true }
 confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
 
 [dev-dependencies]
-sp-io = { workspace = true }
 pallet-zkhe = { path = "../zkhe" }
+sp-io = { workspace = true }
 
 [features]
 default = [ "std" ]
