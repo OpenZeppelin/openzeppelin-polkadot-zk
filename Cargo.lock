@@ -8369,8 +8369,10 @@ dependencies = [
  "confidential-assets-primitives",
  "frame-support",
  "frame-system",
+ "pallet-zkhe",
  "parity-scale-codec",
  "scale-info",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
