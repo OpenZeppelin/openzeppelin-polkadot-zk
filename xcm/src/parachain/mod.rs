@@ -16,6 +16,7 @@
 
 //! Parachain runtime mock.
 
+mod confidential;
 mod xcm_config;
 pub use xcm_config::*;
 
@@ -177,8 +178,14 @@ construct_runtime!(
     pub struct Runtime {
         System: frame_system,
         Balances: pallet_balances,
+        Assets: pallet_assets,
         MsgQueue: mock_message_queue,
         PolkadotXcm: pallet_xcm,
         ForeignUniques: pallet_uniques,
+        // Confidential Assets
+        Zkhe: pallet_zkhe,
+        ConfidentialAssets: pallet_confidential_assets,
+        ConfidentialEscrow: pallet_confidential_escrow,
+        ConfidentialBridge: pallet_confidential_bridge,
     }
 );
