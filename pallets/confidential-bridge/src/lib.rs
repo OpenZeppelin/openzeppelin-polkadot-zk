@@ -273,7 +273,7 @@ pub mod pallet {
         ) -> DispatchResult {
             T::XcmOrigin::ensure_origin(origin)?;
 
-            let mut rec = Pending::<T>::get(id).ok_or(Error::<T>::NotFound)?;
+            let rec = Pending::<T>::get(id).ok_or(Error::<T>::NotFound)?;
             ensure!(!rec.completed, Error::<T>::AlreadyCompleted);
 
             let burn_acc = <Pallet<T>>::burn_account();
@@ -286,9 +286,6 @@ pub mod pallet {
             let _disclosed: T::Balance =
                 T::Backend::burn_encrypted(rec.asset, &burn_acc, rec.encrypted_amount, burn_proof)
                     .map_err(|_| Error::<T>::BackendError)?;
-
-            rec.completed = true;
-            Pending::<T>::insert(id, &rec);
             Pending::<T>::remove(id);
 
             Self::deposit_event(Event::OutboundTransferConfirmed {
@@ -316,7 +313,7 @@ pub mod pallet {
         ) -> DispatchResult {
             let caller = origin.clone();
 
-            let mut rec = Pending::<T>::get(id).ok_or(Error::<T>::NotFound)?;
+            let rec = Pending::<T>::get(id).ok_or(Error::<T>::NotFound)?;
             ensure!(!rec.completed, Error::<T>::AlreadyCompleted);
 
             // Two options for authority:
@@ -334,9 +331,6 @@ pub mod pallet {
             // Refund escrow → original sender.
             T::Escrow::escrow_refund(rec.asset, &rec.from, rec.encrypted_amount, refund_proof)
                 .map_err(|_| Error::<T>::BackendError)?;
-
-            rec.completed = true;
-            Pending::<T>::insert(id, &rec);
             Pending::<T>::remove(id);
 
             Self::deposit_event(Event::OutboundTransferRefunded {
