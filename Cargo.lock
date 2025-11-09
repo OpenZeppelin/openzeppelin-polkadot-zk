@@ -2326,31 +2326,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "confidential-demo"
-version = "0.1.0"
-dependencies = [
- "asset-hub-runtime",
- "confidential-assets-primitives",
- "confidential-runtime",
- "cumulus-pallet-parachain-system",
- "docify",
- "futures",
- "hex-literal",
- "log",
- "pallet-confidential-assets",
- "pallet-confidential-bridge",
- "pallet-confidential-escrow",
- "pallet-zkhe",
- "parity-scale-codec",
- "polkadot-sdk 2503.0.1",
- "relay-runtime",
- "scale-info",
- "serde_json",
- "smallvec",
- "zkhe-verifier",
-]
-
-[[package]]
 name = "confidential-runtime"
 version = "0.1.0"
 dependencies = [
@@ -2369,6 +2344,38 @@ dependencies = [
  "serde_json",
  "smallvec",
  "substrate-wasm-builder",
+ "zkhe-verifier",
+]
+
+[[package]]
+name = "confidential-xcm"
+version = "0.1.0"
+dependencies = [
+ "confidential-assets-primitives",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-balances",
+ "pallet-confidential-assets",
+ "pallet-confidential-bridge",
+ "pallet-confidential-escrow",
+ "pallet-message-queue",
+ "pallet-uniques",
+ "pallet-xcm",
+ "pallet-zkhe",
+ "parity-scale-codec",
+ "polkadot-parachain-primitives",
+ "polkadot-runtime-parachains",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-tracing",
+ "staging-xcm",
+ "staging-xcm-builder",
+ "staging-xcm-executor",
+ "xcm-simulator",
+ "zkhe-prover",
  "zkhe-verifier",
 ]
 
@@ -4011,42 +4018,6 @@ dependencies = [
  "serdect",
  "subtle 2.6.1",
  "zeroize",
-]
-
-[[package]]
-name = "emulated-integration-tests-common"
-version = "20.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk?tag=polkadot-stable2503#0c0d4ceba45a70f4e8dc40b1ee0cfae1fd759454"
-dependencies = [
- "asset-test-utils",
- "bp-messages",
- "bp-xcm-bridge-hub",
- "cumulus-pallet-parachain-system",
- "cumulus-pallet-xcmp-queue",
- "cumulus-primitives-core",
- "frame-support",
- "hex-literal",
- "pallet-assets",
- "pallet-balances",
- "pallet-bridge-messages",
- "pallet-message-queue",
- "pallet-xcm",
- "pallet-xcm-bridge-hub",
- "parachains-common",
- "parity-scale-codec",
- "paste",
- "polkadot-parachain-primitives",
- "polkadot-primitives",
- "polkadot-runtime-parachains",
- "sc-consensus-grandpa",
- "sp-authority-discovery",
- "sp-consensus-babe",
- "sp-consensus-beefy",
- "sp-core",
- "sp-keyring",
- "sp-runtime",
- "staging-xcm",
- "xcm-emulator",
 ]
 
 [[package]]
@@ -11315,7 +11286,6 @@ dependencies = [
  "bridge-hub-common",
  "bridge-hub-test-utils",
  "bridge-runtime-common",
- "cumulus-client-parachain-inherent",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -11334,7 +11304,6 @@ dependencies = [
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "cumulus-test-relay-sproof-builder",
- "emulated-integration-tests-common",
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "frame-benchmarking-pallet-pov",
@@ -11527,7 +11496,6 @@ dependencies = [
  "staging-xcm-executor",
  "substrate-bip39",
  "testnet-parachains-constants",
- "xcm-emulator",
  "xcm-runtime-apis",
 ]
 
@@ -16322,6 +16290,7 @@ version = "17.1.0"
 source = "git+https://github.com/paritytech/polkadot-sdk?tag=polkadot-stable2503#0c0d4ceba45a70f4e8dc40b1ee0cfae1fd759454"
 dependencies = [
  "parity-scale-codec",
+ "regex",
  "tracing",
  "tracing-core",
  "tracing-subscriber",
@@ -19097,38 +19066,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "xcm-emulator"
-version = "0.19.0"
-source = "git+https://github.com/paritytech/polkadot-sdk?tag=polkadot-stable2503#0c0d4ceba45a70f4e8dc40b1ee0cfae1fd759454"
-dependencies = [
- "array-bytes",
- "cumulus-pallet-parachain-system",
- "cumulus-primitives-core",
- "cumulus-primitives-parachain-inherent",
- "cumulus-test-relay-sproof-builder",
- "frame-support",
- "frame-system",
- "impl-trait-for-tuples",
- "log",
- "pallet-balances",
- "pallet-message-queue",
- "parachains-common",
- "parity-scale-codec",
- "paste",
- "polkadot-parachain-primitives",
- "polkadot-primitives",
- "polkadot-runtime-parachains",
- "sp-arithmetic",
- "sp-core",
- "sp-crypto-hashing 0.1.0 (git+https://github.com/paritytech/polkadot-sdk?tag=polkadot-stable2503)",
- "sp-io",
- "sp-runtime",
- "sp-tracing",
- "staging-xcm",
- "staging-xcm-executor",
-]
-
-[[package]]
 name = "xcm-procedural"
 version = "11.0.2"
 source = "git+https://github.com/paritytech/polkadot-sdk?tag=polkadot-stable2503#0c0d4ceba45a70f4e8dc40b1ee0cfae1fd759454"
@@ -19406,16 +19343,6 @@ dependencies = [
  "subtle 2.6.1",
  "zkhe-primitives",
  "zkhe-prover",
-]
-
-[[package]]
-name = "zombienet-sdk-tests"
-version = "0.1.0"
-dependencies = [
- "log",
- "polkadot-primitives",
- "serde",
- "serde_json",
 ]
 
 [[package]]

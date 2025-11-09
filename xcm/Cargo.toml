@@ -1,0 +1,88 @@
+[package]
+name = "confidential-xcm"
+authors = { workspace = true }
+description = "tests for cross chain confidential asset transfers using XCM + ZK El Gamal"
+edition = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+version = "0.1.0"
+
+[dependencies]
+confidential-assets-primitives = { path = "../primitives/confidential-assets", default-features = false }
+log = { workspace = true }
+pallet-confidential-assets = { path = "../pallets/confidential-assets", default-features = false }
+pallet-confidential-bridge = { path = "../pallets/confidential-bridge", default-features = false }
+pallet-confidential-escrow = { path = "../pallets/confidential-escrow", default-features = false }
+pallet-zkhe = { path = "../pallets/zkhe", default-features = false }
+parity-scale-codec = { workspace = true, features = [ "derive" ] }
+scale-info = { workspace = true, default-features = true, features = [ "derive" ] }
+zkhe-prover = { path = "../zkhe-prover" }
+zkhe-verifier = { path = "../zkhe-verifier", default-features = false }
+[dependencies.frame-support]
+workspace = true
+default-features = true
+[dependencies.frame-system]
+workspace = true
+default-features = true
+[dependencies.pallet-balances]
+workspace = true
+default-features = true
+[dependencies.pallet-message-queue]
+workspace = true
+default-features = true
+[dependencies.pallet-uniques]
+workspace = true
+default-features = true
+[dependencies.pallet-xcm]
+workspace = true
+default-features = true
+[dependencies.polkadot-parachain-primitives]
+workspace = true
+default-features = true
+[dependencies.polkadot-runtime-parachains]
+workspace = true
+default-features = true
+[dependencies.sp-core]
+workspace = true
+default-features = true
+[dependencies.sp-io]
+workspace = true
+default-features = true
+[dependencies.sp-runtime]
+workspace = true
+default-features = true
+[dependencies.sp-tracing]
+workspace = true
+default-features = true
+[dependencies.xcm]
+workspace = true
+default-features = true
+[dependencies.xcm-builder]
+workspace = true
+default-features = true
+[dependencies.xcm-executor]
+workspace = true
+default-features = true
+[dependencies.xcm-simulator]
+workspace = true
+default-features = true
+
+[dev-dependencies]
+sp-tracing = { workspace = true, default-features = false, features = [ "test-utils" ] }
+
+[features]
+default = []
+runtime-benchmarks = [
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-message-queue/runtime-benchmarks",
+	"pallet-uniques/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
+	"polkadot-parachain-primitives/runtime-benchmarks",
+	"polkadot-runtime-parachains/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
+	"xcm-executor/runtime-benchmarks",
+	"xcm/runtime-benchmarks",
+]
