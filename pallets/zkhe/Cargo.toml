@@ -20,6 +20,9 @@ blake2 = { version = "0.10", default-features = false }
 
 confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
 
+[dev-dependencies]
+sp-io = { workspace = true }
+
 [features]
 default = [ "std" ]
 std = [

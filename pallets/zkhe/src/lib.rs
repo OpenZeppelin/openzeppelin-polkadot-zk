@@ -16,6 +16,11 @@
 //! - All cryptographic checks live in `Config::Verifier`.
 //! - Sender transfer updates: available(from) ↓, pending(to) ↑.
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 use confidential_assets_primitives::*;
 use frame_support::{pallet_prelude::*, transactional, Blake2_128Concat};
 use frame_system::pallet_prelude::*;
