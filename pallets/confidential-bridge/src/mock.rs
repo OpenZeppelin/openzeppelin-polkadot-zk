@@ -118,6 +118,7 @@ impl pallet_confidential_bridge::Config for Runtime {
     type Backend = Zkhe;
     type Escrow = ConfidentialEscrow;
     type Messenger = MockMessenger;
+    type MaxBridgePayload = ConstU32<1024>;
     type BurnPalletId = BridgePalletId;
     type DefaultTimeout = ConstU64<10>;
     type SelfParaId = ConstU32<1>;

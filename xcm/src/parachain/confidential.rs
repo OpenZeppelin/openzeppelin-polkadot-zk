@@ -90,6 +90,9 @@ impl pallet_confidential_escrow::Config for Runtime {
     type Backend = Zkhe;
     type PalletId = EscrowPalletId;
 }
+parameter_types! {
+    pub const MaxBridgePayload: u32 = 16 * 1024; // 16 KiB is safe for two Bulletproofs, link proof, etc.
+}
 impl pallet_confidential_bridge::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type AssetId = AssetId;
@@ -97,6 +100,7 @@ impl pallet_confidential_bridge::Config for Runtime {
     type Backend = Zkhe;
     type Escrow = ConfidentialEscrow;
     type Messenger = XcmHrmpMessenger;
+    type MaxBridgePayload = MaxBridgePayload;
     type BurnPalletId = BridgePalletId;
     type DefaultTimeout = ConstU64<10>;
     type SelfParaId = SelfParaId;
@@ -105,10 +109,6 @@ impl pallet_confidential_bridge::Config for Runtime {
 }
 
 // ----------------- Confidential Assets Helpers -----------------
-
-parameter_types! {
-    pub const AssetsPalletId: PalletId = PalletId(*b"CaAssets");
-}
 
 pub struct NativeAssetId;
 impl Get<AssetId> for NativeAssetId {
@@ -195,6 +195,7 @@ impl Ramp<AccountId, AssetId, Balance> for PublicRamp {
 // ----------------- Confidential Bridge Helpers -----------------
 
 parameter_types! {
+    pub const AssetsPalletId: PalletId = PalletId(*b"CaAssets");
     pub const EscrowPalletId: PalletId = PalletId(*b"CaEscrow");
     pub const BridgePalletId: PalletId = PalletId(*b"CaBridge");
     pub SelfParaId: u32 = MsgQueue::get().into();
@@ -206,17 +207,23 @@ fn bridge_account() -> AccountId {
 pub struct XcmHrmpMessenger;
 impl HrmpMessenger for XcmHrmpMessenger {
     fn send(dest_para: u32, payload: Vec<u8>) -> Result<(), ()> {
-        let dest = Location::new(1, [Parachain(dest_para.into())]);
+        // Use the SAME bound as the pallet call expects:
+        let payload_bv: BoundedVec<u8, MaxBridgePayload> =
+            BoundedVec::try_from(payload).map_err(|_| ())?;
+
+        let dest = (Parent, Parachain(dest_para));
         let call = RuntimeCall::ConfidentialBridge(
             pallet_confidential_bridge::Call::<Runtime>::receive_confidential {
-                payload: BoundedVec::try_from(payload).map_err(|_| ())?,
+                payload: payload_bv,
             },
         );
+
         let msg = Xcm(vec![Transact {
             origin_kind: OriginKind::SovereignAccount,
             fallback_max_weight: None,
             call: call.encode().into(),
         }]);
+
         let origin = RuntimeOrigin::signed(bridge_account());
         PolkadotXcm::send(
             origin,

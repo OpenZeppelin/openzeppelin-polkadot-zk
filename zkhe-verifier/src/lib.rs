@@ -3,6 +3,7 @@
 
 extern crate alloc;
 
+#[allow(dead_code, unused)]
 mod range;
 pub use range::BulletproofRangeVerifier;
 

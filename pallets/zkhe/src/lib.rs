@@ -70,6 +70,7 @@ pub mod pallet {
     // -------------------- Storage --------------------
 
     #[pallet::storage]
+    #[pallet::getter(fn public_key)]
     pub type PublicKey<T: Config> =
         StorageMap<_, Blake2_128Concat, T::AccountId, PublicKeyBytes, OptionQuery>;
 

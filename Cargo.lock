@@ -2352,8 +2352,10 @@ name = "confidential-xcm"
 version = "0.1.0"
 dependencies = [
  "confidential-assets-primitives",
+ "curve25519-dalek",
  "frame-support",
  "frame-system",
+ "hex",
  "log",
  "pallet-assets",
  "pallet-balances",
@@ -2367,7 +2369,10 @@ dependencies = [
  "parity-scale-codec",
  "polkadot-parachain-primitives",
  "polkadot-runtime-parachains",
+ "rand 0.9.2",
+ "rand_chacha 0.9.0",
  "scale-info",
+ "sha2 0.10.9",
  "sp-core",
  "sp-io",
  "sp-runtime",

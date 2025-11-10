@@ -78,6 +78,9 @@ pub mod pallet {
         /// HRMP messenger adapter (runtime supplies an implementation).
         type Messenger: HrmpMessenger;
 
+        /// Maximum size in bytes for a bridge HRMP payload.
+        type MaxBridgePayload: Get<u32>;
+
         #[pallet::constant]
         type SelfParaId: Get<u32>; // in prod use compact encoded u32: polkadot_parachain_primitives::Id
 
@@ -283,14 +286,18 @@ pub mod pallet {
 
             let burn_acc = <Pallet<T>>::burn_account();
 
-            // 1) Release escrow to burn account.
-            T::Escrow::escrow_release(rec.asset, &burn_acc, rec.encrypted_amount, release_proof)
-                .map_err(|_| Error::<T>::BackendError)?;
+            let res1 = T::Escrow::escrow_release(rec.asset, &burn_acc, rec.encrypted_amount, release_proof);
+            if res1.is_err() {
+                println!("escrow failed");
+                return Err(Error::<T>::AlreadyCompleted.into());
+            }
 
-            // 2) Burn from burn account (supply conservation).
-            let _disclosed: T::Balance =
-                T::Backend::burn_encrypted(rec.asset, &burn_acc, rec.encrypted_amount, burn_proof)
-                    .map_err(|_| Error::<T>::BackendError)?;
+            let res2 =
+                T::Backend::burn_encrypted(rec.asset, &burn_acc, rec.encrypted_amount, burn_proof);
+            if res2.is_err() {
+                println!("burn failed");
+                return Err(Error::<T>::NotFound.into());
+            }
             Pending::<T>::remove(id);
 
             Self::deposit_event(Event::OutboundTransferConfirmed {
@@ -353,7 +360,7 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::cancel_and_refund())]
         pub fn receive_confidential(
             origin: T::RuntimeOrigin,
-            payload: BoundedVec<u8, ConstU32<1024>>, //make constant MAX_BRIDGE_PAYLOAD = 1024
+            payload: BoundedVec<u8, T::MaxBridgePayload>, //make constant MAX_BRIDGE_PAYLOAD = 1024
         ) -> DispatchResult {
             T::XcmOrigin::ensure_origin(origin)?;
 
