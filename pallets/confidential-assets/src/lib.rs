@@ -6,6 +6,9 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 extern crate alloc;
 
 use confidential_assets_primitives::*;
@@ -144,9 +147,6 @@ pub mod pallet {
         }
         pub fn asset_decimals(asset: T::AssetId) -> u8 {
             T::AssetMetadata::decimals(asset)
-        }
-        pub fn asset_contract_uri(asset: T::AssetId) -> Vec<u8> {
-            T::AssetMetadata::contract_uri(asset)
         }
     }
 

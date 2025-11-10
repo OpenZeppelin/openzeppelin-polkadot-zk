@@ -8356,6 +8356,7 @@ name = "pallet-confidential-assets"
 version = "0.1.0"
 dependencies = [
  "confidential-assets-primitives",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-zkhe",

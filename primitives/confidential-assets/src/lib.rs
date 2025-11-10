@@ -179,7 +179,6 @@ pub trait AssetMetadataProvider<AssetId> {
     fn name(asset: AssetId) -> Vec<u8>;
     fn symbol(asset: AssetId) -> Vec<u8>;
     fn decimals(asset: AssetId) -> u8;
-    fn contract_uri(asset: AssetId) -> Vec<u8>;
 }
 
 impl<AssetId> AssetMetadataProvider<AssetId> for () {
@@ -191,9 +190,6 @@ impl<AssetId> AssetMetadataProvider<AssetId> for () {
     }
     fn decimals(_asset: AssetId) -> u8 {
         0u8
-    }
-    fn contract_uri(_asset: AssetId) -> Vec<u8> {
-        Vec::new()
     }
 }
 
