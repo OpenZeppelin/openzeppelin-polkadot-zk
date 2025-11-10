@@ -293,14 +293,12 @@ pub mod pallet {
                 release_proof,
             );
             if res1.is_err() {
-                println!("escrow failed");
                 return Err(Error::<T>::AlreadyCompleted.into());
             }
 
             let res2 =
                 T::Backend::burn_encrypted(rec.asset, &burn_acc, rec.encrypted_amount, burn_proof);
             if res2.is_err() {
-                println!("burn failed");
                 return Err(Error::<T>::NotFound.into());
             }
             Pending::<T>::remove(id);

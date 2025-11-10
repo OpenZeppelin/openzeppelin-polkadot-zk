@@ -1,7 +1,6 @@
 use super::*;
 use crate::mock::*;
 use frame_support::assert_ok;
-use sp_runtime::traits::Zero;
 
 // Small helpers
 fn ct(x: u8) -> EncryptedAmount {
@@ -308,14 +307,5 @@ fn confidential_transfer_acl_allows_any_caller_when_acl_is_unit() {
             }
             e => panic!("unexpected event: {e:?}"),
         }
-    });
-}
-
-#[test]
-fn account_id_is_derived_from_pallet_id() {
-    new_test_ext().execute_with(|| {
-        let acc = ConfidentialAssets::account_id();
-        // With u64 AccountId, truncation happens; just ensure it's non-zero and deterministic.
-        assert!(!acc.is_zero());
     });
 }

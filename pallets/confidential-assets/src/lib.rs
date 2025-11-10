@@ -9,10 +9,9 @@ mod tests;
 extern crate alloc;
 
 use confidential_assets_primitives::*;
-use frame_support::{dispatch::DispatchResult, pallet_prelude::*, PalletId};
+use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
 use frame_system::pallet_prelude::*;
 use scale_info::TypeInfo;
-use sp_runtime::traits::AccountIdConversion;
 use sp_std::prelude::*;
 
 pub use pallet::*;
@@ -37,11 +36,6 @@ pub mod pallet {
 
         /// Plug in any ramp you want (naive now, Merkle/batched later).
         type Ramp: Ramp<Self::AccountId, Self::AssetId, Self::Balance>;
-
-        /// PalletId to derive the custodial account used for holding escrowed
-        /// balances iff `Self::Ramp` is implemented accordingly
-        #[pallet::constant]
-        type PalletId: Get<PalletId>;
 
         /// Optional ACL (default = ()).
         type Acl: AclProvider<Self::AccountId, Self::AssetId, Self::Balance>;
@@ -360,10 +354,6 @@ pub mod pallet {
     }
 
     impl<T: Config> Pallet<T> {
-        /// Pallet custodial account.
-        pub fn account_id() -> T::AccountId {
-            T::PalletId::get().into_account_truncating()
-        }
         #[inline]
         fn ensure_is_self_or_operator(
             holder: &T::AccountId,

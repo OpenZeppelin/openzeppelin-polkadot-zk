@@ -77,7 +77,6 @@ impl pallet_confidential_assets::Config for Runtime {
     type Balance = Balance;
     type Backend = Zkhe;
     type Ramp = PublicRamp;
-    type PalletId = AssetsPalletId;
     type AssetMetadata = ();
     type Acl = ();
     type Operators = ();
@@ -195,7 +194,6 @@ impl Ramp<AccountId, AssetId, Balance> for PublicRamp {
 // ----------------- Confidential Bridge Helpers -----------------
 
 parameter_types! {
-    pub const AssetsPalletId: PalletId = PalletId(*b"CaAssets");
     pub const EscrowPalletId: PalletId = PalletId(*b"CaEscrow");
     pub const BridgePalletId: PalletId = PalletId(*b"CaBridge");
     pub SelfParaId: u32 = MsgQueue::get().into();

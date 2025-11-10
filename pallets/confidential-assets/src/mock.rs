@@ -2,7 +2,7 @@ use crate::pallet as pallet_confidential_assets;
 use confidential_assets_primitives::{
     ConfidentialBackend, EncryptedAmount, InputProof, PublicKeyBytes, Ramp, ZkVerifier,
 };
-use frame_support::{construct_runtime, derive_impl, parameter_types, PalletId};
+use frame_support::{construct_runtime, derive_impl};
 use sp_runtime::BuildStorage;
 
 pub type AccountId = u64;
@@ -109,16 +109,12 @@ impl pallet_zkhe::Config for Runtime {
     type Verifier = AlwaysOkVerifier;
     type WeightInfo = ();
 }
-parameter_types! {
-    pub const AssetsPalletId: PalletId = PalletId(*b"CaAssets");
-}
 impl pallet_confidential_assets::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type AssetId = AssetId;
     type Balance = Balance;
     type Backend = Zkhe;
     type Ramp = NoRamp;
-    type PalletId = AssetsPalletId;
     type AssetMetadata = ();
     type Acl = ();
     type Operators = ();

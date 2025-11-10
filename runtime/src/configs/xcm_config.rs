@@ -1,6 +1,6 @@
 use crate::{
     AccountId, AllPalletsWithSystem, Balances, ParachainInfo, ParachainSystem, PolkadotXcm,
-    Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, WeightToFee, XcmpQueue,
+    Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, XcmpQueue,
 };
 
 use polkadot_sdk::{
@@ -9,27 +9,22 @@ use polkadot_sdk::{
 
 use frame_support::{
     parameter_types,
-    traits::{ConstU32, Contains, Everything, Nothing},
+    traits::{ConstU32, Everything, Nothing},
     weights::Weight,
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain_primitives::primitives::Sibling;
-use polkadot_runtime_common::impls::ToAuthor;
-use polkadot_sdk::{
-    polkadot_sdk_frame::traits::Disabled,
-    staging_xcm_builder::{DenyRecursively, DenyThenTry},
-};
+use polkadot_sdk::polkadot_sdk_frame::traits::Disabled;
 use xcm::latest::{prelude::*, WESTEND_GENESIS_HASH};
 use xcm_builder::{
     AccountId32Aliases, AllowHrmpNotificationsFromRelayChain, AllowKnownQueryResponses,
     AllowSubscriptionsFrom, AllowTopLevelPaidExecutionFrom, DescribeAllTerminal, DescribeFamily,
     EnsureXcmOrigin, ExternalConsensusLocationsConverterFor, FixedWeightBounds,
-    FrameTransactionalProcessor, FungibleAdapter, FungiblesAdapter, HashedDescription, IsConcrete,
-    LocalMint, NativeAsset, NoChecking, ParentIsPreset, SiblingParachainAsNative,
-    SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
-    SovereignSignedViaLocation, StartsWith, TakeWeightCredit, TrailingSetTopicAsId,
-    UsingComponents, WithComputedOrigin, WithUniqueTopic,
+    FrameTransactionalProcessor, FungibleAdapter, HashedDescription, IsConcrete, NativeAsset,
+    ParentIsPreset, SiblingParachainAsNative, SiblingParachainConvertsVia,
+    SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
+    TrailingSetTopicAsId, WithComputedOrigin, WithUniqueTopic,
 };
 use xcm_executor::XcmExecutor;
 
@@ -97,23 +92,6 @@ parameter_types! {
     pub const MaxAssetsIntoHolding: u32 = 64;
 }
 
-pub struct ParentOrParentsExecutivePlurality;
-impl Contains<Location> for ParentOrParentsExecutivePlurality {
-    fn contains(location: &Location) -> bool {
-        matches!(
-            location.unpack(),
-            (1, [])
-                | (
-                    1,
-                    [Plurality {
-                        id: BodyId::Executive,
-                        ..
-                    }]
-                )
-        )
-    }
-}
-
 pub type Barrier = TrailingSetTopicAsId<(
     TakeWeightCredit,
     AllowKnownQueryResponses<PolkadotXcm>,
@@ -139,9 +117,7 @@ impl xcm_executor::Config for XcmConfig {
     type IsReserve = NativeAsset;
     type IsTeleporter = (); // Teleporting is disabled.
     type UniversalLocation = UniversalLocation;
-    // This is not safe, you should use `xcm_builder::AllowTopLevelPaidExecutionFrom<T>` in a
-    // production chain
-    type Barrier = xcm_builder::AllowUnpaidExecutionFrom<Everything>;
+    type Barrier = Barrier;
     type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
     type Trader = (); //UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, ToAuthor<Runtime>>;
     type ResponseHandler = PolkadotXcm;

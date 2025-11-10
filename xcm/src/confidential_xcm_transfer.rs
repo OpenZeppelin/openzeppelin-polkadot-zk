@@ -79,8 +79,12 @@ fn show_pending_commit(label: &str, asset: u128, who: parachain::AccountId) {
     }
 }
 
+/// Demonstrates confidential xcm transfers via pallet-confidential-bridge:
+/// 1. Send confidential assets from source parachain to dest parachain + escrow local confidential assets
+/// 2. Claim confidential assets on dest parachain + send confirmation back to source parachain
+/// 3. Release escrow on source parachain once received confirmed execution on dest parachain
 #[test]
-fn confidential_bridge_send_receive_and_confirm_success() {
+fn confidential_xcm_transfer() {
     MockNet::reset();
 
     let asset_id_u128 = 0u128;

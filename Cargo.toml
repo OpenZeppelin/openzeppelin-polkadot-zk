@@ -18,10 +18,8 @@ members = [
 	# Primitives
 	"primitives/confidential-assets",
 	"primitives/zkhe",
-	# Runtimes
-	"runtimes/asset-hub",
-	"runtimes/confidential",
-	"runtimes/relay",
+	# Runtime
+	"runtime",
 	# Confidential XCM Tests
 	"xcm",
 	# client

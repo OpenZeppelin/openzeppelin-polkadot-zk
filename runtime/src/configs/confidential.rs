@@ -43,7 +43,6 @@ impl pallet_confidential_assets::Config for Runtime {
     type Balance = Balance;
     type Backend = Zkhe;
     type Ramp = PublicRamp;
-    type PalletId = AssetsPalletId;
     type AssetMetadata = ();
     type Acl = ();
     type Operators = ();
@@ -75,10 +74,6 @@ impl pallet_confidential_bridge::Config for Runtime {
 }
 
 // ----------------- Confidential Assets Helpers -----------------
-
-parameter_types! {
-    pub const AssetsPalletId: PalletId = PalletId(*b"CaAssets");
-}
 
 pub struct NativeAssetId;
 impl Get<AssetId> for NativeAssetId {
