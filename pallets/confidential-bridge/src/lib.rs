@@ -286,7 +286,12 @@ pub mod pallet {
 
             let burn_acc = <Pallet<T>>::burn_account();
 
-            let res1 = T::Escrow::escrow_release(rec.asset, &burn_acc, rec.encrypted_amount, release_proof);
+            let res1 = T::Escrow::escrow_release(
+                rec.asset,
+                &burn_acc,
+                rec.encrypted_amount,
+                release_proof,
+            );
             if res1.is_err() {
                 println!("escrow failed");
                 return Err(Error::<T>::AlreadyCompleted.into());
