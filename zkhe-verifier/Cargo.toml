@@ -25,10 +25,6 @@ zkhe-vectors = { path = "../zkhe-vectors", default-features = false }
 [dev-dependencies]
 criterion = "0.5"
 
-[[bench]]
-name = "verify"
-harness = false
-
 [features]
 default = [ "std" ]
 std = [
@@ -43,3 +39,7 @@ std = [
 	"subtle/std",
 	"zkhe-primitives/std",
 ]
+
+[[bench]]
+name = "verify"
+harness = false

@@ -1,6 +1,6 @@
 # Confidential Cookbook
 
-- [Ingredients: Confidential Assets](./R0.md)
+- [Confidential Assets](./R0.md)
 - [Recipe 1: Confidential Swaps](./R1.md)
 - [Recipe 2: Confidential Intents Dex](./R2.md)
 - [Recipe 3: Confidential Escrow](./R3.md)

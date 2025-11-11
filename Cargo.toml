@@ -24,10 +24,10 @@ members = [
 	"xcm",
 	# client
 	"zkhe-prover",
+	"zkhe-vectors",
 	# no_std on-chain verifier
 	"zkhe-verifier",
 	"zkhe-verifier/per-block",
-	"zkhe-vectors",
 ]
 resolver = "2"
 

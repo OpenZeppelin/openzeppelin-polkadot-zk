@@ -1,9 +1,8 @@
 //! Benchmarking for `pallet-confidential-assets`.
 
-mod proofs;
+// TODO import and use below
+use zkhe_vectors::*;
 use crate::*;
-use proofs::*;
-
 use confidential_assets_primitives::*;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
