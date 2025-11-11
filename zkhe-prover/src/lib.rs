@@ -20,6 +20,7 @@
 //!   available and pending commitments, plus the transfer witnesses (Δv, ρ). In production,
 //!   the Δv, ρ can be reconstructed from consumed UTXOs if desired.
 
+pub mod bench_vectors;
 #[cfg(test)]
 mod tests;
 

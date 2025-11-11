@@ -26,6 +26,8 @@ members = [
 	"zkhe-prover",
 	# no_std on-chain verifier
 	"zkhe-verifier",
+	"zkhe-verifier/per-block",
+	"zkhe-vectors",
 ]
 resolver = "2"
 
