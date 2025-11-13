@@ -1,0 +1,34 @@
+[package]
+name = "pallet-confidential-xcm-bridge"
+authors = { workspace = true }
+description = "pallet supporting xcm confidential transfers"
+edition = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+version = "0.1.0"
+[dependencies]
+serde = { workspace = true, optional = true, features = [ "derive" ] }
+
+frame-support = { workspace = true }
+frame-system  = { workspace = true }
+parity-scale-codec = { workspace = true }
+scale-info = { workspace = true }
+sp-io = { workspace = true }
+sp-runtime    = { workspace = true }
+sp-std = { workspace = true }
+
+confidential-assets-primitives = { path = "../../../primitives/confidential-assets", default-features = false }
+
+[features]
+default = [ "std" ]
+std = [
+	"confidential-assets-primitives/std",
+	"dep:serde",
+	"frame-support/std",
+	"frame-system/std",
+	"parity-scale-codec/std",
+	"scale-info/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-std/std",
+]

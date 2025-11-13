@@ -1,0 +1,8 @@
+[package]
+name = "per_block"
+edition = "2021"
+version = "0.1.0"
+
+[dependencies]
+serde = { version = "1", features = [ "derive" ] }
+serde_json = "1"

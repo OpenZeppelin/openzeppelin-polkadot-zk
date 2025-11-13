@@ -1,0 +1,45 @@
+[package]
+name = "zkhe-verifier"
+authors = { workspace = true }
+description = "no_std ZK ElGamal proof verification"
+edition = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+version = "0.1.0"
+[dependencies]
+# no_std crypto
+blake2 = { version = "0.10", default-features = false }
+bulletproofs      = { version = "4", default-features = false }
+curve25519-dalek = { version = "4.1.3", default-features = false, features = [ "alloc" ] }
+curve25519-dalek-ng = { version = "4.1.1", default-features = false, features = [ "alloc" ] }
+merlin            = { version = "3", default-features = false }
+rand_chacha = { version = "0.3", default-features = false }
+rand_core = { version = "0.6", default-features = false }
+subtle            = { version = "2", default-features = false }
+
+confidential-assets-primitives = { path = "../primitives/confidential-assets", default-features = false }
+sha2 = { version = "0.10.9", default-features = false }
+zkhe-primitives = { path = "../primitives/zkhe", default-features = false }
+zkhe-vectors = { path = "../zkhe-vectors", default-features = false }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[features]
+default = [ "std" ]
+std = [
+	"blake2/std",
+	"bulletproofs/std",
+	"confidential-assets-primitives/std",
+	"curve25519-dalek-ng/std",
+	"merlin/std",
+	"rand_chacha/std",
+	"rand_core/std",
+	"sha2/std",
+	"subtle/std",
+	"zkhe-primitives/std",
+]
+
+[[bench]]
+name = "verify"
+harness = false
