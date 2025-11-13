@@ -24,3 +24,7 @@ Read [the extension pallets](./book/examples/) for examples leveraging and exten
 
 * [OpenZeppelin Confidential Contracts Standard](https://github.com/OpenZeppelin/openzeppelin-confidential-contracts/blob/master/contracts/interfaces/IERC7984.sol)
 * [Solana Confidential Balances Overview](https://www.solana-program.com/docs/confidential-balances/overview)
+
+## Security Policy
+
+Please report any security issues you find to <security@openzeppelin.com>.

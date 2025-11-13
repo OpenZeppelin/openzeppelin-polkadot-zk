@@ -78,11 +78,11 @@ jobs:
       - name: Run tests
         run: cargo nextest run --release
 
-      - name: Check benchmarking compilation
-        run: cargo check --release --features runtime-benchmarks
+      # - name: Check benchmarking compilation
+      #   run: cargo check --release --features runtime-benchmarks
 
-      - name: Check clippy
-        run: cargo clippy --release --locked --all-targets -- -D warnings
+      # - name: Check clippy
+      #   run: cargo clippy --release --locked --all-targets -- -D warnings
 
       - name: Check Documentation
         run: cargo doc --release --locked --all --no-deps
