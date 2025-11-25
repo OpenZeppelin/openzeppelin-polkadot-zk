@@ -40,10 +40,10 @@ pub mod pallet {
         type Balance: Parameter + Member + Copy + Ord + MaxEncodedLen + TypeInfo + From<u64>;
 
         /// Verifier boundary (no_std on-chain).
-        /// - verify_transfer_sent(..) -> (from_new_commit, to_new_pending_commit)
-        /// - verify_transfer_received(.., pending_commits: &[[u8;32]], accept_envelope: &[u8])
-        /// - verify_mint(..) -> (to_new_pending_commit, total_new_commit, minted_ciphertext)
-        /// - verify_burn(..) -> (from_new_available_commit, total_new_commit, disclosed_amount_u64)
+        /// - `verify_transfer_sent(..) -> (from_new_commit, to_new_pending_commit)`
+        /// - `verify_transfer_received(.., pending_commits: &[[u8;32]], accept_envelope: &[u8])`
+        /// - `verify_mint(..) -> (to_new_pending_commit, total_new_commit, minted_ciphertext)`
+        /// - `verify_burn(..) -> (from_new_available_commit, total_new_commit, disclosed_amount_u64)`
         type Verifier: ZkVerifier;
 
         type WeightInfo: WeightData;
