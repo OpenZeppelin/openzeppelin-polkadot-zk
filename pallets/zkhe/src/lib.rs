@@ -16,6 +16,8 @@
 //! - All cryptographic checks live in `Config::Verifier`.
 //! - Sender transfer updates: available(from) ↓, pending(to) ↑.
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]

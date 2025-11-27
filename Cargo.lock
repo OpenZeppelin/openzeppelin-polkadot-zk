@@ -8457,6 +8457,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "zkhe-vectors",
 ]
 
 [[package]]
@@ -9971,8 +9972,10 @@ version = "0.1.0"
 dependencies = [
  "blake2 0.10.6",
  "confidential-assets-primitives",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-balances",
  "parity-scale-codec",
  "scale-info",
  "sp-io",

@@ -18,6 +18,9 @@ sp-std = { workspace = true }
 
 confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
 
+# Benchmarking vectors (deterministic proofs for real verification)
+zkhe-vectors = { path = "../../zkhe-vectors", default-features = false, optional = true }
+
 [dev-dependencies]
 pallet-zkhe = { path = "../zkhe" }
 sp-io = { workspace = true }
@@ -33,12 +36,14 @@ std = [
 	"scale-info/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"zkhe-vectors?/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
+	"zkhe-vectors",
 ]
 try-runtime = [
 	"frame-support/try-runtime",

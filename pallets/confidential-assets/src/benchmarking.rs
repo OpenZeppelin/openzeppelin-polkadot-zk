@@ -1,67 +1,79 @@
 //! Benchmarking for `pallet-confidential-assets`.
 
-// TODO import and use below
-use zkhe_vectors::*;
 use crate::*;
 use confidential_assets_primitives::*;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
-use sp_std::convert::TryFrom;
 use sp_std::vec::Vec;
+use zkhe_vectors::*;
 
-#[benchmarks]
+#[benchmarks(where T::AssetId: Default, T::Balance: From<u32>)]
 mod benchmarks {
     use super::*;
 
     // ---- helpers ----
     fn asset<T: Config>() -> T::AssetId
     where
-        // If your AssetId supports TryFrom<&[u8]>, use the prover-bound id.
-        // Otherwise fall back to the previous numeric id to preserve behavior.
-        T::AssetId: From<u32>,
+        T::AssetId: Default,
     {
-        if let Ok(id) = <T::AssetId as TryFrom<&'static [u8]>>::try_from(ASSET_ID_BYTES) {
-            id
-        } else {
-            42u32.into()
-        }
+        // Use default asset id for benchmarking
+        Default::default()
     }
 
     #[inline]
     fn sender_pk() -> PublicKeyBytes {
-        PublicKeyBytes::from(SENDER_PK32)
-    }
-    #[inline]
-    fn receiver_pk() -> PublicKeyBytes {
-        PublicKeyBytes::from(RECEIVER_PK32)
+        // SENDER_PK32 is [u8; 32], but PublicKeyBytes is BoundedVec<u8, 64>
+        // Pad to 64 bytes
+        let mut pk = [0u8; 64];
+        pk[..32].copy_from_slice(&SENDER_PK32);
+        pk.to_vec()
+            .try_into()
+            .expect("64 bytes fits in BoundedVec<64>")
     }
 
-    // Ciphertexts
+    #[inline]
+    fn receiver_pk() -> PublicKeyBytes {
+        let mut pk = [0u8; 64];
+        pk[..32].copy_from_slice(&RECEIVER_PK32);
+        pk.to_vec()
+            .try_into()
+            .expect("64 bytes fits in BoundedVec<64>")
+    }
+
+    // Ciphertexts - EncryptedAmount is [u8; 64]
     #[inline]
     fn ct_transfer() -> EncryptedAmount {
-        EncryptedAmount::from(TRANSFER_DELTA_CT_64)
+        TRANSFER_DELTA_CT_64
     }
     #[inline]
     fn ct_burn() -> EncryptedAmount {
-        EncryptedAmount::from(BURN_AMOUNT_CT_64)
+        BURN_AMOUNT_CT_64
     }
 
-    // Proofs / bundles
+    // Proofs / bundles - InputProof is BoundedVec<u8, 8192>
     #[inline]
     fn proof_mint() -> InputProof {
-        InputProof::from(Vec::from(MINT_PROOF))
+        Vec::from(MINT_PROOF)
+            .try_into()
+            .expect("proof fits in BoundedVec<8192>")
     }
     #[inline]
     fn proof_burn() -> InputProof {
-        InputProof::from(Vec::from(BURN_PROOF))
+        Vec::from(BURN_PROOF)
+            .try_into()
+            .expect("proof fits in BoundedVec<8192>")
     }
     #[inline]
     fn proof_transfer_bundle() -> InputProof {
-        InputProof::from(Vec::from(TRANSFER_BUNDLE))
+        Vec::from(TRANSFER_BUNDLE)
+            .try_into()
+            .expect("proof fits in BoundedVec<8192>")
     }
     #[inline]
     fn proof_accept_envelope() -> InputProof {
-        InputProof::from(Vec::from(ACCEPT_ENVELOPE))
+        Vec::from(ACCEPT_ENVELOPE)
+            .try_into()
+            .expect("proof fits in BoundedVec<8192>")
     }
 
     // set_public_key(who, elgamal_pk)
@@ -167,7 +179,7 @@ mod benchmarks {
         confidential_transfer_from(
             RawOrigin::Signed(from.clone()),
             asset::<T>(),
-            from,
+            from.clone(),
             to,
             ct_transfer(),
             proof_transfer_bundle(),

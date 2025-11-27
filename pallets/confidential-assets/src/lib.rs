@@ -6,10 +6,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-// WIP Requires first updating mock runtime and tests to use real verifier
-// => benchmarking runtime matches real runtime (for pallet::Config associated types)
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 
 extern crate alloc;
 
