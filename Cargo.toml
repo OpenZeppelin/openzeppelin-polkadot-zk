@@ -15,6 +15,8 @@ members = [
 	"pallets/confidential-escrow",
 	"pallets/operators",
 	"pallets/zkhe",
+	# Precompiles / Chain Extensions
+	"precompiles/confidential-assets",
 	# Primitives
 	"primitives/confidential-assets",
 	"primitives/zkhe",
@@ -91,6 +93,8 @@ pallet-treasury = { git = "https://github.com/paritytech/polkadot-sdk", default-
 pallet-uniques = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 pallet-utility = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 pallet-whitelist = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
+pallet-revive = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
+pallet-revive-uapi = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 polkadot-sdk = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 sc-basic-authorship = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 sc-chain-spec = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }

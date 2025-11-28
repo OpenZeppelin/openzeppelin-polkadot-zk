@@ -2340,6 +2340,7 @@ dependencies = [
 name = "confidential-asset-hub"
 version = "0.1.0"
 dependencies = [
+ "confidential-assets-precompile",
  "confidential-assets-primitives",
  "cumulus-pallet-parachain-system",
  "docify",
@@ -2348,6 +2349,7 @@ dependencies = [
  "pallet-confidential-assets",
  "pallet-confidential-bridge",
  "pallet-confidential-escrow",
+ "pallet-revive",
  "pallet-zkhe",
  "parity-scale-codec",
  "polkadot-sdk 2503.0.1",
@@ -2356,6 +2358,24 @@ dependencies = [
  "smallvec",
  "substrate-wasm-builder",
  "zkhe-verifier",
+]
+
+[[package]]
+name = "confidential-assets-precompile"
+version = "0.1.0"
+dependencies = [
+ "confidential-assets-primitives",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-confidential-assets",
+ "pallet-revive",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
