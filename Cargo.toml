@@ -20,8 +20,9 @@ members = [
 	# Primitives
 	"primitives/confidential-assets",
 	"primitives/zkhe",
-	# Runtime
-	"runtime",
+	# Runtimes
+	"runtimes/evm-rollup",
+	"runtimes/polkavm-rollup",
 	# Confidential XCM Tests
 	"xcm",
 	# client
@@ -68,8 +69,6 @@ frame-system = { git = "https://github.com/paritytech/polkadot-sdk", default-fea
 frame-system-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 frame-try-runtime = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
-openzeppelin-pallet-abstractions = { git = "https://github.com/OpenZeppelin/openzeppelin-pallet-abstractions", branch = "polkadot-stable2503", default-features = false }
-openzeppelin-pallet-abstractions-proc = { git = "https://github.com/OpenZeppelin/openzeppelin-pallet-abstractions", branch = "polkadot-stable2503", default-features = false }
 pallet-asset-tx-payment = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 pallet-assets = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }
 pallet-aura = { git = "https://github.com/paritytech/polkadot-sdk", default-features = false, tag = "polkadot-stable2503" }

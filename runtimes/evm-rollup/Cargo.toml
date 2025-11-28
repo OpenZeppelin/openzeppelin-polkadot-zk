@@ -1,0 +1,141 @@
+[package]
+name = "evm-confidential-asset-hub"
+authors = { workspace = true }
+description = "EVM runtime with confidential assets framework"
+edition = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+version = "0.1.0"
+
+[dependencies]
+# Local
+confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
+pallet-confidential-assets = { path = "../../pallets/confidential-assets", default-features = false }
+pallet-zkhe = { path = "../../pallets/zkhe", default-features = false }
+zkhe-verifier = { path = "../../zkhe-verifier", default-features = false }
+
+# General
+log = { workspace = true }
+parity-scale-codec = { workspace = true, features = ["derive"] }
+scale-info = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true, default-features = false, features = ["alloc"] }
+smallvec = { workspace = true }
+
+# Substrate
+frame-executive = { workspace = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-assets = { workspace = true }
+pallet-aura = { workspace = true }
+pallet-authorship = { workspace = true }
+pallet-balances = { workspace = true }
+pallet-session = { workspace = true }
+pallet-sudo = { workspace = true }
+pallet-timestamp = { workspace = true }
+pallet-transaction-payment = { workspace = true }
+sp-api = { workspace = true }
+sp-block-builder = { workspace = true }
+sp-consensus-aura = { workspace = true }
+sp-core = { workspace = true }
+sp-genesis-builder = { workspace = true }
+sp-inherents = { workspace = true }
+sp-offchain = { workspace = true }
+sp-runtime = { workspace = true }
+sp-session = { workspace = true }
+sp-transaction-pool = { workspace = true }
+sp-version = { workspace = true }
+
+# Polkadot
+pallet-xcm = { workspace = true }
+polkadot-parachain-primitives = { workspace = true }
+polkadot-runtime-common = { workspace = true }
+xcm = { workspace = true }
+xcm-builder = { workspace = true }
+xcm-executor = { workspace = true }
+
+# Cumulus
+cumulus-pallet-aura-ext = { workspace = true }
+cumulus-pallet-parachain-system = { workspace = true }
+cumulus-pallet-xcm = { workspace = true }
+cumulus-pallet-xcmp-queue = { workspace = true }
+cumulus-primitives-core = { workspace = true }
+pallet-collator-selection = { workspace = true }
+pallet-message-queue = { workspace = true }
+parachains-common = { workspace = true }
+parachain-info = { workspace = true }
+
+# Frontier EVM
+fp-evm = { workspace = true }
+fp-rpc = { workspace = true }
+fp-self-contained = { workspace = true, features = ["serde"] }
+pallet-base-fee = { workspace = true }
+pallet-ethereum = { workspace = true }
+pallet-evm = { workspace = true }
+pallet-evm-chain-id = { workspace = true }
+pallet-evm-precompile-modexp = { workspace = true }
+pallet-evm-precompile-sha3fips = { workspace = true }
+pallet-evm-precompile-simple = { workspace = true }
+
+[build-dependencies]
+substrate-wasm-builder = { workspace = true, default-features = true, optional = true }
+
+[features]
+default = ["std"]
+std = [
+	"confidential-assets-primitives/std",
+	"cumulus-pallet-aura-ext/std",
+	"cumulus-pallet-parachain-system/std",
+	"cumulus-pallet-xcm/std",
+	"cumulus-pallet-xcmp-queue/std",
+	"cumulus-primitives-core/std",
+	"fp-evm/std",
+	"fp-rpc/std",
+	"fp-self-contained/std",
+	"frame-executive/std",
+	"frame-support/std",
+	"frame-system/std",
+	"log/std",
+	"pallet-assets/std",
+	"pallet-aura/std",
+	"pallet-authorship/std",
+	"pallet-balances/std",
+	"pallet-base-fee/std",
+	"pallet-collator-selection/std",
+	"pallet-confidential-assets/std",
+	"pallet-ethereum/std",
+	"pallet-evm-chain-id/std",
+	"pallet-evm/std",
+	"pallet-evm-precompile-modexp/std",
+	"pallet-evm-precompile-sha3fips/std",
+	"pallet-evm-precompile-simple/std",
+	"pallet-message-queue/std",
+	"pallet-session/std",
+	"pallet-sudo/std",
+	"pallet-timestamp/std",
+	"pallet-transaction-payment/std",
+	"pallet-xcm/std",
+	"pallet-zkhe/std",
+	"parachains-common/std",
+	"parachain-info/std",
+	"parity-scale-codec/std",
+	"polkadot-parachain-primitives/std",
+	"polkadot-runtime-common/std",
+	"scale-info/std",
+	"serde_json/std",
+	"sp-api/std",
+	"sp-block-builder/std",
+	"sp-consensus-aura/std",
+	"sp-core/std",
+	"sp-genesis-builder/std",
+	"sp-inherents/std",
+	"sp-offchain/std",
+	"sp-runtime/std",
+	"sp-session/std",
+	"sp-transaction-pool/std",
+	"sp-version/std",
+	"substrate-wasm-builder",
+	"xcm-builder/std",
+	"xcm-executor/std",
+	"xcm/std",
+	"zkhe-verifier/std",
+]
