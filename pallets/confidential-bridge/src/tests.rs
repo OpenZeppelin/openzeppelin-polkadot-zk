@@ -1,4 +1,4 @@
-use crate::{mock::*, Error, Event};
+use crate::{Error, Event, mock::*};
 use confidential_assets_primitives::EncryptedAmount;
 use frame_support::assert_ok;
 

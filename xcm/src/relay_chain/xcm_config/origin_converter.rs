@@ -15,7 +15,7 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::relay_chain::{
-    constants::RelayNetwork, location_converter::LocationConverter, RuntimeOrigin,
+    RuntimeOrigin, constants::RelayNetwork, location_converter::LocationConverter,
 };
 use polkadot_parachain_primitives::primitives::Id as ParaId;
 use polkadot_runtime_parachains::origin;

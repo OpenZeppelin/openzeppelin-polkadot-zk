@@ -20,8 +20,8 @@ use curve25519_dalek::{
 };
 use merlin::Transcript;
 use zkhe_primitives::{
-    append_point, challenge_scalar as fs_chal, labels, new_transcript, point_from_bytes,
-    point_to_bytes, Ciphertext, FixedProof, PublicContext, RangeProofVerifier, SDK_VERSION,
+    Ciphertext, FixedProof, PublicContext, RangeProofVerifier, SDK_VERSION, append_point,
+    challenge_scalar as fs_chal, labels, new_transcript, point_from_bytes, point_to_bytes,
 };
 
 pub struct ZkheVerifier;

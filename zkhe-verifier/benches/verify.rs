@@ -1,5 +1,5 @@
 use confidential_assets_primitives::ZkVerifier as _;
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
 use zkhe_vectors::{
     ACCEPT_ENVELOPE, ASSET_ID_BYTES, RECEIVER_PK32, SENDER_PK32, TRANSFER_BUNDLE,

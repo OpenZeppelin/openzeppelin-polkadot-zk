@@ -8,14 +8,13 @@ use crate::{
 use alloc::{boxed::Box, vec, vec::Vec};
 use confidential_assets_primitives::{HrmpMessenger, Ramp};
 use frame_support::traits::{
+    Currency, ExistenceRequirement,
     tokens::fungibles::Mutate as MultiTransfer,
     tokens::{Fortitude, Precision, Preservation, WithdrawReasons},
-    Currency, ExistenceRequirement,
 };
 use frame_support::{
-    parameter_types,
+    PalletId, parameter_types,
     traits::{ConstU32, Get},
-    PalletId,
 };
 use parity_scale_codec::Encode;
 use polkadot_sdk::{
@@ -24,7 +23,7 @@ use polkadot_sdk::{
 };
 use sp_runtime::{
     DispatchError,
-    {traits::AccountIdConversion, BoundedVec},
+    {BoundedVec, traits::AccountIdConversion},
 };
 use xcm::latest::prelude::*;
 use xcm::{VersionedLocation, VersionedXcm};

@@ -16,7 +16,7 @@ use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain_primitives::primitives::Sibling;
 use polkadot_sdk::polkadot_sdk_frame::traits::Disabled;
-use xcm::latest::{prelude::*, WESTEND_GENESIS_HASH};
+use xcm::latest::{WESTEND_GENESIS_HASH, prelude::*};
 use xcm_builder::{
     AccountId32Aliases, AllowHrmpNotificationsFromRelayChain, AllowKnownQueryResponses,
     AllowSubscriptionsFrom, AllowTopLevelPaidExecutionFrom, DescribeAllTerminal, DescribeFamily,

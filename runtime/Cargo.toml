@@ -52,6 +52,8 @@ runtime-benchmarks = [
 	"cumulus-pallet-parachain-system/runtime-benchmarks",
 	"hex-literal",
 	"polkadot-sdk/runtime-benchmarks",
+	"pallet-zkhe/runtime-benchmarks",
+	"pallet-confidential-assets/runtime-benchmarks",
 ]
 
 try-runtime = [

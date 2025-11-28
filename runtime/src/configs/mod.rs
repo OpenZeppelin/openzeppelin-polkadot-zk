@@ -9,25 +9,24 @@ use polkadot_sdk::{staging_xcm_builder as xcm_builder, staging_xcm_executor as x
 use cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use frame_support::{
-    derive_impl,
+    PalletId, derive_impl,
     dispatch::DispatchClass,
     parameter_types,
     traits::{
-        AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse,
+        AsEnsureOriginWithArg, ConstBool, ConstU8, ConstU32, ConstU64, EitherOfDiverse,
         TransformOrigin, VariantCountOf,
     },
     weights::{ConstantMultiplier, Weight},
-    PalletId,
 };
 use frame_system::EnsureSigned;
 use frame_system::{
-    limits::{BlockLength, BlockWeights},
     EnsureRoot,
+    limits::{BlockLength, BlockWeights},
 };
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
 use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
 use polkadot_runtime_common::{
-    xcm_sender::NoPriceForMessageDelivery, BlockHashCount, SlowAdjustingFeeUpdate,
+    BlockHashCount, SlowAdjustingFeeUpdate, xcm_sender::NoPriceForMessageDelivery,
 };
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::Perbill;
@@ -36,12 +35,12 @@ use xcm::latest::prelude::BodyId;
 
 // Local module imports
 use super::{
+    AVERAGE_ON_INITIALIZE_RATIO, AccountId, AssetId, Aura, Balance, Balances, Block, BlockNumber,
+    CollatorSelection, ConsensusHook, EXISTENTIAL_DEPOSIT, HOURS, Hash, MAXIMUM_BLOCK_WEIGHT,
+    MICRO_UNIT, MessageQueue, NORMAL_DISPATCH_RATIO, Nonce, PalletInfo, ParachainSystem, Runtime,
+    RuntimeCall, RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask,
+    SLOT_DURATION, Session, SessionKeys, System, UNIT, VERSION, WeightToFee, XcmpQueue,
     weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
-    AccountId, AssetId, Aura, Balance, Balances, Block, BlockNumber, CollatorSelection,
-    ConsensusHook, Hash, MessageQueue, Nonce, PalletInfo, ParachainSystem, Runtime, RuntimeCall,
-    RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask, Session,
-    SessionKeys, System, WeightToFee, XcmpQueue, AVERAGE_ON_INITIALIZE_RATIO, EXISTENTIAL_DEPOSIT,
-    HOURS, MAXIMUM_BLOCK_WEIGHT, MICRO_UNIT, NORMAL_DISPATCH_RATIO, SLOT_DURATION, UNIT, VERSION,
 };
 pub use xcm_config::LocationToAccountId;
 use xcm_config::{LocalOriginToLocation, RelayLocation, XcmOriginToTransactDispatchOrigin};
@@ -159,11 +158,22 @@ parameter_types! {
     pub const UnitBody: BodyId = BodyId::Unit;
 }
 
+pub type AssetIdParameter = parity_scale_codec::Compact<AssetId>;
+
+/// Custom benchmark helper for pallet-assets that works with Compact<u128> asset IDs
+pub struct AssetsBenchmarkHelper;
+
+impl pallet_assets::BenchmarkHelper<AssetIdParameter> for AssetsBenchmarkHelper {
+    fn create_asset_id_parameter(id: u32) -> parity_scale_codec::Compact<u128> {
+        parity_scale_codec::Compact(id as u128)
+    }
+}
+
 impl pallet_assets::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type Balance = Balance;
     type AssetId = AssetId;
-    type AssetIdParameter = parity_scale_codec::Compact<AssetId>;
+    type AssetIdParameter = AssetIdParameter;
     type Currency = Balances;
     type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
     type ForceOrigin = EnsureRoot<AccountId>;
@@ -180,7 +190,7 @@ impl pallet_assets::Config for Runtime {
     type AssetAccountDeposit = AssetAccountDeposit;
     type RemoveItemsLimit = frame_support::traits::ConstU32<1000>;
     #[cfg(feature = "runtime-benchmarks")]
-    type BenchmarkHelper = ();
+    type BenchmarkHelper = AssetsBenchmarkHelper;
 }
 
 parameter_types! {

@@ -77,8 +77,8 @@ fn sender_range_context_from_bundle(
 ) -> [u8; 32] {
     use curve25519_dalek::ristretto::CompressedRistretto;
     use zkhe_primitives::{
-        append_point, challenge_scalar as fs_chal, labels, new_transcript, Ciphertext,
-        PublicContext, SDK_VERSION,
+        Ciphertext, PublicContext, SDK_VERSION, append_point, challenge_scalar as fs_chal, labels,
+        new_transcript,
     };
 
     let ct = Ciphertext::from_bytes(delta_ct_bytes).expect("valid delta ct");

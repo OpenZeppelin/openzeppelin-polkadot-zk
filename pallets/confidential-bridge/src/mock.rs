@@ -3,9 +3,8 @@ use confidential_assets_primitives::{
     ConfidentialBackend, EncryptedAmount, HrmpMessenger, InputProof, PublicKeyBytes, ZkVerifier,
 };
 use frame_support::{
-    construct_runtime, derive_impl, parameter_types,
+    PalletId, construct_runtime, derive_impl, parameter_types,
     traits::{ConstU32, ConstU64},
-    PalletId,
 };
 use sp_runtime::BuildStorage;
 
