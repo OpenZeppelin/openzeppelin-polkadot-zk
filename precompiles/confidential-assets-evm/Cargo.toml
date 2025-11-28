@@ -1,0 +1,46 @@
+[package]
+name = "pallet-evm-precompile-confidential-assets"
+authors = { workspace = true }
+description = "EVM precompile for confidential assets"
+edition = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+version = "0.1.0"
+
+[dependencies]
+# Local
+confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
+pallet-confidential-assets = { path = "../../pallets/confidential-assets", default-features = false }
+pallet-zkhe = { path = "../../pallets/zkhe", default-features = false }
+
+# Substrate
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+parity-scale-codec = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+
+# Frontier
+fp-evm = { workspace = true }
+pallet-evm = { workspace = true }
+precompile-utils = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+	"confidential-assets-primitives/std",
+	"fp-evm/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-confidential-assets/std",
+	"pallet-evm/std",
+	"pallet-zkhe/std",
+	"parity-scale-codec/std",
+	"precompile-utils/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-std/std",
+]

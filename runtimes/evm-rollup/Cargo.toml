@@ -11,6 +11,7 @@ version = "0.1.0"
 # Local
 confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
 pallet-confidential-assets = { path = "../../pallets/confidential-assets", default-features = false }
+pallet-evm-precompile-confidential-assets = { path = "../../precompiles/confidential-assets-evm", default-features = false }
 pallet-zkhe = { path = "../../pallets/zkhe", default-features = false }
 zkhe-verifier = { path = "../../zkhe-verifier", default-features = false }
 
@@ -102,6 +103,7 @@ std = [
 	"pallet-base-fee/std",
 	"pallet-collator-selection/std",
 	"pallet-confidential-assets/std",
+	"pallet-evm-precompile-confidential-assets/std",
 	"pallet-ethereum/std",
 	"pallet-evm-chain-id/std",
 	"pallet-evm/std",
