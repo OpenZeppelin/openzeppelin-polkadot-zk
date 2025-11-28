@@ -1,6 +1,8 @@
 // pallets/confidential-assets/src/lib.rs
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod weights;
+
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -48,10 +50,10 @@ pub mod pallet {
 
         type AssetMetadata: AssetMetadataProvider<Self::AssetId>;
 
-        type WeightInfo: WeightData;
+        type WeightInfo: WeightInfo;
     }
 
-    pub trait WeightData {
+    pub trait WeightInfo {
         fn set_public_key() -> Weight;
         fn confidential_transfer() -> Weight;
         fn confidential_transfer_from() -> Weight;
@@ -59,7 +61,7 @@ pub mod pallet {
         fn confidential_transfer_from_and_call() -> Weight;
         fn disclose_amount() -> Weight;
     }
-    impl WeightData for () {
+    impl WeightInfo for () {
         fn set_public_key() -> Weight {
             Weight::from_parts(10_000, 0)
         }

@@ -2346,8 +2346,6 @@ dependencies = [
  "hex-literal",
  "log",
  "pallet-confidential-assets",
- "pallet-confidential-bridge",
- "pallet-confidential-escrow",
  "pallet-zkhe",
  "parity-scale-codec",
  "polkadot-sdk 2503.0.1",
@@ -9981,6 +9979,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "zkhe-vectors",
 ]
 
 [[package]]

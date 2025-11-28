@@ -43,7 +43,7 @@ use super::{
     weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
 };
 pub use xcm_config::LocationToAccountId;
-use xcm_config::{LocalOriginToLocation, RelayLocation, XcmOriginToTransactDispatchOrigin};
+use xcm_config::{RelayLocation, XcmOriginToTransactDispatchOrigin};
 
 parameter_types! {
     pub const Version: RuntimeVersion = VERSION;
@@ -161,8 +161,10 @@ parameter_types! {
 pub type AssetIdParameter = parity_scale_codec::Compact<AssetId>;
 
 /// Custom benchmark helper for pallet-assets that works with Compact<u128> asset IDs
+#[cfg(feature = "runtime-benchmarks")]
 pub struct AssetsBenchmarkHelper;
 
+#[cfg(feature = "runtime-benchmarks")]
 impl pallet_assets::BenchmarkHelper<AssetIdParameter> for AssetsBenchmarkHelper {
     fn create_asset_id_parameter(id: u32) -> parity_scale_codec::Compact<u128> {
         parity_scale_codec::Compact(id as u128)
