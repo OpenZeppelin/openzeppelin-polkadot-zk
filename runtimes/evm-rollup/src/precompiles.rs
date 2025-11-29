@@ -9,7 +9,7 @@ use pallet_evm::{
     AddressMapping, IsPrecompileResult, Precompile, PrecompileHandle, PrecompileResult,
     PrecompileSet,
 };
-use pallet_evm_precompile_confidential_assets::ConfidentialAssetsPrecompile;
+use confidential_assets_evm_precompile::ConfidentialAssetsPrecompile;
 use pallet_evm_precompile_modexp::Modexp;
 use pallet_evm_precompile_sha3fips::Sha3FIPS256;
 use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripemd160, Sha256};

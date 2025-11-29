@@ -1,7 +1,7 @@
 [package]
-name = "pallet-evm-precompile-confidential-assets"
+name = "confidential-assets-evm-precompile"
 authors = { workspace = true }
-description = "EVM precompile for confidential assets"
+description = "Frontier EVM precompile for confidential assets"
 edition = { workspace = true }
 license = { workspace = true }
 repository = { workspace = true }
@@ -26,6 +26,17 @@ sp-std = { workspace = true }
 fp-evm = { workspace = true }
 pallet-evm = { workspace = true }
 precompile-utils = { workspace = true }
+
+[dev-dependencies]
+hex-literal = { workspace = true }
+pallet-balances = { workspace = true, features = ["insecure_zero_ed", "std"] }
+pallet-timestamp = { workspace = true, features = ["std"] }
+pallet-assets = { workspace = true, features = ["std"] }
+parity-scale-codec = { workspace = true, features = ["max-encoded-len", "std"] }
+precompile-utils = { workspace = true, features = ["std", "testing"] }
+scale-info = { workspace = true, features = ["derive", "std"] }
+sp-runtime = { workspace = true, features = ["std"] }
+zkhe-verifier = { path = "../../zkhe-verifier", default-features = false, features = ["std"] }
 
 [features]
 default = ["std"]

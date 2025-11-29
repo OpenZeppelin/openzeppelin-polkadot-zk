@@ -109,11 +109,12 @@ pub mod views {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::vec;
 
     #[test]
     fn types_are_encodable() {
         let input = calls::SetPublicKeyInput {
-            elgamal_pk: [0u8; 32],
+            elgamal_pk: vec![0u8; 64].try_into().expect("valid pubkey size"),
         };
         let encoded = input.encode();
         assert!(!encoded.is_empty());
