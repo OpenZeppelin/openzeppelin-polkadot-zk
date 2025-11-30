@@ -3,3 +3,10 @@ target-install/
 */book/
 # remove once repo cleaned before merging
 docs/
+
+# Foundry/Solidity build artifacts
+cache/
+out/
+contracts/cache/
+contracts/out/
+contracts/README.md
