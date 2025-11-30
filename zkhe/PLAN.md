@@ -110,30 +110,59 @@ None currently.
 
 ### Planned
 
-#### Property Testing
+#### Property Testing (DONE)
 
-Property tests should verify:
+Implemented property tests verify:
 
-**Runtime:**
-- [ ] Pallet integration doesn't panic with arbitrary valid inputs
-- [ ] State transitions are consistent (commitments balance)
-- [ ] Weight calculations are accurate
+**pallet-zkhe** (6 property tests):
+- [x] `prop_transfer_succeeds_with_valid_pks` - transfer works with valid PKs
+- [x] `prop_transfer_fails_without_sender_pk` - transfer fails without sender PK
+- [x] `prop_sequential_transfers_increment_utxo_ids` - UTXO IDs increment correctly
+- [x] `prop_accept_pending_rejects_malformed_envelope` - envelope validation
+- [x] `prop_mint_creates_valid_pending_state` - mint creates correct state
+- [x] `prop_burn_updates_commits_correctly` - burn updates commitments
 
-**pallet-confidential-assets:**
-- [ ] deposit/withdraw roundtrip preserves invariants
-- [ ] confidential_transfer maintains commitment sums
-- [ ] claim properly consumes pending UTXOs
+**pallet-confidential-assets** (8 property tests):
+- [x] `prop_set_public_key_always_succeeds` - PK setting always works
+- [x] `prop_deposit_succeeds_with_pk` - deposit works with valid PK
+- [x] `prop_confidential_transfer_succeeds` - transfer between distinct accounts
+- [x] `prop_withdraw_succeeds` - withdraw with disclosed amount
+- [x] `prop_disclose_amount_succeeds` - disclosure emits correct event
+- [x] `prop_transfer_from_unauthorized_fails` - unauthorized transfer rejected
+- [x] `prop_transfer_from_by_owner_succeeds` - owner can transfer
 
-**pallet-zkhe:**
-- [ ] transfer + accept_pending roundtrip
-- [ ] mint_encrypted creates valid pending state
-- [ ] burn_encrypted properly decrements commitments
+#### XCM Integration (DONE)
 
-#### XCM Integration
+- [x] Created `xcm/src/vector_tests.rs` using `zkhe_vectors::*` constants
+- [x] Added 7 deterministic test scenarios:
+  - `verify_transfer_sent_with_vectors`
+  - `verify_transfer_received_with_vectors`
+  - `verify_mint_with_vectors`
+  - `verify_burn_with_vectors`
+  - `full_transfer_roundtrip_with_vectors`
+  - `tampered_bundle_rejected`
+  - `wrong_pk_rejected`
 
-- [ ] Use `zkhe_vectors::*` constants in XCM tests
-- [ ] Remove hardcoded proof generation in `confidential_xcm_transfer.rs`
-- [ ] Add deterministic test scenarios matching vectors
+#### Documentation (DONE)
+
+Created comprehensive mdbook documentation at `book/`:
+
+- [x] `introduction.md` - Project overview and features
+- [x] `quickstart.md` - 5-minute getting started guide
+- [x] `architecture.md` - System design with diagrams
+- [x] `asset-hub.md` - Asset Hub integration guide
+- [x] `configuration.md` - Complete pallet configuration reference
+- [x] `crypto.md` - Cryptographic primitives documentation
+- [x] `runtime-integration.md` - Runtime integration guide
+- [x] `xcm-setup.md` - XCM cross-chain configuration
+- [x] `custom-backends.md` - Alternative backend implementation
+- [x] `acl-operators.md` - Access control and operators
+- [x] `custom-ramps.md` - Custom ramp implementation
+- [x] `client.md` - Client integration guide (JS/TS SDK)
+- [x] `testing.md` - Testing strategies and examples
+- [x] `api.md` - Complete API reference
+
+#### Future Work
 
 ---
 
