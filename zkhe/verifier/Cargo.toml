@@ -17,10 +17,10 @@ rand_chacha = { version = "0.3", default-features = false }
 rand_core = { version = "0.6", default-features = false }
 subtle            = { version = "2", default-features = false }
 
-confidential-assets-primitives = { path = "../primitives/confidential-assets", default-features = false }
+confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
 sha2 = { version = "0.10.9", default-features = false }
-zkhe-primitives = { path = "../primitives/zkhe", default-features = false }
-zkhe-vectors = { path = "../zkhe-vectors", default-features = false }
+zkhe-primitives = { path = "../../primitives/zkhe", default-features = false }
+zkhe-vectors = { path = "../vectors", default-features = false }
 
 [dev-dependencies]
 criterion = "0.5"
