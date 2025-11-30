@@ -324,6 +324,10 @@ mod runtime {
     pub type ConfidentialEscrow = pallet_confidential_escrow;
     #[runtime::pallet_index(43)]
     pub type ConfidentialBridge = pallet_confidential_bridge;
+
+    // Smart contracts (PolkaVM)
+    #[runtime::pallet_index(50)]
+    pub type Revive = pallet_revive;
 }
 
 #[docify::export(register_validate_block)]
