@@ -14,8 +14,8 @@ struct Mean {
 fn main() {
     let block_ms = 6000.0; // 6-second block
     let paths = [
-        "../../target/criterion/verify_transfer_sent/transfer/new/estimates.json",
-        "../../target/criterion/verify_transfer_received/accept/new/estimates.json",
+        "../../../target/criterion/verify_transfer_sent/transfer/new/estimates.json",
+        "../../../target/criterion/verify_transfer_received/accept/new/estimates.json",
     ];
 
     println!("{:<36} {:>12} {:>12}", "Benchmark", "mean_ms", "proofs/6s");

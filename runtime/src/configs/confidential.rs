@@ -6,7 +6,7 @@ use crate::{
     RuntimeCall, RuntimeEvent, RuntimeOrigin, Zkhe,
 };
 use alloc::{boxed::Box, vec, vec::Vec};
-use confidential_assets_primitives::{HrmpMessenger, Ramp};
+use confidential_assets_primitives::{HrmpMessenger, NetworkIdProvider, Ramp};
 use frame_support::traits::{
     tokens::fungibles::Mutate as MultiTransfer,
     tokens::{Fortitude, Precision, Preservation, WithdrawReasons},
@@ -30,11 +30,24 @@ use xcm::latest::prelude::*;
 use xcm::{VersionedLocation, VersionedXcm};
 use xcm_builder::EnsureXcmOrigin;
 
+/// Network ID provider for this runtime.
+///
+/// In production, this should return a unique identifier for the network (e.g., genesis hash
+/// or a configured chain-specific ID) to provide domain separation for ZK proofs.
+pub struct RuntimeNetworkId;
+impl NetworkIdProvider for RuntimeNetworkId {
+    fn network_id() -> [u8; 32] {
+        // TODO: Replace with actual network identifier (e.g., from genesis config)
+        // For now returns zeros to maintain compatibility with test vectors
+        [0u8; 32]
+    }
+}
+
 impl pallet_zkhe::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type AssetId = AssetId;
     type Balance = Balance;
-    type Verifier = zkhe_verifier::ZkheVerifier;
+    type Verifier = zkhe_verifier::ZkheVerifier<RuntimeNetworkId>;
     type WeightInfo = ();
 }
 impl pallet_confidential_assets::Config for Runtime {

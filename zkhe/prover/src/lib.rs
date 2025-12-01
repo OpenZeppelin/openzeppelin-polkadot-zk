@@ -1,24 +1,81 @@
-//! zk_elgamal_prover — std-only prover matching the two-phase flow
+//! # zkhe-prover — ZK-ElGamal Proof Generation
 //!
-//! Phase 1 (sender initiates):
-//!   - `prove_sender_transfer(...)`
-//!     Emits:
-//!       * Δciphertext (64 bytes: C||D)
-//!       * sender bundle bytes:
-//!           delta_comm(32) || link(192) || len1(2) || range_from_new || len2(2)=0
-//!       * delta_comm(32) explicitly
+//! This crate provides client-side proof generation for confidential transfers
+//! using the ZK-ElGamal scheme. It implements a two-phase transfer protocol:
 //!
-//! Phase 2 (receiver accepts):
-//!   - `prove_receiver_accept(...)`
-//!     Emits a compact envelope (Option A to match verifier):
-//!       * delta_comm(32) || len1(2) || range_avail_new || len2(2) || range_pending_new
+//! ## Two-Phase Transfer Protocol
 //!
-//! Notes:
-//! - Bulletproofs are single 64-bit range proofs bound to a transcript context identical to
-//!   the verifier's binding logic.
-//! - For simplicity, `prove_receiver_accept` requires the receiver openings for both
-//!   available and pending commitments, plus the transfer witnesses (Δv, ρ). In production,
-//!   the Δv, ρ can be reconstructed from consumed UTXOs if desired.
+//! **Phase 1 - Sender initiates transfer:**
+//! - [`prove_sender_transfer`] generates the sender's ZK proof
+//! - Outputs: Δciphertext (64 bytes), sender bundle with range proof
+//!
+//! **Phase 2 - Receiver accepts transfer:**
+//! - [`prove_receiver_accept`] generates the receiver's acceptance proof
+//! - Outputs: acceptance envelope with range proofs for both balances
+//!
+//! ## Mint/Burn Operations
+//!
+//! - [`prove_mint`] - Convert public assets to confidential (deposit)
+//! - [`prove_burn`] - Convert confidential assets to public (withdraw)
+//!
+//! ## Quick Start
+//!
+//! ```rust,ignore
+//! use zkhe_prover::{prove_sender_transfer, SenderInput};
+//! use curve25519_dalek::ristretto::RistrettoPoint;
+//! use curve25519_dalek::scalar::Scalar;
+//!
+//! // Generate keypairs (in production, use secure key generation)
+//! let sender_pk: RistrettoPoint = /* ... */;
+//! let receiver_pk: RistrettoPoint = /* ... */;
+//!
+//! // Prepare transfer input
+//! let input = SenderInput {
+//!     asset_id: vec![0u8; 32],
+//!     network_id: [0u8; 32],
+//!     sender_pk,
+//!     receiver_pk,
+//!     from_old_c: /* sender's current balance commitment */,
+//!     from_old_opening: (1000, Scalar::from(42u64)), // (value, blinding)
+//!     to_old_c: /* receiver's pending balance commitment */,
+//!     delta_value: 100, // amount to transfer
+//!     rng_seed: [0u8; 32], // use secure random in production
+//!     fee_c: None,
+//! };
+//!
+//! // Generate proof
+//! let output = prove_sender_transfer(&input)?;
+//!
+//! // Submit output.sender_bundle_bytes and output.delta_ct_bytes to chain
+//! ```
+//!
+//! ## Proof Byte Layouts
+//!
+//! **Sender Bundle:**
+//! ```text
+//! delta_comm(32) || link_proof(192) || len1(2) || range_from_new || len2(2)=0
+//! ```
+//!
+//! **Accept Envelope:**
+//! ```text
+//! delta_comm(32) || len1(2) || range_avail_new || len2(2) || range_pending_new
+//! ```
+//!
+//! **Mint Proof:**
+//! ```text
+//! minted_ct(64) || delta_comm(32) || link(192) || len1(2) || rp_pending || len2(2) || rp_total
+//! ```
+//!
+//! **Burn Proof:**
+//! ```text
+//! delta_comm(32) || link(192) || len1(2) || rp_avail || len2(2) || rp_total || amount_le(8)
+//! ```
+//!
+//! ## Security Notes
+//!
+//! - All cryptographic scalars use full 256-bit entropy
+//! - Bulletproofs provide 64-bit range proofs
+//! - Proofs are bound to transcript context for domain separation
 
 pub mod bench_vectors;
 #[cfg(test)]
@@ -31,31 +88,41 @@ use curve25519_dalek::{
 use merlin::Transcript;
 use rand::{RngCore, SeedableRng};
 use rand_chacha::ChaCha20Rng;
-use sha2::Sha512;
 use thiserror::Error;
 
 use zkhe_primitives::{
     Ciphertext, PublicContext, SDK_VERSION, append_point, challenge_scalar as fs_chal, labels,
-    new_transcript, point_to_bytes,
+    new_transcript, pedersen_h_generator, point_to_bytes,
 };
 
-// Interop check (optional)
+// Interop check (optional, behind feature flag)
+#[cfg(feature = "solana-interop")]
 use solana_zk_sdk::encryption::elgamal as sdk_elgamal;
 
 #[derive(Debug, Error)]
 pub enum ProverError {
-    #[error("malformed input")]
-    Malformed,
-    #[error("range proof failed")]
-    RangeProof,
-}
-
-fn pedersen_h_generator() -> RistrettoPoint {
-    RistrettoPoint::hash_from_bytes::<Sha512>(b"Zether/PedersenH")
+    #[error("malformed input: {0}")]
+    Malformed(&'static str),
+    #[error("invalid input: {0}")]
+    InvalidInput(&'static str),
+    #[error("range proof failed: {0}")]
+    RangeProof(&'static str),
+    #[error("arithmetic overflow in {0}")]
+    Overflow(&'static str),
 }
 
 fn transcript_for(ctx: &PublicContext) -> Transcript {
     new_transcript(ctx)
+}
+
+/// Generate a random scalar with full 256-bit entropy.
+///
+/// Unlike `Scalar::from(rng.next_u64())` which only provides 64 bits of entropy,
+/// this function uses the full scalar field capacity for production-grade security.
+fn random_scalar<R: RngCore>(rng: &mut R) -> Scalar {
+    let mut bytes = [0u8; 64];
+    rng.fill_bytes(&mut bytes);
+    Scalar::from_bytes_mod_order_wide(&bytes)
 }
 
 fn pad_or_trim_32(x: &[u8]) -> [u8; 32] {
@@ -165,7 +232,7 @@ fn prove_range_u64(
 
     let (proof, _bp_commit) =
         RangeProof::prove_single(&bp_gens, &pg, &mut t, value_u64, &blind_ng, 64)
-            .map_err(|_| ProverError::RangeProof)?;
+            .map_err(|_| ProverError::RangeProof("bulletproof generation failed"))?;
 
     Ok(proof.to_bytes())
 }
@@ -203,6 +270,20 @@ pub struct SenderOutput {
     pub to_new_c: [u8; 32], // computed for convenience (not applied on-chain in phase 1)
 }
 
+/// Generate a ZK proof for the sender side of a confidential transfer.
+///
+/// This is Phase 1 of the two-phase transfer protocol. The sender proves they
+/// have sufficient balance and creates an encrypted transfer amount.
+///
+/// # Arguments
+/// * `inp` - Sender input containing keys, commitments, and transfer amount
+///
+/// # Returns
+/// * `SenderOutput` containing the encrypted amount and proof bundle
+///
+/// # Errors
+/// * `ProverError::Overflow` - If balance arithmetic would overflow/underflow
+/// * `ProverError::RangeProof` - If Bulletproof generation fails
 pub fn prove_sender_transfer(inp: &SenderInput) -> Result<SenderOutput, ProverError> {
     let (v_from_old_u64, r_from_old) = inp.from_old_opening;
     let v_from_old = Scalar::from(v_from_old_u64);
@@ -210,17 +291,19 @@ pub fn prove_sender_transfer(inp: &SenderInput) -> Result<SenderOutput, ProverEr
     let dv = Scalar::from(dv_u64);
 
     let mut rng = ChaCha20Rng::from_seed(inp.rng_seed);
-    let k = Scalar::from(rng.next_u64()); // ElGamal randomness
-    let rho = Scalar::from(rng.next_u64()); // ΔC blind
-    let a_k = Scalar::from(rng.next_u64()); // CP blinding for k
-    let a_v = Scalar::from(rng.next_u64()); // CP blinding for v
-    let a_r = Scalar::from(rng.next_u64()); // CP blinding for rho
+    // Use full 256-bit entropy for cryptographic scalars
+    let k = random_scalar(&mut rng); // ElGamal randomness
+    let rho = random_scalar(&mut rng); // ΔC blind
+    let a_k = random_scalar(&mut rng); // Σ-proof blinding for k
+    let a_v = random_scalar(&mut rng); // Σ-proof blinding for v
+    let a_r = random_scalar(&mut rng); // Σ-proof blinding for rho
 
     let h = pedersen_h_generator();
     let delta_c = dv * G + rho * h;
     let delta_ct = elgamal_encrypt_delta(&inp.sender_pk, dv_u64, &k);
 
-    // SDK interop check
+    // SDK interop check (only when solana-interop feature is enabled)
+    #[cfg(feature = "solana-interop")]
     {
         let sdk_ct = {
             use solana_zk_sdk::encryption::elgamal::DecryptHandle;
@@ -283,7 +366,7 @@ pub fn prove_sender_transfer(inp: &SenderInput) -> Result<SenderOutput, ProverEr
         &from_new_bytes,
         v_from_old_u64
             .checked_sub(dv_u64)
-            .ok_or(ProverError::RangeProof)?,
+            .ok_or(ProverError::Overflow("sender balance - delta"))?,
         &(r_from_old - rho),
     )?;
 
@@ -336,6 +419,20 @@ pub struct ReceiverAcceptOutput {
     pub pending_new_c: [u8; 32],
 }
 
+/// Generate a ZK proof for the receiver to accept pending transfers.
+///
+/// This is Phase 2 of the two-phase transfer protocol. The receiver proves
+/// they can correctly update their available and pending balances.
+///
+/// # Arguments
+/// * `inp` - Receiver input containing keys, commitments, and transfer witnesses
+///
+/// # Returns
+/// * `ReceiverAcceptOutput` containing the acceptance envelope
+///
+/// # Errors
+/// * `ProverError::Overflow` - If balance arithmetic would overflow/underflow
+/// * `ProverError::RangeProof` - If Bulletproof generation fails
 pub fn prove_receiver_accept(
     inp: &ReceiverAcceptInput,
 ) -> Result<ReceiverAcceptOutput, ProverError> {
@@ -379,7 +476,7 @@ pub fn prove_receiver_accept(
         &avail_new_bytes,
         v_av_u64
             .checked_add(dv_u64)
-            .ok_or(ProverError::RangeProof)?,
+            .ok_or(ProverError::Overflow("available balance + delta"))?,
         &(r_av_old + rho),
     )?;
 
@@ -389,7 +486,7 @@ pub fn prove_receiver_accept(
         &pending_new_bytes,
         v_pend_u64
             .checked_sub(dv_u64)
-            .ok_or(ProverError::RangeProof)?,
+            .ok_or(ProverError::Overflow("pending balance - delta"))?,
         &(r_pend_old - rho),
     )?;
 
@@ -439,14 +536,28 @@ pub struct MintOutput {
     pub total_new_c: [u8; 32],      // convenience
 }
 
+/// Generate a ZK proof for minting (depositing) public assets into confidential balance.
+///
+/// This converts a known plaintext amount into an encrypted confidential balance.
+/// Used for the on-ramp from public to confidential assets.
+///
+/// # Arguments
+/// * `inp` - Mint input containing recipient key, old commitments, and mint amount
+///
+/// # Returns
+/// * `MintOutput` containing the minted ciphertext and proof
+///
+/// # Errors
+/// * `ProverError::Overflow` - If total supply would overflow
+/// * `ProverError::RangeProof` - If Bulletproof generation fails
 pub fn prove_mint(inp: &MintInput) -> Result<MintOutput, ProverError> {
     let (v_to_old_u64, r_to_old) = inp.to_pending_old_opening;
     let (v_total_old_u64, r_total_old) = inp.total_old_opening;
 
-    // Randomness
+    // Randomness - use full 256-bit entropy
     let mut rng = ChaCha20Rng::from_seed(inp.rng_seed);
-    let k = Scalar::from(rng.next_u64()); // ElGamal nonce
-    let rho = Scalar::from(rng.next_u64()); // ΔC blind
+    let k = random_scalar(&mut rng); // ElGamal nonce
+    let rho = random_scalar(&mut rng); // ΔC blind
 
     // ΔC and ciphertext to `to_pk`
     let h = pedersen_h_generator();
@@ -470,10 +581,10 @@ pub fn prove_mint(inp: &MintInput) -> Result<MintOutput, ProverError> {
     };
     let mut t = transcript_for(&ctx);
 
-    // Σ-proof commitments
-    let a_k = Scalar::from(rng.next_u64());
-    let a_v = Scalar::from(rng.next_u64());
-    let a_r = Scalar::from(rng.next_u64());
+    // Σ-proof commitments - use full 256-bit entropy
+    let a_k = random_scalar(&mut rng);
+    let a_v = random_scalar(&mut rng);
+    let a_r = random_scalar(&mut rng);
 
     let a1 = a_k * G;
     let a2 = a_v * G + a_k * inp.to_pk;
@@ -503,7 +614,7 @@ pub fn prove_mint(inp: &MintInput) -> Result<MintOutput, ProverError> {
         &to_new_bytes,
         v_to_old_u64
             .checked_add(dv_u64)
-            .ok_or(ProverError::RangeProof)?,
+            .ok_or(ProverError::Overflow("pending balance + mint amount"))?,
         &(r_to_old + rho),
     )?;
 
@@ -513,7 +624,7 @@ pub fn prove_mint(inp: &MintInput) -> Result<MintOutput, ProverError> {
         &total_new_bytes,
         v_total_old_u64
             .checked_add(dv_u64)
-            .ok_or(ProverError::RangeProof)?,
+            .ok_or(ProverError::Overflow("total supply + mint amount"))?,
         &(r_total_old + rho),
     )?;
 
@@ -571,13 +682,28 @@ pub struct BurnOutput {
     pub total_new_c: [u8; 32],      // convenience
 }
 
+/// Generate a ZK proof for burning (withdrawing) confidential assets to public balance.
+///
+/// This converts a confidential amount back to plaintext for public use.
+/// Used for the off-ramp from confidential to public assets.
+///
+/// # Arguments
+/// * `inp` - Burn input containing sender key, old commitments, and burn amount
+///
+/// # Returns
+/// * `BurnOutput` containing the amount ciphertext and proof (including disclosed amount)
+///
+/// # Errors
+/// * `ProverError::Overflow` - If balance would underflow
+/// * `ProverError::RangeProof` - If Bulletproof generation fails
 pub fn prove_burn(inp: &BurnInput) -> Result<BurnOutput, ProverError> {
     let (v_from_old_u64, r_from_old) = inp.from_avail_old_opening;
     let (v_total_old_u64, r_total_old) = inp.total_old_opening;
 
+    // Randomness - use full 256-bit entropy
     let mut rng = ChaCha20Rng::from_seed(inp.rng_seed);
-    let k = Scalar::from(rng.next_u64()); // ElGamal nonce
-    let rho = Scalar::from(rng.next_u64()); // ΔC blind
+    let k = random_scalar(&mut rng); // ElGamal nonce
+    let rho = random_scalar(&mut rng); // ΔC blind
 
     let h = pedersen_h_generator();
     let dv_u64 = inp.burn_value;
@@ -599,10 +725,10 @@ pub fn prove_burn(inp: &BurnInput) -> Result<BurnOutput, ProverError> {
     };
     let mut t = transcript_for(&ctx);
 
-    // Σ-proof commitments
-    let a_k = Scalar::from(rng.next_u64());
-    let a_v = Scalar::from(rng.next_u64());
-    let a_r = Scalar::from(rng.next_u64());
+    // Σ-proof commitments - use full 256-bit entropy
+    let a_k = random_scalar(&mut rng);
+    let a_v = random_scalar(&mut rng);
+    let a_r = random_scalar(&mut rng);
 
     let a1 = a_k * G;
     let a2 = a_v * G + a_k * inp.from_pk;
@@ -632,7 +758,7 @@ pub fn prove_burn(inp: &BurnInput) -> Result<BurnOutput, ProverError> {
         &from_new_bytes,
         v_from_old_u64
             .checked_sub(dv_u64)
-            .ok_or(ProverError::RangeProof)?,
+            .ok_or(ProverError::Overflow("available balance - burn amount"))?,
         &(r_from_old - rho),
     )?;
 
@@ -642,7 +768,7 @@ pub fn prove_burn(inp: &BurnInput) -> Result<BurnOutput, ProverError> {
         &total_new_bytes,
         v_total_old_u64
             .checked_sub(dv_u64)
-            .ok_or(ProverError::RangeProof)?,
+            .ok_or(ProverError::Overflow("total supply - burn amount"))?,
         &(r_total_old - rho),
     )?;
 

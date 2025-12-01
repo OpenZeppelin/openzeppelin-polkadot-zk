@@ -20,6 +20,7 @@ confidential-assets-primitives = { path = "../../primitives/confidential-assets"
 
 [dev-dependencies]
 pallet-zkhe = { path = "../zkhe" }
+proptest = "1.5"
 sp-io = { workspace = true }
 
 [features]

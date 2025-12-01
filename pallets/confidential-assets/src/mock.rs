@@ -1,6 +1,7 @@
 use crate::pallet as pallet_confidential_assets;
 use confidential_assets_primitives::{
-    ConfidentialBackend, EncryptedAmount, InputProof, PublicKeyBytes, Ramp, ZkVerifier,
+    ConfidentialBackend, EncryptedAmount, InputProof, NetworkIdProvider, PublicKeyBytes, Ramp,
+    ZkVerifier,
 };
 use frame_support::{construct_runtime, derive_impl};
 use sp_runtime::BuildStorage;
@@ -13,6 +14,16 @@ pub const BOB: AccountId = 2;
 pub const CHARLIE: AccountId = 3;
 pub const ASSET: AssetId = 7;
 
+// --- Mock Network ID Provider -----------------------------------------------
+// Returns zero network ID for testing.
+
+pub struct MockNetworkId;
+impl NetworkIdProvider for MockNetworkId {
+    fn network_id() -> [u8; 32] {
+        [0u8; 32]
+    }
+}
+
 // --- A very simple, always-OK mock verifier ---------------------------------
 // It returns deterministic 32-byte commitments and 64-byte ciphertexts.
 // This allows us to assert pallet state transitions without touching ZK logic.
@@ -22,6 +33,7 @@ pub struct AlwaysOkVerifier;
 
 impl ZkVerifier for AlwaysOkVerifier {
     type Error = ();
+    type NetworkIdProvider = MockNetworkId;
     // Disclose encrypted amount -> constant u64 (e.g., 123)
     fn disclose(_asset: &[u8], _pk: &[u8], _cipher: &[u8]) -> Result<u64, ()> {
         Ok(123)

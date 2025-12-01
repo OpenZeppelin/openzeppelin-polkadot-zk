@@ -6,6 +6,13 @@ use curve25519_dalek::{
 use rand::{RngCore, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 
+/// Helper to generate random scalar using same method as prover (256-bit entropy)
+fn random_scalar_test<R: RngCore>(rng: &mut R) -> Scalar {
+    let mut bytes = [0u8; 64];
+    rng.fill_bytes(&mut bytes);
+    Scalar::from_bytes_mod_order_wide(&bytes)
+}
+
 #[test]
 fn sender_receiver_round_trip_shapes() {
     let mut seed = [0u8; 32];
@@ -48,9 +55,10 @@ fn sender_receiver_round_trip_shapes() {
     assert!(s_out.sender_bundle_bytes.len() >= 32 + 192 + 2 + 1 + 2);
 
     // Deterministically recover rho to build receiver's pending opening
+    // Must match the prover's random_scalar usage: k is first, rho is second
     let mut rng = ChaCha20Rng::from_seed(seed);
-    let _k_ignored = rng.next_u64(); // first draw = k
-    let delta_rho = Scalar::from(rng.next_u64()); // second draw = rho
+    let _k_ignored = random_scalar_test(&mut rng); // first draw = k (256-bit)
+    let delta_rho = random_scalar_test(&mut rng); // second draw = rho (256-bit)
 
     // Build ΔC and pending_old (= ΔC) so accept will zero pending and raise available
     let delta_comm = CompressedRistretto(s_out.delta_comm_bytes)

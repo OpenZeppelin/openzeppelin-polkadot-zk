@@ -21,7 +21,7 @@ polkadot-sdk = { workspace = true, default-features = false, features = [ "cumul
 scale-info = { workspace = true, features = [ "derive" ] }
 serde_json = { workspace = true, default-features = false, features = [ "alloc" ] }
 smallvec = { workspace = true, default-features = true }
-zkhe-verifier = { path = "../zkhe-verifier", default-features = false }
+zkhe-verifier = { path = "../zkhe/verifier", default-features = false }
 
 [dependencies.cumulus-pallet-parachain-system]
 workspace = true

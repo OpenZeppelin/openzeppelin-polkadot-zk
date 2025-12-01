@@ -16,8 +16,9 @@ pallet-confidential-escrow = { path = "../pallets/confidential-escrow", default-
 pallet-zkhe = { path = "../pallets/zkhe", default-features = false }
 parity-scale-codec = { workspace = true, features = [ "derive" ] }
 scale-info = { workspace = true, default-features = true, features = [ "derive" ] }
-zkhe-prover = { path = "../zkhe-prover" }
-zkhe-verifier = { path = "../zkhe-verifier", default-features = false }
+zkhe-prover = { path = "../zkhe/prover" }
+zkhe-vectors = { path = "../zkhe/vectors" }
+zkhe-verifier = { path = "../zkhe/verifier", default-features = false }
 [dependencies.frame-support]
 workspace = true
 default-features = true
