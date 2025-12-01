@@ -4,7 +4,19 @@
 //! deterministic, pre-computed proofs. This enables reproducible testing
 //! without needing to regenerate proofs each test run.
 
+use confidential_assets_primitives::NetworkIdProvider;
 use zkhe_vectors::*;
+
+/// Test network ID provider - returns zero to match vector generation.
+pub struct TestNetworkId;
+impl NetworkIdProvider for TestNetworkId {
+    fn network_id() -> [u8; 32] {
+        [0u8; 32]
+    }
+}
+
+/// Type alias for verifier with test network ID
+type TestVerifier = zkhe_verifier::ZkheVerifier<TestNetworkId>;
 
 /// Verifier test: verify transfer_sent with pre-generated vectors
 #[test]
@@ -12,7 +24,6 @@ fn verify_transfer_sent_with_vectors() {
     use confidential_assets_primitives::ZkVerifier;
     use curve25519_dalek::ristretto::CompressedRistretto;
     use curve25519_dalek::traits::Identity;
-    use zkhe_verifier::ZkheVerifier;
 
     // Use vectors directly
     let asset_id = ASSET_ID_BYTES;
@@ -22,7 +33,7 @@ fn verify_transfer_sent_with_vectors() {
     let to_old_c = curve25519_dalek::ristretto::RistrettoPoint::identity();
 
     // Verify sender proof
-    let result = <ZkheVerifier as ZkVerifier>::verify_transfer_sent(
+    let result = <TestVerifier as ZkVerifier>::verify_transfer_sent(
         asset_id,
         &SENDER_PK32,
         &RECEIVER_PK32,
@@ -55,7 +66,6 @@ fn verify_transfer_received_with_vectors() {
     use confidential_assets_primitives::ZkVerifier;
     use curve25519_dalek::ristretto::CompressedRistretto;
     use curve25519_dalek::traits::Identity;
-    use zkhe_verifier::ZkheVerifier;
 
     let asset_id = ASSET_ID_BYTES;
     let pk_receiver_pt = CompressedRistretto(RECEIVER_PK32)
@@ -70,7 +80,7 @@ fn verify_transfer_received_with_vectors() {
 
     let pending_commits: Vec<[u8; 32]> = vec![pending_old_c.compress().to_bytes()];
 
-    let result = <ZkheVerifier as ZkVerifier>::verify_transfer_received(
+    let result = <TestVerifier as ZkVerifier>::verify_transfer_received(
         asset_id,
         &pk_receiver_pt.compress().to_bytes(),
         &avail_old_c.compress().to_bytes(),
@@ -100,12 +110,11 @@ fn verify_transfer_received_with_vectors() {
 fn verify_mint_with_vectors() {
     use confidential_assets_primitives::{PublicKeyBytes, ZkVerifier};
     use core::convert::TryFrom;
-    use zkhe_verifier::ZkheVerifier;
 
     let asset_id = ASSET_ID_BYTES;
     let to_pk_bv = PublicKeyBytes::try_from(RECEIVER_PK32.to_vec()).expect("pk bv");
 
-    let result = <ZkheVerifier as ZkVerifier>::verify_mint(
+    let result = <TestVerifier as ZkVerifier>::verify_mint(
         asset_id,
         &to_pk_bv,
         &[], // to_old_pending = identity
@@ -136,7 +145,6 @@ fn verify_burn_with_vectors() {
     use confidential_assets_primitives::{EncryptedAmount, PublicKeyBytes, ZkVerifier};
     use core::convert::TryFrom;
     use curve25519_dalek::ristretto::CompressedRistretto;
-    use zkhe_verifier::ZkheVerifier;
 
     let asset_id = ASSET_ID_BYTES;
     let from_pk_bv = PublicKeyBytes::try_from(SENDER_PK32.to_vec()).expect("pk bv");
@@ -149,7 +157,7 @@ fn verify_burn_with_vectors() {
 
     let amount_ct_bv = EncryptedAmount::try_from(BURN_AMOUNT_CT_64.to_vec()).expect("ct bv");
 
-    let result = <ZkheVerifier as ZkVerifier>::verify_burn(
+    let result = <TestVerifier as ZkVerifier>::verify_burn(
         asset_id,
         &from_pk_bv,
         &from_old_c.compress().to_bytes(),
@@ -182,7 +190,6 @@ fn full_transfer_roundtrip_with_vectors() {
     use confidential_assets_primitives::ZkVerifier;
     use curve25519_dalek::ristretto::CompressedRistretto;
     use curve25519_dalek::traits::Identity;
-    use zkhe_verifier::ZkheVerifier;
 
     let asset_id = ASSET_ID_BYTES;
 
@@ -193,7 +200,7 @@ fn full_transfer_roundtrip_with_vectors() {
     let to_old_c = curve25519_dalek::ristretto::RistrettoPoint::identity();
 
     let (from_new_bytes, to_new_pending_bytes) =
-        <ZkheVerifier as ZkVerifier>::verify_transfer_sent(
+        <TestVerifier as ZkVerifier>::verify_transfer_sent(
             asset_id,
             &SENDER_PK32,
             &RECEIVER_PK32,
@@ -221,7 +228,7 @@ fn full_transfer_roundtrip_with_vectors() {
     let pending_commits: Vec<[u8; 32]> = vec![pending_old_c.compress().to_bytes()];
 
     let (avail_new_bytes, pending_new_bytes) =
-        <ZkheVerifier as ZkVerifier>::verify_transfer_received(
+        <TestVerifier as ZkVerifier>::verify_transfer_received(
             asset_id,
             &pk_receiver_pt.compress().to_bytes(),
             &avail_old_c.compress().to_bytes(),
@@ -255,7 +262,6 @@ fn tampered_bundle_rejected() {
     use confidential_assets_primitives::ZkVerifier;
     use curve25519_dalek::ristretto::CompressedRistretto;
     use curve25519_dalek::traits::Identity;
-    use zkhe_verifier::ZkheVerifier;
 
     let asset_id = ASSET_ID_BYTES;
     let from_old_c = CompressedRistretto(TRANSFER_FROM_OLD_COMM_32)
@@ -269,7 +275,7 @@ fn tampered_bundle_rejected() {
         tampered_bundle[50] ^= 0xFF; // Flip some bits
     }
 
-    let result = <ZkheVerifier as ZkVerifier>::verify_transfer_sent(
+    let result = <TestVerifier as ZkVerifier>::verify_transfer_sent(
         asset_id,
         &SENDER_PK32,
         &RECEIVER_PK32,
@@ -288,7 +294,6 @@ fn wrong_pk_rejected() {
     use confidential_assets_primitives::ZkVerifier;
     use curve25519_dalek::ristretto::CompressedRistretto;
     use curve25519_dalek::traits::Identity;
-    use zkhe_verifier::ZkheVerifier;
 
     let asset_id = ASSET_ID_BYTES;
     let from_old_c = CompressedRistretto(TRANSFER_FROM_OLD_COMM_32)
@@ -297,7 +302,7 @@ fn wrong_pk_rejected() {
     let to_old_c = curve25519_dalek::ristretto::RistrettoPoint::identity();
 
     // Use wrong sender PK (swap sender and receiver)
-    let result = <ZkheVerifier as ZkVerifier>::verify_transfer_sent(
+    let result = <TestVerifier as ZkVerifier>::verify_transfer_sent(
         asset_id,
         &RECEIVER_PK32, // Wrong! Should be SENDER_PK32
         &SENDER_PK32,   // Wrong! Should be RECEIVER_PK32

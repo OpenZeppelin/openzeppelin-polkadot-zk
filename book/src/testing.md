@@ -77,11 +77,22 @@ impl pallet_confidential_assets::Config for Test {
 ### Mock Verifier
 
 ```rust
+use confidential_assets_primitives::{NetworkIdProvider, ZkVerifier};
+
+/// Mock network ID provider - returns all zeros for testing.
+pub struct MockNetworkId;
+impl NetworkIdProvider for MockNetworkId {
+    fn network_id() -> [u8; 32] {
+        [0u8; 32]
+    }
+}
+
 // For unit tests, use a mock verifier that accepts all proofs
 pub struct MockVerifier;
 
 impl ZkVerifier for MockVerifier {
     type Error = ();
+    type NetworkIdProvider = MockNetworkId;
 
     fn verify_transfer_sent(
         _asset: &[u8],

@@ -20,29 +20,27 @@ zkhe/
 - Clean separation of sender/receiver/mint/burn proof generation
 - Well-documented protocol flow (two-phase transfer)
 - Deterministic RNG for reproducible tests
-- SDK interop validation with Solana ZK SDK
+- SDK interop validation with Solana ZK SDK (feature-gated)
+- Full 256-bit entropy for cryptographic scalars
 
-**Potential Improvements:**
+**Completed Improvements:**
 
-1. **Error Handling** (`lib.rs:45-51`)
-   - [ ] `ProverError` could include more context (e.g., which commitment failed)
-   - [ ] Consider adding `InvalidInput` variant for clearer error messages
+1. **Error Handling** (`lib.rs`)
+   - [x] `ProverError` now includes contextual messages
+   - [x] Added `InvalidInput` and `Overflow` variants for clearer error messages
 
-2. **Code Duplication** (`lib.rs:53-56`, `lib.rs:142-150`)
-   - [ ] `pedersen_h_generator()` is duplicated in prover and verifier
-   - [ ] Consider extracting to `zkhe-primitives` for shared use
+2. **Code Deduplication**
+   - [x] `pedersen_h_generator()` extracted to `zkhe-primitives` for shared use
 
-3. **Scalar Generation** (`lib.rs:213-217`)
-   - [ ] Random scalars are generated from `u64` which limits entropy
-   - [ ] Consider using full 256-bit scalar generation for production security
+3. **Scalar Generation** (`lib.rs:118-126`)
+   - [x] Random scalars now use full 256-bit entropy via `Scalar::from_bytes_mod_order_wide`
 
-4. **SDK Version Coupling** (`lib.rs:42-43`)
-   - [ ] `solana_zk_sdk` interop check could be feature-gated
-   - [ ] Not all deployments need Solana compatibility
+4. **SDK Version Coupling**
+   - [x] `solana_zk_sdk` interop check is now feature-gated (`solana-interop` feature)
 
 5. **Documentation**
-   - [ ] Add rustdoc examples for each public function
-   - [ ] Document the proof format byte layouts more clearly
+   - [x] Added comprehensive rustdoc with examples for all public functions
+   - [x] Documented proof format byte layouts in module docs
 
 ### Verifier (`zkhe/verifier/`)
 
@@ -51,23 +49,28 @@ zkhe/
 - Comprehensive verification of link proofs and range proofs
 - Clean trait implementation (`ZkVerifier`)
 
-**Potential Improvements:**
+**Completed Improvements:**
 
-1. **Error Type** (`lib.rs:29-30`)
-   - [ ] Replace `()` error type with proper enum
-   - [ ] Would enable better debugging and error handling
+1. **Error Type** (`lib.rs:45-76`)
+   - [x] Added `VerifierError` enum with detailed variants for debugging
+   - [x] Trait compatibility maintained via `impl From<VerifierError> for ()`
 
-2. **Debug Output** (`range.rs:8-32`)
-   - [ ] Debug macros compile even without `std`; consider cfg(debug_assertions)
-   - [ ] `hex()` function allocates unnecessarily in non-debug builds
+2. **Debug Output** (`range.rs:8-35`)
+   - [x] Debug macros now require both `debug_assertions` AND `std`/`test`
+   - [x] `hex()` function has no-op stub to avoid allocations in release builds
 
-3. **Transcript Context** (`lib.rs:592-596`)
-   - [ ] `transcript_context_bytes` returns `Vec<u8>` but 32 bytes would suffice
-   - [ ] Minor allocation that could be avoided
+3. **Transcript Context** (`lib.rs:654-659`)
+   - [x] `transcript_context_bytes` now returns `[u8; 32]` instead of `Vec<u8>`
 
-4. **Hardcoded Network ID** (`lib.rs:51`, `lib.rs:150`, etc.)
-   - [ ] Network ID is hardcoded to `[0u8; 32]` throughout
-   - [ ] Should be parameterized for multi-network support
+4. **Network ID Parameterization** (`lib.rs`)
+   - [x] Added `NetworkIdProvider` trait to `confidential-assets-primitives`
+   - [x] `ZkVerifier` trait now has `type NetworkIdProvider` associated type
+   - [x] `ZkheVerifier<N>` is now generic over `N: NetworkIdProvider`
+   - [x] All hardcoded `[0u8; 32]` replaced with `N::network_id()` calls
+   - [x] Test mocks updated with `MockNetworkId` provider
+   - [x] Documentation updated with NetworkIdProvider examples
+
+**Remaining Items:**
 
 5. **Benchmark Infrastructure** (`per-block/`)
    - [ ] Paths to criterion results are relative and fragile
@@ -78,17 +81,53 @@ zkhe/
 **Observations:**
 - Generated deterministically from prover
 - Covers transfer, accept, mint, and burn scenarios
+- Includes edge case and negative test vectors
 
-**Potential Improvements:**
+**Completed Improvements:**
 
 1. **Vector Coverage**
-   - [ ] Add edge case vectors (zero values, max values)
-   - [ ] Add negative test vectors (malformed proofs)
-   - [ ] Add vectors for multi-asset scenarios
+   - [x] Added edge case vectors (large values: 1 billion mint, full balance burn)
+   - [x] Added negative test vectors (truncated, tampered, invalid point)
 
 2. **Generation Process**
-   - [ ] Document regeneration procedure
-   - [ ] Add CI check to verify vectors match prover output
+   - [x] Documented regeneration procedure (see below)
+
+---
+
+## Test Vector Regeneration Procedure
+
+When modifying proof generation or cryptographic primitives, regenerate test vectors:
+
+```bash
+# From the workspace root
+cargo run -p zkhe-prover --bin gen_vectors
+
+# This writes to: zkhe/vectors/src/generated.rs
+```
+
+**Important:** The vector generator (`zkhe/prover/src/bench_vectors.rs`) must match
+the prover's internal random scalar generation. If you change how scalars are generated:
+
+1. Update `bench_vectors.rs` to derive `delta_rho` using the same method
+2. Regenerate vectors with the command above
+3. Run tests to verify: `cargo test -p zkhe-prover -p zkhe-verifier -p zkhe-vectors`
+
+### Vector Categories
+
+**Standard Vectors:**
+- `TRANSFER_*` - Sender transfer proof (111 units)
+- `ACCEPT_*` - Receiver acceptance proof
+- `MINT_*` - Mint/deposit proof (77 units)
+- `BURN_*` - Burn/withdraw proof (120 units)
+
+**Edge Case Vectors:**
+- `LARGE_MINT_*` - Large value mint (1 billion units)
+- `FULL_BURN_*` - Full balance burn (1000 units to zero)
+
+**Negative Test Vectors (should fail verification):**
+- `MALFORMED_TRUNCATED_BUNDLE` - Too short to parse
+- `MALFORMED_TAMPERED_BUNDLE` - Valid length but corrupted
+- `MALFORMED_INVALID_POINT` - Not a valid curve point
 
 ---
 
@@ -103,6 +142,18 @@ zkhe/
 - [x] Add property test coverage for pallet-zkhe (6 property tests)
 - [x] Add property test coverage for pallet-confidential-assets (8 property tests)
 - [x] Create vector_tests.rs in XCM using zkhe-vectors (7 deterministic tests)
+- [x] Enhanced ProverError with contextual messages and InvalidInput/Overflow variants
+- [x] Extracted pedersen_h_generator to zkhe-primitives
+- [x] Improved scalar generation to use 256-bit entropy
+- [x] Feature-gated Solana SDK interop
+- [x] Added rustdoc examples to prover
+- [x] Added VerifierError enum for detailed debugging
+- [x] Optimized debug output with cfg(debug_assertions)
+- [x] Fixed transcript_context_bytes to return [u8; 32]
+- [x] Added edge case test vectors (large mint, full burn)
+- [x] Added negative test vectors (truncated, tampered, invalid point)
+- [x] Documented vector regeneration procedure
+- [x] Parameterized network ID via `NetworkIdProvider` trait
 
 ### In Progress
 
@@ -164,6 +215,10 @@ Created comprehensive mdbook documentation at `book/`:
 
 #### Future Work
 
+- [x] Parameterize network ID for multi-network support (DONE via `NetworkIdProvider` trait)
+- [ ] Add CI check to verify vectors match prover output
+- [ ] Improve benchmark infrastructure path handling
+
 ---
 
 ## Architecture Notes
@@ -198,7 +253,7 @@ Created comprehensive mdbook documentation at `book/`:
 ### Key Cryptographic Components
 
 1. **ElGamal Encryption**: Amount confidentiality
-2. **Pedersen Commitments**: Balance hiding
+2. **Pedersen Commitments**: Balance hiding (H derived via `hash_to_ristretto(b"Zether/PedersenH")`)
 3. **Bulletproofs**: 64-bit range proofs
 4. **Merlin Transcripts**: Fiat-Shamir challenges
 
@@ -212,7 +267,7 @@ Created comprehensive mdbook documentation at `book/`:
 | curve25519-dalek | 4.1.3 | Elliptic curve ops |
 | curve25519-dalek-ng | 4.1.1 | Bulletproofs compat |
 | merlin | 3.x | Transcript construction |
-| solana-zk-sdk | 4.x | SDK interop (prover only) |
+| solana-zk-sdk | 4.x | SDK interop (prover only, feature-gated) |
 
 ---
 
@@ -221,3 +276,4 @@ Created comprehensive mdbook documentation at `book/`:
 - The prover uses Rust 2024 edition features
 - Verifier must remain `no_std` compatible for WASM
 - Test vectors should be regenerated when proof format changes
+- Scalars use 256-bit entropy for production security

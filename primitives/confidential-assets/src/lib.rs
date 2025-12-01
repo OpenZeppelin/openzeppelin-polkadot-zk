@@ -193,12 +193,38 @@ impl<AssetId> AssetMetadataProvider<AssetId> for () {
     }
 }
 
+/// Provider for the network identifier used in ZK proof domain separation.
+/// Implement this trait and configure it via `ZkVerifier::NetworkIdProvider`.
+pub trait NetworkIdProvider {
+    /// Returns the 32-byte network identifier for this chain.
+    fn network_id() -> [u8; 32];
+}
+
+/// Default network ID provider that returns all zeros.
+/// **WARNING**: Only use this for testing. Production deployments should
+/// configure a unique network ID to prevent cross-chain replay attacks.
+pub struct ZeroNetworkId;
+impl NetworkIdProvider for ZeroNetworkId {
+    fn network_id() -> [u8; 32] {
+        [0u8; 32]
+    }
+}
+
 /// Abstract verifier boundary. Implement in the runtime.
+///
+/// The `NetworkIdProvider` type provides domain separation for proofs, preventing
+/// replay attacks across different networks. Set this to a unique identifier
+/// for your chain (e.g., hash of genesis block, chain ID, etc.).
 ///
 // TODO:
 // - verify_{mint, burn}_{to_send, received}
 pub trait ZkVerifier {
     type Error;
+
+    /// Provider for the network identifier used in ZK proof domain separation.
+    /// This should return a unique 32-byte value per chain to prevent cross-chain replay attacks.
+    /// Common choices: `blake2_256(genesis_hash ++ pallet_name)` or a fixed chain ID.
+    type NetworkIdProvider: NetworkIdProvider;
 
     /// Sender phase: verify link/range (as implemented) and compute new commitments.
     /// Inputs:
