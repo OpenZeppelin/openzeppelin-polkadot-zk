@@ -6,13 +6,13 @@
 extern crate alloc;
 
 use frame_support::{
+    PalletId,
     pallet_prelude::*,
     traits::{
+        Get,
         fungibles::{Inspect, Mutate},
         tokens::Preservation,
-        Get,
     },
-    PalletId,
 };
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::prelude::*;

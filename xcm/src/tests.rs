@@ -3,7 +3,7 @@ use crate::*;
 use frame_support::{assert_ok, weights::Weight};
 use parity_scale_codec::Encode;
 use xcm::latest::QueryResponseInfo;
-use xcm_simulator::{mock_message_queue::ReceivedDmp, TestExt};
+use xcm_simulator::{TestExt, mock_message_queue::ReceivedDmp};
 
 // Helper function for forming buy execution message
 fn buy_execution<C>(fees: impl Into<Asset>) -> Instruction<C> {
@@ -172,7 +172,7 @@ fn reserve_transfer() {
 fn reserve_transfer_with_error() {
     use sp_tracing::{
         test_log_capture::init_log_capture,
-        tracing::{subscriber, Level},
+        tracing::{Level, subscriber},
     };
 
     // Reset the test network

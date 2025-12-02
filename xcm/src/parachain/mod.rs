@@ -26,17 +26,17 @@ use frame_support::{
     traits::{
         ConstU128, ContainsPair, Disabled, EnsureOrigin, EnsureOriginWithArg, Everything, Nothing,
     },
-    weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight},
+    weights::{Weight, constants::WEIGHT_REF_TIME_PER_SECOND},
 };
 use frame_system::EnsureRoot;
 use sp_core::ConstU32;
 use sp_runtime::{
-    traits::{Get, IdentityLookup},
     AccountId32,
+    traits::{Get, IdentityLookup},
 };
 use xcm::latest::prelude::*;
 use xcm_builder::{EnsureXcmOrigin, SignedToAccountId32};
-use xcm_executor::{traits::ConvertLocation, XcmExecutor};
+use xcm_executor::{XcmExecutor, traits::ConvertLocation};
 use xcm_simulator::mock_message_queue;
 
 pub type AccountId = AccountId32;

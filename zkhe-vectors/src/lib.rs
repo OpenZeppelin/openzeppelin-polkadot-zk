@@ -1,7 +1,9 @@
+//! Deterministic ZK proof vectors for benchmarking and testing.
+//!
+//! This crate provides pre-generated cryptographic proofs that pass
+//! the on-chain ZK verifier, enabling accurate weight benchmarking.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// This file is created by the generator in prover.
-// It defines the consts you included in your example.
 mod generated;
 
 pub use generated::*;
