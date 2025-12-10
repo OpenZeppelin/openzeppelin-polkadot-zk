@@ -39,9 +39,9 @@ use curve25519_dalek::{
 };
 use merlin::Transcript;
 use zkhe_primitives::{
-    append_point, challenge_scalar as fs_chal, labels, new_transcript, pedersen_h_generator,
-    point_from_bytes, point_to_bytes, Ciphertext, FixedProof, PublicContext, RangeProofVerifier,
-    SDK_VERSION,
+    Ciphertext, FixedProof, PublicContext, RangeProofVerifier, SDK_VERSION, append_point,
+    challenge_scalar as fs_chal, labels, new_transcript, pedersen_h_generator, point_from_bytes,
+    point_to_bytes,
 };
 
 /// Errors that can occur during proof verification.
