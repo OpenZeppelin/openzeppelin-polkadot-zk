@@ -4,7 +4,7 @@
 extern crate alloc;
 
 use confidential_assets_primitives::{AclCtx, AclProvider, Op};
-use frame_support::{pallet_prelude::*, Blake2_128Concat};
+use frame_support::{Blake2_128Concat, pallet_prelude::*};
 use frame_system::pallet_prelude::*;
 use sp_std::prelude::*;
 

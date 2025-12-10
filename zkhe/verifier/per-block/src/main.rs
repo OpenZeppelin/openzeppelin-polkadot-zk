@@ -31,7 +31,9 @@ fn main() {
                 println!("{path}: parse error");
             }
         } else {
-            println!("{path}: Benchmark results NOT found. Run benchmarks `cargo bench --verify` for zkhe-verifier");
+            println!(
+                "{path}: Benchmark results NOT found. Run benchmarks `cargo bench --verify` for zkhe-verifier"
+            );
         }
     }
 }

@@ -34,7 +34,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-use frame_support::{pallet_prelude::*, traits::Get, transactional, PalletId};
+use frame_support::{PalletId, pallet_prelude::*, traits::Get, transactional};
 use frame_system::pallet_prelude::*;
 use parity_scale_codec::{Encode, MaxEncodedLen};
 use scale_info::TypeInfo;

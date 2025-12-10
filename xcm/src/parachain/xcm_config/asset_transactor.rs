@@ -15,8 +15,8 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::parachain::{
-    constants::KsmLocation, location_converter::LocationConverter, AccountId, Balances,
-    ForeignUniques,
+    AccountId, Balances, ForeignUniques, constants::KsmLocation,
+    location_converter::LocationConverter,
 };
 use xcm::latest::prelude::*;
 use xcm_builder::{

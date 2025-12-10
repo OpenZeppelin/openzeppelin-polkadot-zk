@@ -4,7 +4,7 @@
 extern crate alloc;
 
 use confidential_assets_primitives::OperatorRegistry;
-use frame_support::{pallet_prelude::*, traits::Get, Blake2_128Concat};
+use frame_support::{Blake2_128Concat, pallet_prelude::*, traits::Get};
 use frame_system::pallet_prelude::*;
 use sp_std::prelude::*;
 

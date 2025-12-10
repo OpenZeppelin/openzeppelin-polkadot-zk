@@ -87,11 +87,11 @@ pub mod pallet {
 
         /// XCM router used to actually send Transact messages.
         type Xcm: XcmRouter<
-            ParaId = Self::ParaId,
-            Weight = Self::XcmWeight,
-            FeeAssetId = Self::FeeAssetId,
-            FeeBalance = Self::FeeBalance,
-        >;
+                ParaId = Self::ParaId,
+                Weight = Self::XcmWeight,
+                FeeAssetId = Self::FeeAssetId,
+                FeeBalance = Self::FeeBalance,
+            >;
 
         /// Confidential HTLC implementation (escrow path).
         /// Must match: BridgeHtlc<AccountId, AssetId, (EncryptedAmount, InputProof)>

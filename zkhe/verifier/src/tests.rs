@@ -89,8 +89,8 @@ fn sender_range_context_from_bundle(
 ) -> [u8; 32] {
     use curve25519_dalek::ristretto::CompressedRistretto;
     use zkhe_primitives::{
-        append_point, challenge_scalar as fs_chal, labels, new_transcript, Ciphertext,
-        PublicContext, SDK_VERSION,
+        Ciphertext, PublicContext, SDK_VERSION, append_point, challenge_scalar as fs_chal, labels,
+        new_transcript,
     };
 
     let ct = Ciphertext::from_bytes(delta_ct_bytes).expect("valid delta ct");
@@ -147,7 +147,7 @@ fn verify_sender_and_receiver_happy_path() {
     use curve25519_dalek::ristretto::CompressedRistretto;
 
     // Inputs from vectors
-    let asset_id = ASSET_ID_BYTES;
+    let asset_id = &ASSET_ID_BYTES[..];
     let _pk_sender_pt = CompressedRistretto(SENDER_PK32).decompress().expect("pk_s");
     let pk_receiver_pt = CompressedRistretto(RECEIVER_PK32)
         .decompress()
@@ -202,7 +202,7 @@ fn verify_sender_and_receiver_happy_path() {
 fn rejects_tampered_sender_bundle() {
     use curve25519_dalek::ristretto::CompressedRistretto;
 
-    let asset_id = ASSET_ID_BYTES;
+    let asset_id = &ASSET_ID_BYTES[..];
     let from_old_c = CompressedRistretto(TRANSFER_FROM_OLD_COMM_32)
         .decompress()
         .expect("from_old");
@@ -241,7 +241,7 @@ fn range_proof_from_sender_bundle_verifies() {
         .expect("pk_r");
 
     let ctx_bytes = sender_range_context_from_bundle(
-        ASSET_ID_BYTES,
+        &ASSET_ID_BYTES,
         &pk_sender_pt,
         &pk_receiver_pt,
         &TRANSFER_DELTA_CT_64,
@@ -285,7 +285,7 @@ fn mint_round_trip() {
 
     let (to_new_bytes, total_new_bytes, minted_ct_bytes) =
         <TestVerifier as ZkVerifierTrait>::verify_mint(
-            ASSET_ID_BYTES,
+            &ASSET_ID_BYTES,
             &to_pk_bv,
             &[], // to_old_pending = identity
             &[], // total_old = identity
@@ -314,7 +314,7 @@ fn burn_round_trip() {
 
     let (from_new_bytes, total_new_bytes, disclosed) =
         <TestVerifier as ZkVerifierTrait>::verify_burn(
-            ASSET_ID_BYTES,
+            &ASSET_ID_BYTES,
             &from_pk_bv,
             &from_old_c.compress().to_bytes(), // from_old_available
             &total_old_c.compress().to_bytes(), // total_old

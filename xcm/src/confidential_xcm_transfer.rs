@@ -11,8 +11,8 @@ use rand::{RngCore, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 use xcm_simulator::TestExt;
 use zkhe_prover::{
-    prove_burn, prove_mint, prove_receiver_accept, prove_sender_transfer, BurnInput, MintInput,
-    ReceiverAcceptInput, SenderInput,
+    BurnInput, MintInput, ReceiverAcceptInput, SenderInput, prove_burn, prove_mint,
+    prove_receiver_accept, prove_sender_transfer,
 };
 
 fn asset_id_bytes_u128(id: u128) -> Vec<u8> {

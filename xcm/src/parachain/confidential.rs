@@ -7,20 +7,19 @@ use crate::parachain::{
 };
 use confidential_assets_primitives::{HrmpMessenger, NetworkIdProvider, Ramp};
 use frame_support::traits::{
+    AsEnsureOriginWithArg, Currency, ExistenceRequirement,
     tokens::fungibles::Mutate as MultiTransfer,
     tokens::{Fortitude, Precision, Preservation, WithdrawReasons},
-    AsEnsureOriginWithArg, Currency, ExistenceRequirement,
 };
 use frame_support::{
-    parameter_types,
+    PalletId, parameter_types,
     traits::{ConstU64, Get},
-    PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSigned};
 use parity_scale_codec::Encode;
 use sp_runtime::{
     DispatchError,
-    {traits::AccountIdConversion, BoundedVec},
+    {BoundedVec, traits::AccountIdConversion},
 };
 use std::{boxed::Box, vec, vec::Vec};
 use xcm::latest::prelude::*;

@@ -1,7 +1,7 @@
 //! Types and traits for confidential assets crates
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{pallet_prelude::*, BoundedVec};
+use frame_support::{BoundedVec, pallet_prelude::*};
 use sp_std::prelude::*;
 
 /// ZK El Gamal Ciphertext
@@ -98,7 +98,7 @@ pub trait EscrowTrust<AccountId, AssetId, Balance> {
 
     /// Release escrowed value to `to` (on successful redeem).
     fn escrow_release(asset: AssetId, to: &AccountId, amount: Balance)
-        -> Result<(), DispatchError>;
+    -> Result<(), DispatchError>;
 
     /// Refund escrowed value to `to` (after timeout).
     fn escrow_refund(asset: AssetId, to: &AccountId, amount: Balance) -> Result<(), DispatchError>;

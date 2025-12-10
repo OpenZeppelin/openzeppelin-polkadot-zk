@@ -20,9 +20,8 @@ use smallvec::smallvec;
 use polkadot_sdk::{staging_parachain_info as parachain_info, *};
 
 use sp_runtime::{
-    generic, impl_opaque_keys,
+    MultiSignature, generic, impl_opaque_keys,
     traits::{BlakeTwo256, IdentifyAccount, Verify},
-    MultiSignature,
 };
 
 #[cfg(feature = "std")]
@@ -30,8 +29,8 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 use frame_support::weights::{
-    constants::WEIGHT_REF_TIME_PER_SECOND, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
-    WeightToFeePolynomial,
+    Weight, WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
+    constants::WEIGHT_REF_TIME_PER_SECOND,
 };
 pub use genesis_config_presets::PARACHAIN_ID;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -320,10 +319,6 @@ mod runtime {
     pub type Zkhe = pallet_zkhe;
     #[runtime::pallet_index(41)]
     pub type ConfidentialAssets = pallet_confidential_assets;
-    #[runtime::pallet_index(42)]
-    pub type ConfidentialEscrow = pallet_confidential_escrow;
-    #[runtime::pallet_index(43)]
-    pub type ConfidentialBridge = pallet_confidential_bridge;
 }
 
 #[docify::export(register_validate_block)]

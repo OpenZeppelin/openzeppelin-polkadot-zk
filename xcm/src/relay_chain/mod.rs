@@ -30,7 +30,7 @@ use frame_support::{
 
 use frame_system::EnsureRoot;
 use sp_core::ConstU32;
-use sp_runtime::{traits::IdentityLookup, AccountId32};
+use sp_runtime::{AccountId32, traits::IdentityLookup};
 
 use polkadot_runtime_parachains::{
     configuration,
