@@ -26,8 +26,8 @@ pallet-balances = { workspace = true, optional = true }
 zkhe-vectors = { path = "../../zkhe-vectors", default-features = false, optional = true }
 
 [dev-dependencies]
-sp-io = { workspace = true }
 proptest = "1.5"
+sp-io = { workspace = true }
 
 [features]
 default = [ "std" ]
