@@ -24,7 +24,11 @@ use frame_support::{
 };
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
-use sp_core::{H256, U256};
+use precompile_utils::{
+    evm::logs::{log2, log3, log4, LogExt},
+    keccak256,
+};
+use sp_core::{H160, H256, U256};
 use sp_runtime::traits::Dispatchable;
 
 /// Size limits for bounded inputs (matching primitives)
@@ -35,6 +39,24 @@ pub const ENCRYPTED_AMOUNT_SIZE: u32 = 64;
 type GetMaxProofSize = ConstU32<MAX_PROOF_SIZE>;
 type GetMaxPubKeySize = ConstU32<MAX_PUBKEY_SIZE>;
 type GetEncryptedAmountSize = ConstU32<ENCRYPTED_AMOUNT_SIZE>;
+
+/// Event selectors for EVM logs
+/// event PublicKeySet(address indexed account, bytes pubkey)
+pub const SELECTOR_LOG_PUBLIC_KEY_SET: [u8; 32] = keccak256!("PublicKeySet(address,bytes)");
+
+/// event Deposit(uint128 indexed asset, address indexed account, uint256 amount)
+pub const SELECTOR_LOG_DEPOSIT: [u8; 32] = keccak256!("Deposit(uint128,address,uint256)");
+
+/// event Withdraw(uint128 indexed asset, address indexed account)
+pub const SELECTOR_LOG_WITHDRAW: [u8; 32] = keccak256!("Withdraw(uint128,address)");
+
+/// event ConfidentialTransfer(uint128 indexed asset, address indexed from, address indexed to)
+pub const SELECTOR_LOG_CONFIDENTIAL_TRANSFER: [u8; 32] =
+    keccak256!("ConfidentialTransfer(uint128,address,address)");
+
+/// event ConfidentialClaim(uint128 indexed asset, address indexed account)
+pub const SELECTOR_LOG_CONFIDENTIAL_CLAIM: [u8; 32] =
+    keccak256!("ConfidentialClaim(uint128,address)");
 
 /// Precompile exposing confidential assets functionality to EVM.
 pub struct ConfidentialAssetsPrecompile<Runtime>(PhantomData<Runtime>);
@@ -146,10 +168,11 @@ where
         handle: &mut impl PrecompileHandle,
         pubkey: BoundedBytes<GetMaxPubKeySize>,
     ) -> EvmResult {
-        let origin = <Runtime as pallet_evm::Config>::AddressMapping::into_account_id(
-            handle.context().caller,
-        );
+        let caller = handle.context().caller;
+        let origin =
+            <Runtime as pallet_evm::Config>::AddressMapping::into_account_id(caller);
         let pubkey_vec: Vec<u8> = pubkey.into();
+        let pubkey_bytes = pubkey_vec.clone();
         let pubkey_bounded: PublicKeyBytes =
             BoundedVec::try_from(pubkey_vec).map_err(|_| revert("pubkey too large"))?;
 
@@ -163,6 +186,16 @@ where
             0,
         )?;
 
+        // Emit PublicKeySet event
+        // event PublicKeySet(address indexed account, bytes pubkey)
+        log2(
+            handle.context().address,
+            SELECTOR_LOG_PUBLIC_KEY_SET,
+            H256::from(caller),
+            pubkey_bytes,
+        )
+        .record(handle)?;
+
         Ok(())
     }
 
@@ -175,9 +208,8 @@ where
         amount: U256,
         proof: BoundedBytes<GetMaxProofSize>,
     ) -> EvmResult {
-        let origin = <Runtime as pallet_evm::Config>::AddressMapping::into_account_id(
-            handle.context().caller,
-        );
+        let caller = handle.context().caller;
+        let origin = <Runtime as pallet_evm::Config>::AddressMapping::into_account_id(caller);
 
         let asset_id = asset.try_into().map_err(|_| revert("invalid asset id"))?;
 
@@ -199,6 +231,20 @@ where
             0,
         )?;
 
+        // Emit Deposit event
+        // event Deposit(uint128 indexed asset, address indexed account, uint256 amount)
+        let mut asset_h256 = H256::zero();
+        asset_h256.0[16..32].copy_from_slice(&asset.to_be_bytes());
+        let amount_bytes: [u8; 32] = amount.to_big_endian();
+        log3(
+            handle.context().address,
+            SELECTOR_LOG_DEPOSIT,
+            asset_h256,
+            H256::from(caller),
+            amount_bytes.to_vec(),
+        )
+        .record(handle)?;
+
         Ok(())
     }
 
@@ -211,9 +257,8 @@ where
         encrypted_amount: BoundedBytes<GetEncryptedAmountSize>,
         proof: BoundedBytes<GetMaxProofSize>,
     ) -> EvmResult {
-        let origin = <Runtime as pallet_evm::Config>::AddressMapping::into_account_id(
-            handle.context().caller,
-        );
+        let caller = handle.context().caller;
+        let origin = <Runtime as pallet_evm::Config>::AddressMapping::into_account_id(caller);
 
         let asset_id = asset.try_into().map_err(|_| revert("invalid asset id"))?;
 
@@ -237,6 +282,19 @@ where
             0,
         )?;
 
+        // Emit Withdraw event
+        // event Withdraw(uint128 indexed asset, address indexed account)
+        let mut asset_h256 = H256::zero();
+        asset_h256.0[16..32].copy_from_slice(&asset.to_be_bytes());
+        log3(
+            handle.context().address,
+            SELECTOR_LOG_WITHDRAW,
+            asset_h256,
+            H256::from(caller),
+            Vec::new(),
+        )
+        .record(handle)?;
+
         Ok(())
     }
 
@@ -250,11 +308,11 @@ where
         encrypted_amount: BoundedBytes<GetEncryptedAmountSize>,
         proof: BoundedBytes<GetMaxProofSize>,
     ) -> EvmResult {
-        let origin = <Runtime as pallet_evm::Config>::AddressMapping::into_account_id(
-            handle.context().caller,
-        );
+        let caller = handle.context().caller;
+        let origin = <Runtime as pallet_evm::Config>::AddressMapping::into_account_id(caller);
+        let to_h160: H160 = to.into();
         let to_account: <Runtime as frame_system::Config>::AccountId =
-            <Runtime as pallet_evm::Config>::AddressMapping::into_account_id(to.into());
+            <Runtime as pallet_evm::Config>::AddressMapping::into_account_id(to_h160);
 
         let asset_id = asset.try_into().map_err(|_| revert("invalid asset id"))?;
 
@@ -279,6 +337,20 @@ where
             0,
         )?;
 
+        // Emit ConfidentialTransfer event
+        // event ConfidentialTransfer(uint128 indexed asset, address indexed from, address indexed to)
+        let mut asset_h256 = H256::zero();
+        asset_h256.0[16..32].copy_from_slice(&asset.to_be_bytes());
+        log4(
+            handle.context().address,
+            SELECTOR_LOG_CONFIDENTIAL_TRANSFER,
+            asset_h256,
+            H256::from(caller),
+            H256::from(to_h160),
+            Vec::new(),
+        )
+        .record(handle)?;
+
         Ok(())
     }
 
@@ -290,9 +362,8 @@ where
         asset: u128,
         proof: BoundedBytes<GetMaxProofSize>,
     ) -> EvmResult {
-        let origin = <Runtime as pallet_evm::Config>::AddressMapping::into_account_id(
-            handle.context().caller,
-        );
+        let caller = handle.context().caller;
+        let origin = <Runtime as pallet_evm::Config>::AddressMapping::into_account_id(caller);
 
         let asset_id = asset.try_into().map_err(|_| revert("invalid asset id"))?;
 
@@ -309,6 +380,19 @@ where
             },
             0,
         )?;
+
+        // Emit ConfidentialClaim event
+        // event ConfidentialClaim(uint128 indexed asset, address indexed account)
+        let mut asset_h256 = H256::zero();
+        asset_h256.0[16..32].copy_from_slice(&asset.to_be_bytes());
+        log3(
+            handle.context().address,
+            SELECTOR_LOG_CONFIDENTIAL_CLAIM,
+            asset_h256,
+            H256::from(caller),
+            Vec::new(),
+        )
+        .record(handle)?;
 
         Ok(())
     }
