@@ -16,14 +16,12 @@ members = [
 	"pallets/operators",
 	"pallets/zkhe",
 	# Precompiles / Chain Extensions
-	"precompiles/confidential-assets",
 	"precompiles/confidential-assets-evm",
 	# Primitives
 	"primitives/confidential-assets",
 	"primitives/zkhe",
 	# Runtimes
 	"runtimes/evm-rollup",
-	"runtimes/polkavm-rollup",
 	# Confidential XCM Tests
 	"xcm",
 	# client
