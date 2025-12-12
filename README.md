@@ -132,7 +132,6 @@ Polkadot parachains: 6s blocks, ~1.5s compute budget for normal extrinsics.
 | Polkadot (standard transfers) | ~1,000 | Plain balance transfers |
 | Kusama (stress test) | ~10,547 | 2024 "Spammening" peak |
 | **Confidential transfers** | **~37-100** | This framework |
-| Solana Confidential Token | TBD | Same ZK-ElGamal scheme |
 
 **Privacy has a cost**: ~10% of standard throughput. This is expected - you're verifying zero-knowledge proofs on every transaction.
 
