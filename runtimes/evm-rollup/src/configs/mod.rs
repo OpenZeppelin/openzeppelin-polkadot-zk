@@ -10,9 +10,9 @@ use frame_support::{
     derive_impl,
     traits::{AsEnsureOriginWithArg, TransformOrigin},
 };
-use frame_system::{EnsureRoot, EnsureSigned};
+use frame_system::EnsureRoot;
 use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
-use polkadot_runtime_common::{xcm_sender::NoPriceForMessageDelivery, BlockHashCount};
+use polkadot_runtime_common::{BlockHashCount, xcm_sender::NoPriceForMessageDelivery};
 use sp_runtime::traits::AccountIdLookup;
 
 // Re-exports
@@ -22,6 +22,15 @@ parameter_types! {
     pub const Version: RuntimeVersion = VERSION;
     pub RuntimeBlockLength: BlockLength =
         BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+    // Weight configuration for the EVM rollup.
+    //
+    // NOTE: Base weights are set to 0 because:
+    // 1. This is an EVM-focused rollup where gas metering handles most fee calculation
+    // 2. The TransactionByteFee (10 * MICRO_UNIT per byte) provides a floor for all transactions
+    // 3. Native Substrate extrinsics are expected to be minimal (mostly EVM transactions)
+    //
+    // For production with significant native extrinsic usage, consider adding non-zero base weights
+    // and proper DbWeight configuration.
     pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
         .base_block(Weight::from_parts(0, 0))
         .for_class(DispatchClass::all(), |weights| {
@@ -118,6 +127,18 @@ parameter_types! {
     pub const RelayOrigin: AggregateMessageOrigin = AggregateMessageOrigin::Parent;
 }
 
+/// Relay chain slot duration in milliseconds.
+/// This should match the relay chain's slot duration (typically 6000ms for Polkadot).
+pub const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32 = 6000;
+
+/// Block processing velocity - number of parachain blocks per relay chain slot.
+/// A value of 1 means one parachain block per relay chain slot.
+pub const BLOCK_PROCESSING_VELOCITY: u32 = 1;
+
+/// Unincluded segment capacity - maximum number of blocks that can be built
+/// but not yet included in the relay chain.
+pub const UNINCLUDED_SEGMENT_CAPACITY: u32 = 3;
+
 impl cumulus_pallet_parachain_system::Config for Runtime {
     type WeightInfo = ();
     type RuntimeEvent = RuntimeEvent;
@@ -131,9 +152,9 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
     type CheckAssociatedRelayNumber = RelayNumberMonotonicallyIncreases;
     type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
         Runtime,
-        6000, // relay chain slot duration
-        1,    // block processing velocity
-        3,    // unincluded segment capacity
+        RELAY_CHAIN_SLOT_DURATION_MILLIS,
+        BLOCK_PROCESSING_VELOCITY,
+        UNINCLUDED_SEGMENT_CAPACITY,
     >;
     type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Runtime>;
 }
@@ -222,7 +243,25 @@ impl pallet_collator_selection::Config for Runtime {
     type WeightInfo = ();
 }
 
-// Placeholder XCM config - minimal implementation
+// XCM Configuration
+//
+// IMPORTANT: XCM is intentionally disabled in this runtime.
+//
+// This is an EVM-focused confidential assets rollup where XCM cross-chain functionality
+// is not required for the initial release. The XCM pallets are included for parachain
+// infrastructure compatibility but are configured to reject all XCM messages.
+//
+// Configuration decisions:
+// - XcmSender = (): No outbound XCM messages can be sent
+// - AssetTransactor = (): No asset handling for XCM (prevents unintended asset movements)
+// - Barrier = (): All inbound XCM messages are rejected (returns error to sender)
+// - XcmOriginToTransactDispatchOrigin always returns Err, rejecting origin conversion
+//
+// If XCM functionality is needed in the future, this configuration must be updated with:
+// - Proper barrier configuration (e.g., AllowTopLevelPaidExecutionFrom)
+// - Asset transactor for handling reserve/teleport assets
+// - Origin converters for proper dispatch
+// - Real weight info instead of TestWeightInfo
 parameter_types! {
     pub const RelayNetwork: Option<xcm::latest::NetworkId> = None;
     pub UniversalLocation: xcm::latest::InteriorLocation = xcm::latest::Junctions::Here;
@@ -232,12 +271,15 @@ parameter_types! {
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
     type RuntimeCall = RuntimeCall;
+    // Outbound XCM is disabled - no messages can be sent
     type XcmSender = ();
+    // No asset handling - prevents unintended asset movements via XCM
     type AssetTransactor = ();
     type OriginConverter = XcmOriginToTransactDispatchOrigin;
     type IsReserve = ();
     type IsTeleporter = ();
     type UniversalLocation = UniversalLocation;
+    // Barrier = () means all inbound XCM messages are rejected
     type Barrier = ();
     type Weigher = xcm_builder::FixedWeightBounds<UnitWeightCost, RuntimeCall, ConstU32<100>>;
     type Trader = ();
@@ -298,6 +340,8 @@ impl pallet_xcm::Config for Runtime {
     type TrustedLockers = ();
     type SovereignAccountOf = ();
     type MaxLockers = ConstU32<8>;
+    // NOTE: Using TestWeightInfo is acceptable here because XCM is disabled.
+    // When XCM is enabled, replace with real benchmarked weights.
     type WeightInfo = pallet_xcm::TestWeightInfo;
     type AdminOrigin = EnsureRoot<AccountId>;
     type MaxRemoteLockConsumers = ConstU32<0>;
@@ -321,7 +365,11 @@ impl pallet_assets::Config for Runtime {
     type AssetId = u128;
     type AssetIdParameter = parity_scale_codec::Compact<u128>;
     type Currency = Balances;
-    type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
+    // NOTE: Asset creation is allowed via signed origin. Root can use ForceOrigin for privileged
+    // asset operations. Asset ID 0 is used as the native asset sentinel by PublicRamp - the pallet
+    // should validate asset IDs to prevent collision, or root should be careful when creating assets.
+    // Consider implementing asset ID validation in the confidential assets integration layer.
+    type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
     type ForceOrigin = EnsureRoot<AccountId>;
     type AssetDeposit = AssetDeposit;
     type MetadataDepositBase = MetadataDepositBase;
@@ -349,9 +397,9 @@ impl pallet_zkhe::Config for Runtime {
 // Minimal confidential assets config - using Ramp and Backend types
 use confidential_assets_primitives::Ramp;
 use frame_support::traits::{
+    Currency, ExistenceRequirement, Get,
     tokens::fungibles::Mutate as MultiTransfer,
     tokens::{Fortitude, Precision, Preservation, WithdrawReasons},
-    Currency, ExistenceRequirement, Get,
 };
 use sp_runtime::DispatchError;
 

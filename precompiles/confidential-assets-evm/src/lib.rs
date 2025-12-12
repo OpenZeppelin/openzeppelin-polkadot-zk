@@ -18,14 +18,14 @@ use core::marker::PhantomData;
 use confidential_assets_primitives::{EncryptedAmount, InputProof, PublicKeyBytes};
 use fp_evm::PrecompileHandle;
 use frame_support::{
+    BoundedVec,
     dispatch::{GetDispatchInfo, PostDispatchInfo},
     pallet_prelude::ConstU32,
-    BoundedVec,
 };
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
 use precompile_utils::{
-    evm::logs::{log2, log3, log4, LogExt},
+    evm::logs::{LogExt, log2, log3, log4},
     keccak256,
 };
 use sp_core::{H160, H256, U256};
@@ -169,8 +169,7 @@ where
         pubkey: BoundedBytes<GetMaxPubKeySize>,
     ) -> EvmResult {
         let caller = handle.context().caller;
-        let origin =
-            <Runtime as pallet_evm::Config>::AddressMapping::into_account_id(caller);
+        let origin = <Runtime as pallet_evm::Config>::AddressMapping::into_account_id(caller);
         let pubkey_vec: Vec<u8> = pubkey.into();
         let pubkey_bytes = pubkey_vec.clone();
         let pubkey_bounded: PublicKeyBytes =
@@ -233,8 +232,10 @@ where
 
         // Emit Deposit event
         // event Deposit(uint128 indexed asset, address indexed account, uint256 amount)
+        // Use validated asset_id to ensure event matches state in case AssetId conversion is non-identity
+        let asset_u128: u128 = asset_id.into();
         let mut asset_h256 = H256::zero();
-        asset_h256.0[16..32].copy_from_slice(&asset.to_be_bytes());
+        asset_h256.0[16..32].copy_from_slice(&asset_u128.to_be_bytes());
         let amount_bytes: [u8; 32] = amount.to_big_endian();
         log3(
             handle.context().address,
@@ -284,8 +285,10 @@ where
 
         // Emit Withdraw event
         // event Withdraw(uint128 indexed asset, address indexed account)
+        // Use validated asset_id to ensure event matches state in case AssetId conversion is non-identity
+        let asset_u128: u128 = asset_id.into();
         let mut asset_h256 = H256::zero();
-        asset_h256.0[16..32].copy_from_slice(&asset.to_be_bytes());
+        asset_h256.0[16..32].copy_from_slice(&asset_u128.to_be_bytes());
         log3(
             handle.context().address,
             SELECTOR_LOG_WITHDRAW,
@@ -339,8 +342,10 @@ where
 
         // Emit ConfidentialTransfer event
         // event ConfidentialTransfer(uint128 indexed asset, address indexed from, address indexed to)
+        // Use validated asset_id to ensure event matches state in case AssetId conversion is non-identity
+        let asset_u128: u128 = asset_id.into();
         let mut asset_h256 = H256::zero();
-        asset_h256.0[16..32].copy_from_slice(&asset.to_be_bytes());
+        asset_h256.0[16..32].copy_from_slice(&asset_u128.to_be_bytes());
         log4(
             handle.context().address,
             SELECTOR_LOG_CONFIDENTIAL_TRANSFER,
@@ -383,8 +388,10 @@ where
 
         // Emit ConfidentialClaim event
         // event ConfidentialClaim(uint128 indexed asset, address indexed account)
+        // Use validated asset_id to ensure event matches state in case AssetId conversion is non-identity
+        let asset_u128: u128 = asset_id.into();
         let mut asset_h256 = H256::zero();
-        asset_h256.0[16..32].copy_from_slice(&asset.to_be_bytes());
+        asset_h256.0[16..32].copy_from_slice(&asset_u128.to_be_bytes());
         log3(
             handle.context().address,
             SELECTOR_LOG_CONFIDENTIAL_CLAIM,

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 /// @title IConfidentialAssets
-/// @author Optimism Foundation
+/// @author OpenZeppelin
 /// @notice Interface for the Confidential Assets precompile
 /// @dev This precompile provides multi-asset confidential token functionality with ZK-proof based privacy.
 ///
@@ -67,7 +67,7 @@ pragma solidity ^0.8.20;
 /// ```
 ///
 /// @custom:deployment-address 0x0000000000000000000000000000000000000800
-/// @custom:security-contact security@optimism.io
+/// @custom:security-contact security@openzeppelin.com
 ///
 /// NOTE: The @custom:selector annotations are verified by Rust tests in
 /// precompiles/confidential-assets-evm/src/tests.rs to ensure the Solidity

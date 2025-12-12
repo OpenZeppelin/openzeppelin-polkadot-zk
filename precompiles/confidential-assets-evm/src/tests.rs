@@ -1,18 +1,10 @@
 //! Unit tests for the confidential assets EVM precompile.
 
-use crate::mock::{
-    precompiles, set_pk, ConfidentialAssetsAddress, ExtBuilder, PCall, Precompiles,
-    PrecompilesValue, Runtime,
-};
 use crate::MAX_PROOF_SIZE;
+use crate::mock::{ConfidentialAssetsAddress, ExtBuilder, PCall, precompiles, set_pk};
 use precompile_utils::prelude::Address;
 use precompile_utils::testing::*;
 use sp_core::{H160, H256, U256};
-
-#[allow(dead_code)]
-fn precompiles_instance() -> Precompiles<Runtime> {
-    PrecompilesValue::get()
-}
 
 /// Helper to convert test accounts to Address
 fn addr<T: Into<H160>>(account: T) -> Address {
@@ -1053,9 +1045,7 @@ fn test_error_case_proof_too_large() {
                         proof: oversized_proof.into(),
                     },
                 )
-                .execute_reverts(|output| {
-                    output == b"proof: Value is too large for length"
-                });
+                .execute_reverts(|output| output == b"proof: Value is too large for length");
 
             // Try transfer with oversized proof
             let oversized_proof = vec![0xFFu8; MAX_PROOF_SIZE as usize + 1];
@@ -1070,9 +1060,7 @@ fn test_error_case_proof_too_large() {
                         proof: oversized_proof.into(),
                     },
                 )
-                .execute_reverts(|output| {
-                    output == b"proof: Value is too large for length"
-                });
+                .execute_reverts(|output| output == b"proof: Value is too large for length");
 
             // Try claim with oversized proof
             let oversized_proof = vec![0xFFu8; MAX_PROOF_SIZE as usize + 1];
@@ -1085,9 +1073,7 @@ fn test_error_case_proof_too_large() {
                         proof: oversized_proof.into(),
                     },
                 )
-                .execute_reverts(|output| {
-                    output == b"proof: Value is too large for length"
-                });
+                .execute_reverts(|output| output == b"proof: Value is too large for length");
         })
 }
 
@@ -1142,7 +1128,9 @@ fn test_error_case_malformed_encrypted_amount() {
                         proof: mock_proof_with_pattern(100, 0x03).into(),
                     },
                 )
-                .execute_reverts(|output| output == b"encryptedAmount: Value is too large for length");
+                .execute_reverts(|output| {
+                    output == b"encryptedAmount: Value is too large for length"
+                });
 
             // Try transfer with wrong size (32 bytes < 64 bytes)
             let wrong_size = vec![0x05u8; 32];

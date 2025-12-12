@@ -29,6 +29,10 @@ impl pallet_evm::Config for Runtime {
     type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
     type WeightPerGas = WeightPerGas;
     type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
+    // CallOrigin restricted to root for direct Substrate->EVM calls.
+    // This is intentional for this EVM rollup where all user EVM interactions
+    // go through pallet_ethereum (Ethereum JSON-RPC), not direct EVM calls.
+    // Direct EVM calls via Substrate are only used for governance/sudo operations.
     type CallOrigin = pallet_evm::EnsureAddressRoot<AccountId>;
     type WithdrawOrigin = pallet_evm::EnsureAddressTruncated;
     type AddressMapping = pallet_evm::HashedAddressMapping<BlakeTwo256>;

@@ -3,7 +3,7 @@
 use super::*;
 
 use confidential_assets_primitives::{
-    ConfidentialBackend, EncryptedAmount, InputProof, PublicKeyBytes, Ramp, ZkVerifier,
+    ConfidentialBackend, EncryptedAmount, PublicKeyBytes, Ramp, ZkVerifier,
 };
 use frame_support::{
     construct_runtime, derive_impl, parameter_types, traits::Everything, weights::Weight,
@@ -11,7 +11,7 @@ use frame_support::{
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, FrameSystemAccountProvider};
 use precompile_utils::{mock_account, precompile_set::*, testing::MockAccount};
 use sp_core::{H256, U256};
-use sp_runtime::{traits::BlakeTwo256, BuildStorage, Perbill};
+use sp_runtime::{BuildStorage, Perbill, traits::BlakeTwo256};
 
 pub type AccountId = MockAccount;
 pub type AssetId = u128;
@@ -290,10 +290,4 @@ pub fn set_pk(who: AccountId) {
         &[7u8; 64].to_vec().try_into().expect("bounded vec"),
     )
     .unwrap();
-}
-
-/// Helper to create an InputProof from bytes
-#[allow(dead_code)]
-pub fn proof(bytes: &[u8]) -> InputProof {
-    bytes.to_vec().try_into().expect("bounded vec")
 }

@@ -6,14 +6,35 @@ import {IConfidentialAssets} from "./interfaces/IConfidentialAssets.sol";
 
 /**
  * @title ERC7984ConfidentialToken
- * @author Optimism Foundation
+ * @author OpenZeppelin
  * @notice ERC-7984 compliant wrapper around the Confidential Assets precompile
  * @dev This contract wraps a specific asset from the multi-asset Confidential Assets precompile
  *      and exposes it as an ERC-7984 standard compliant confidential token.
  *
+ * # IMPORTANT: Architecture Decision - Direct Precompile Calls
+ *
+ * This wrapper contract does NOT proxy user identities to the precompile. When users call
+ * functions on this wrapper, the precompile sees `msg.sender == address(this)` (the wrapper),
+ * NOT the original user address.
+ *
+ * **Implications:**
+ * - The precompile's account-level state (public keys, balances) is keyed to the wrapper address
+ * - All users sharing this wrapper effectively share a single account in the precompile
+ * - This design is intentional for this use case where the wrapper manages state on behalf of users
+ *
+ * **For user-level account isolation, users should call the precompile directly** at address
+ * 0x0000000000000000000000000000000000000800 using the IConfidentialAssets interface.
+ * This wrapper is primarily for applications that need ERC-7984 interface compatibility or
+ * want to add application-specific logic (like operator delegations) on top of the precompile.
+ *
+ * **Alternative Architectures (not implemented):**
+ * - EIP-712 signature relay: Users sign messages, wrapper verifies and relays with user context
+ * - Direct precompile integration: Applications call the precompile directly without a wrapper
+ * - Meta-transaction patterns: Use CREATE2 for user-specific wrapper instances
+ *
  * # Purpose
  * The ERC-7984 standard defines a common interface for confidential tokens. This wrapper allows
- * applications built for ERC-7984 to seamlessly work with the Optimism Confidential Assets system.
+ * applications built for ERC-7984 to seamlessly work with the Confidential Assets system.
  *
  * # Architecture
  * - **Single Asset**: Each wrapper instance is bound to one asset ID at deployment
@@ -97,7 +118,7 @@ import {IConfidentialAssets} from "./interfaces/IConfidentialAssets.sol";
  * - withdraw: ~85,000-155,000 gas
  * - claim: ~85,000-155,000 gas base + ~20,000 per additional transfer
  *
- * @custom:security-contact security@optimism.io
+ * @custom:security-contact security@openzeppelin.com
  * @custom:standard ERC-7984 Confidential Fungible Token
  */
 contract ERC7984ConfidentialToken is IERC7984 {
@@ -622,6 +643,16 @@ contract ERC7984ConfidentialToken is IERC7984 {
         bytes32 amount,
         bytes calldata data
     ) internal {
+        // Pre-decode validation: ABI-encoded (bytes, bytes) requires at minimum:
+        // - 32 bytes offset for first bytes
+        // - 32 bytes offset for second bytes
+        // - 32 bytes length for first bytes
+        // - 32 bytes length for second bytes
+        // = 128 bytes minimum, plus the actual data
+        if (data.length < 128) {
+            revert InvalidData();
+        }
+
         // Decode the data parameter
         (bytes memory encryptedAmount, bytes memory proof) = abi.decode(data, (bytes, bytes));
 

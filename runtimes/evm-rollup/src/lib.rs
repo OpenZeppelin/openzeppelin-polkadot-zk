@@ -16,18 +16,17 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use frame_support::{
+    PalletId,
     dispatch::DispatchClass,
     parameter_types,
-    traits::{ConstBool, ConstU32, ConstU64, ConstU8, VariantCountOf},
-    weights::{constants::WEIGHT_REF_TIME_PER_SECOND, ConstantMultiplier, Weight},
-    PalletId,
+    traits::{ConstBool, ConstU8, ConstU32, ConstU64, VariantCountOf},
+    weights::{ConstantMultiplier, Weight, constants::WEIGHT_REF_TIME_PER_SECOND},
 };
 use frame_system::limits::{BlockLength, BlockWeights};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::{
-    generic, impl_opaque_keys,
+    MultiSignature, Perbill, generic, impl_opaque_keys,
     traits::{BlakeTwo256, IdentifyAccount, Verify},
-    MultiSignature, Perbill,
 };
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -225,6 +224,16 @@ mod runtime {
 }
 
 // Runtime API implementations
+//
+// NOTE: Runtime APIs are intentionally empty for this alpha release.
+//
+// This EVM-focused rollup primarily uses Ethereum JSON-RPC for client interactions,
+// not native Substrate runtime APIs. The standard Substrate APIs (Core, BlockBuilder,
+// TaggedTransactionQueue, etc.) are provided by derive_impl macros from the
+// ParaChainDefaultConfig preset.
+//
+// Additional runtime APIs (e.g., for confidential assets queries) may be added in
+// future releases as needed for tooling integration.
 sp_api::decl_runtime_apis! {}
 
 pub const RUNTIME_API_VERSIONS: sp_version::ApisVec = sp_version::create_apis_vec!([]);
