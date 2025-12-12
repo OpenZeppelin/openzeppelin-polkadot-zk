@@ -15,7 +15,7 @@
 // along with Polkadot.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::relay_chain::{
-    constants::TokenLocation, location_converter::LocationConverter, AccountId, Balances, Uniques,
+    AccountId, Balances, Uniques, constants::TokenLocation, location_converter::LocationConverter,
 };
 use xcm_builder::{
     AsPrefixedGeneralIndex, ConvertedConcreteId, FungibleAdapter, IsConcrete, NoChecking,

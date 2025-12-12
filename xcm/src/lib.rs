@@ -15,7 +15,7 @@ use sp_runtime::BuildStorage;
 use sp_tracing;
 use xcm::prelude::*;
 use xcm_executor::traits::ConvertLocation;
-use xcm_simulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain, TestExt};
+use xcm_simulator::{TestExt, decl_test_network, decl_test_parachain, decl_test_relay_chain};
 
 pub const ALICE: sp_runtime::AccountId32 = sp_runtime::AccountId32::new([1u8; 32]);
 pub const BOB: sp_runtime::AccountId32 = sp_runtime::AccountId32::new([2u8; 32]);

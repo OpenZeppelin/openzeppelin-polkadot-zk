@@ -8,6 +8,7 @@ repository = { workspace = true }
 version = "0.1.0"
 
 [dependencies]
+frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system  = { workspace = true }
 parity-scale-codec = { workspace = true }
@@ -19,6 +20,10 @@ sp-std = { workspace = true }
 blake2 = { version = "0.10", default-features = false }
 
 confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
+pallet-balances = { workspace = true, optional = true }
+
+# Benchmarking vectors (deterministic proofs for real verification)
+zkhe-vectors = { path = "../../zkhe-vectors", default-features = false, optional = true }
 
 [dev-dependencies]
 sp-io = { workspace = true }
@@ -28,10 +33,21 @@ default = [ "std" ]
 std = [
 	"blake2/std",
 	"confidential-assets-primitives/std",
+	"frame-benchmarking?/std",
 	"frame-support/std",
 	"frame-system/std",
 	"parity-scale-codec/std",
 	"scale-info/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"zkhe-vectors?/std",
+]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-balances",
+	"pallet-balances/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	"zkhe-vectors",
 ]

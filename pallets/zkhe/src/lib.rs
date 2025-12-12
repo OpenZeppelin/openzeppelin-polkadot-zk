@@ -16,13 +16,17 @@
 //! - All cryptographic checks live in `Config::Verifier`.
 //! - Sender transfer updates: available(from) ↓, pending(to) ↑.
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
 
+pub mod weights;
+
 use confidential_assets_primitives::*;
-use frame_support::{pallet_prelude::*, transactional, Blake2_128Concat};
+use frame_support::{Blake2_128Concat, pallet_prelude::*, transactional};
 use frame_system::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_std::prelude::*;
@@ -46,16 +50,16 @@ pub mod pallet {
         /// - `verify_burn(..) -> (from_new_available_commit, total_new_commit, disclosed_amount_u64)`
         type Verifier: ZkVerifier;
 
-        type WeightInfo: WeightData;
+        type WeightInfo: WeightInfo;
     }
 
     /// Weights
-    pub trait WeightData {
+    pub trait WeightInfo {
         fn transfer() -> Weight;
         fn transfer_from_available() -> Weight;
         fn accept_pending() -> Weight;
     }
-    impl WeightData for () {
+    impl WeightInfo for () {
         fn transfer() -> Weight {
             Weight::from_parts(20_000, 0)
         }

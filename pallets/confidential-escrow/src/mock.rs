@@ -2,7 +2,7 @@ use crate::pallet as pallet_confidential_escrow;
 use confidential_assets_primitives::{
     ConfidentialBackend, EncryptedAmount, InputProof, PublicKeyBytes, ZkVerifier,
 };
-use frame_support::{construct_runtime, derive_impl, parameter_types, PalletId};
+use frame_support::{PalletId, construct_runtime, derive_impl, parameter_types};
 use sp_runtime::BuildStorage;
 
 pub type AccountId = u64;
