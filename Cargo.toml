@@ -1,5 +1,9 @@
 [workspace]
 members = [
+	# Benchmarks
+	"benchmarks",
+	# Integration Tests (zombienet-sdk)
+	"integration-tests",
 	# Example Extensions
 	"book/examples/confidential-htlc",
 	"book/examples/confidential-intents-dex",

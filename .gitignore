@@ -3,3 +3,6 @@ target-install/
 */book/
 # remove once repo cleaned before merging
 docs/
+
+# Internal brainstorming documents
+BRAINSTORM.md
