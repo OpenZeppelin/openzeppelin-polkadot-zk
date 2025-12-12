@@ -9,17 +9,17 @@ version = "0.1.0"
 
 [dependencies]
 # Local
+confidential-assets-evm-precompile = { path = "../../precompiles/confidential-assets-evm", default-features = false }
 confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
 pallet-confidential-assets = { path = "../../pallets/confidential-assets", default-features = false }
-confidential-assets-evm-precompile = { path = "../../precompiles/confidential-assets-evm", default-features = false }
 pallet-zkhe = { path = "../../pallets/zkhe", default-features = false }
 zkhe-verifier = { path = "../../zkhe-verifier", default-features = false }
 
 # General
 log = { workspace = true }
-parity-scale-codec = { workspace = true, features = ["derive"] }
-scale-info = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true, default-features = false, features = ["alloc"] }
+parity-scale-codec = { workspace = true, features = [ "derive" ] }
+scale-info = { workspace = true, features = [ "derive" ] }
+serde_json = { workspace = true, default-features = false, features = [ "alloc" ] }
 smallvec = { workspace = true }
 
 # Substrate
@@ -62,13 +62,13 @@ cumulus-pallet-xcmp-queue = { workspace = true }
 cumulus-primitives-core = { workspace = true }
 pallet-collator-selection = { workspace = true }
 pallet-message-queue = { workspace = true }
-parachains-common = { workspace = true }
 parachain-info = { workspace = true }
+parachains-common = { workspace = true }
 
 # Frontier EVM
 fp-evm = { workspace = true }
 fp-rpc = { workspace = true }
-fp-self-contained = { workspace = true, features = ["serde"] }
+fp-self-contained = { workspace = true, features = [ "serde" ] }
 pallet-base-fee = { workspace = true }
 pallet-ethereum = { workspace = true }
 pallet-evm = { workspace = true }
@@ -81,8 +81,9 @@ pallet-evm-precompile-simple = { workspace = true }
 substrate-wasm-builder = { workspace = true, default-features = true, optional = true }
 
 [features]
-default = ["std"]
+default = [ "std" ]
 std = [
+	"confidential-assets-evm-precompile/std",
 	"confidential-assets-primitives/std",
 	"cumulus-pallet-aura-ext/std",
 	"cumulus-pallet-parachain-system/std",
@@ -103,13 +104,12 @@ std = [
 	"pallet-base-fee/std",
 	"pallet-collator-selection/std",
 	"pallet-confidential-assets/std",
-	"confidential-assets-evm-precompile/std",
 	"pallet-ethereum/std",
 	"pallet-evm-chain-id/std",
-	"pallet-evm/std",
 	"pallet-evm-precompile-modexp/std",
 	"pallet-evm-precompile-sha3fips/std",
 	"pallet-evm-precompile-simple/std",
+	"pallet-evm/std",
 	"pallet-message-queue/std",
 	"pallet-session/std",
 	"pallet-sudo/std",
@@ -117,8 +117,8 @@ std = [
 	"pallet-transaction-payment/std",
 	"pallet-xcm/std",
 	"pallet-zkhe/std",
-	"parachains-common/std",
 	"parachain-info/std",
+	"parachains-common/std",
 	"parity-scale-codec/std",
 	"polkadot-parachain-primitives/std",
 	"polkadot-runtime-common/std",
