@@ -33,29 +33,29 @@ This framework implements **ERC-7984 Confidential Contracts** for Polkadot, enab
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                         User Application                         │
+│                        User Application                         │
 ├─────────────────────────────────────────────────────────────────┤
-│  zkhe-prover (off-chain)              │  Client SDK              │
-│  - prove_sender_transfer()            │  - Key management        │
-│  - prove_receiver_accept()            │  - Balance tracking      │
-│  - prove_mint() / prove_burn()        │  - UTXO selection        │
+│  zkhe-prover (off-chain)              │  Client SDK             │
+│  - prove_sender_transfer()            │  - Key management       │
+│  - prove_receiver_accept()            │  - Balance tracking     │
+│  - prove_mint() / prove_burn()        │  - UTXO selection       │
 ├───────────────────────────────────────┴─────────────────────────┤
-│                      Extrinsic Submission                        │
+│                       Extrinsic Submission                      │
 ├─────────────────────────────────────────────────────────────────┤
-│                    On-Chain (Parachain Runtime)                  │
+│                   On-Chain (Parachain Runtime)                  │
 │  ┌─────────────────────┐  ┌─────────────────────┐               │
 │  │ pallet-confidential │  │ pallet-confidential │               │
-│  │      -assets        │  │      -bridge        │               │
-│  │  (IERC7984 API)     │  │  (Cross-chain)      │               │
+│  │       -assets       │  │       -bridge       │               │
+│  │   (IERC7984 API)    │  │    (Cross-chain)    │               │
 │  └──────────┬──────────┘  └──────────┬──────────┘               │
-│             │                        │                           │
+│             │                        │                          │
 │  ┌──────────▼──────────┐  ┌──────────▼──────────┐               │
 │  │    pallet-zkhe      │  │ pallet-confidential │               │
-│  │ (Backend + Storage) │  │      -escrow        │               │
+│  │ (Backend + Storage) │  │       -escrow       │               │
 │  └──────────┬──────────┘  └─────────────────────┘               │
-│             │                                                    │
+│             │                                                   │
 │  ┌──────────▼──────────┐                                        │
 │  │   zkhe-verifier     │  ← no_std, runs on-chain               │
 │  │  (ZK Proof Verify)  │                                        │
@@ -337,7 +337,7 @@ The framework supports confidential transfers between parachains via HRMP.
 
 ### Architecture
 
-```
+```text
 ParaA (Sender)                    ParaB (Receiver)
 ┌─────────────┐                   ┌─────────────┐
 │ 1. Lock     │                   │             │
