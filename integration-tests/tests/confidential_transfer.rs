@@ -32,7 +32,8 @@ async fn test_insufficient_balance_transfer() -> Result<()> {
     let (_bob_sk, bob_pk) = test_accounts::bob();
 
     // Alice only has 100 tokens
-    let alice_balance = ConfidentialBalance::from_opening(100, curve25519_dalek::scalar::Scalar::from(42u64));
+    let alice_balance =
+        ConfidentialBalance::from_opening(100, curve25519_dalek::scalar::Scalar::from(42u64));
     let bob_pending = ConfidentialBalance::zero();
 
     // Try to transfer 1000 tokens (should fail in proof generation)
@@ -65,24 +66,25 @@ async fn test_valid_transfer_proof_generation() -> Result<()> {
     let (_bob_sk, bob_pk) = test_accounts::bob();
 
     // Alice has 10000 tokens
-    let alice_balance = ConfidentialBalance::from_opening(10000, curve25519_dalek::scalar::Scalar::from(42u64));
+    let alice_balance =
+        ConfidentialBalance::from_opening(10000, curve25519_dalek::scalar::Scalar::from(42u64));
     let bob_pending = ConfidentialBalance::zero();
 
     // Transfer 1000 tokens
-    let result = generate_test_transfer(
-        &alice_pk,
-        &bob_pk,
-        &alice_balance,
-        &bob_pending,
-        1000,
-        1,
-    );
+    let result = generate_test_transfer(&alice_pk, &bob_pk, &alice_balance, &bob_pending, 1000, 1);
 
     assert!(result.is_ok(), "Valid transfer should succeed");
 
     let proof = result.unwrap();
-    assert_eq!(proof.encrypted_amount.len(), 64, "Encrypted amount should be 64 bytes");
-    assert!(!proof.proof_bundle.is_empty(), "Proof bundle should not be empty");
+    assert_eq!(
+        proof.encrypted_amount.len(),
+        64,
+        "Encrypted amount should be 64 bytes"
+    );
+    assert!(
+        !proof.proof_bundle.is_empty(),
+        "Proof bundle should not be empty"
+    );
 
     info!("Valid transfer proof generated successfully");
     Ok(())
@@ -139,19 +141,17 @@ mod zombienet_tests {
         let (_alice_sk, alice_pk) = test_accounts::alice();
         let (_bob_sk, bob_pk) = test_accounts::bob();
 
-        let alice_balance = ConfidentialBalance::from_opening(10000, curve25519_dalek::scalar::Scalar::from(42u64));
+        let alice_balance =
+            ConfidentialBalance::from_opening(10000, curve25519_dalek::scalar::Scalar::from(42u64));
         let bob_pending = ConfidentialBalance::zero();
 
-        let transfer1 = generate_test_transfer(
-            &alice_pk,
-            &bob_pk,
-            &alice_balance,
-            &bob_pending,
-            1000,
-            1,
-        )?;
+        let transfer1 =
+            generate_test_transfer(&alice_pk, &bob_pk, &alice_balance, &bob_pending, 1000, 1)?;
 
-        info!("Transfer 1 proof generated: {} bytes", transfer1.proof_bundle.len());
+        info!(
+            "Transfer 1 proof generated: {} bytes",
+            transfer1.proof_bundle.len()
+        );
 
         drop(network);
         Ok(())

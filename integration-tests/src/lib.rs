@@ -40,16 +40,16 @@
 //! - 2 Parachains (ParaA: 1000, ParaB: 2000) with 1 collator each
 //! - HRMP channels between parachains for cross-chain messaging
 
-pub mod network;
 pub mod helpers;
+pub mod network;
 
 #[allow(unused_imports)]
 use anyhow::Result;
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
 use curve25519_dalek::ristretto::RistrettoPoint;
 use curve25519_dalek::scalar::Scalar;
-use rand::rngs::OsRng;
 use rand::RngCore;
+use rand::rngs::OsRng;
 
 /// Generate a random ElGamal keypair for testing
 pub fn generate_test_keypair() -> (Scalar, RistrettoPoint) {

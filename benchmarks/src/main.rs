@@ -13,7 +13,7 @@
 //! ```
 
 use confidential_benchmarks::{
-    block_sim, tps, verification, HardwareInfo, OperationBenchmark, TpsReport,
+    HardwareInfo, OperationBenchmark, TpsReport, block_sim, tps, verification,
 };
 
 fn main() {
@@ -89,7 +89,9 @@ fn main() {
     );
     println!(
         "  vs Polkadot Standard:      {:.1}%",
-        tps_estimates.ecosystem_comparison.confidential_vs_standard_pct
+        tps_estimates
+            .ecosystem_comparison
+            .confidential_vs_standard_pct
     );
 
     // Generate report

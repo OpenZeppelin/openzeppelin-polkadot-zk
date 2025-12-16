@@ -1,63 +1,10 @@
 [package]
 name = "integration-tests"
-version = "0.1.0"
-edition = "2024"
 authors = { workspace = true }
-license = { workspace = true }
 description = "Zombienet-SDK integration tests for confidential assets"
-
-# Note: This crate requires nightly Rust >= 1.88 due to zombienet-sdk dependencies.
-# For now, tests are structured but not fully runnable until Rust version is updated.
-
-[dependencies]
-# Async runtime
-tokio = { version = "1", features = ["full", "rt-multi-thread", "macros"] }
-futures = { workspace = true }
-
-# Serialization
-serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
-
-# Logging
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-
-# Errors
-anyhow = "1.0"
-
-# ZK Proofs (for generating test transfers)
-zkhe-prover = { path = "../zkhe-prover" }
-zkhe-primitives = { path = "../primitives/zkhe" }
-confidential-assets-primitives = { path = "../primitives/confidential-assets" }
-
-# Crypto
-curve25519-dalek = { version = "4.1.3", features = ["alloc"] }
-rand = "0.8"
-sha2 = "0.10"
-
-# Zombienet SDK - optional, requires nightly >= 1.88
-# Enable with: cargo test -p integration-tests --features zombienet
-[dependencies.zombienet-sdk]
-version = "0.4"
-optional = true
-
-[dependencies.subxt]
-version = "0.38"
-features = ["substrate-compat"]
-optional = true
-
-[dependencies.subxt-signer]
-version = "0.38"
-features = ["sr25519"]
-optional = true
-
-[dev-dependencies]
-test-log = { version = "0.2", features = ["trace"] }
-
-[features]
-default = []
-# Enable for full zombienet integration (requires Rust >= 1.88)
-zombienet = ["dep:zombienet-sdk", "dep:subxt", "dep:subxt-signer"]
+edition = "2024"
+license = { workspace = true }
+version = "0.1.0"
 
 [[test]]
 name = "confidential_transfer"
@@ -66,3 +13,56 @@ path = "tests/confidential_transfer.rs"
 [[test]]
 name = "cross_chain_transfer"
 path = "tests/cross_chain_transfer.rs"
+
+# Note: This crate requires nightly Rust >= 1.88 due to zombienet-sdk dependencies.
+# For now, tests are structured but not fully runnable until Rust version is updated.
+
+[dependencies]
+# Async runtime
+futures = { workspace = true }
+tokio = { version = "1", features = [ "full", "macros", "rt-multi-thread" ] }
+
+# Serialization
+serde = { workspace = true, features = [ "derive" ] }
+serde_json = { workspace = true }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = [ "env-filter" ] }
+
+# Errors
+anyhow = "1.0"
+
+# ZK Proofs (for generating test transfers)
+confidential-assets-primitives = { path = "../primitives/confidential-assets" }
+zkhe-primitives = { path = "../primitives/zkhe" }
+zkhe-prover = { path = "../zkhe-prover" }
+
+# Crypto
+curve25519-dalek = { version = "4.1.3", features = [ "alloc" ] }
+rand = "0.8"
+sha2 = "0.10"
+
+[dependencies.subxt]
+features = [ "substrate-compat" ]
+optional = true
+version = "0.38"
+
+[dependencies.subxt-signer]
+features = [ "sr25519" ]
+optional = true
+version = "0.38"
+
+# Zombienet SDK - optional, requires nightly >= 1.88
+# Enable with: cargo test -p integration-tests --features zombienet
+[dependencies.zombienet-sdk]
+optional = true
+version = "0.4"
+
+[dev-dependencies]
+test-log = { version = "0.2", features = [ "trace" ] }
+
+[features]
+default = []
+# Enable for full zombienet integration (requires Rust >= 1.88)
+zombienet = [ "dep:subxt", "dep:subxt-signer", "dep:zombienet-sdk" ]

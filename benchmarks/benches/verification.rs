@@ -3,7 +3,7 @@
 //! Run with: cargo bench -p confidential-benchmarks
 
 use confidential_assets_primitives::ZkVerifier;
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
 use zkhe_vectors::*;
 use zkhe_verifier::ZkheVerifier;
 

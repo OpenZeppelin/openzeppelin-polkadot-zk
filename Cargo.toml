@@ -2,8 +2,6 @@
 members = [
 	# Benchmarks
 	"benchmarks",
-	# Integration Tests (zombienet-sdk)
-	"integration-tests",
 	# Example Extensions
 	"book/examples/confidential-htlc",
 	"book/examples/confidential-intents-dex",
@@ -11,6 +9,8 @@ members = [
 	"book/examples/confidential-xcm-bridge",
 	"book/examples/escrow",
 	"book/examples/htlc",
+	# Integration Tests (zombienet-sdk)
+	"integration-tests",
 	# Backend Pallets
 	"pallets/acl",
 	# Frontend Pallets

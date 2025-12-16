@@ -53,7 +53,7 @@ pub fn generate_test_transfer(
     amount: u64,
     asset_id: u128,
 ) -> Result<TestTransferProof> {
-    use zkhe_prover::{prove_sender_transfer, SenderInput};
+    use zkhe_prover::{SenderInput, prove_sender_transfer};
 
     let mut rng_seed = [0u8; 32];
     rand::RngCore::fill_bytes(&mut rand::rngs::OsRng, &mut rng_seed);
@@ -112,7 +112,11 @@ pub mod assertions {
     pub fn assert_transfer_event_emitted(_events: &[u8], expected_from: &[u8], expected_to: &[u8]) {
         // Parse events and find ConfidentialTransfer event
         // This is a placeholder - real implementation would decode SCALE events
-        tracing::info!("Checking for transfer event from {:?} to {:?}", expected_from, expected_to);
+        tracing::info!(
+            "Checking for transfer event from {:?} to {:?}",
+            expected_from,
+            expected_to
+        );
     }
 
     /// Assert that balance commitment changed

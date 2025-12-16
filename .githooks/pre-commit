@@ -1,0 +1,47 @@
+#!/bin/bash
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# Check if cargo is available
+if ! command -v cargo &> /dev/null; then
+    echo "Error: cargo is not installed or not in PATH"
+    exit 1
+fi
+
+# Check Rust formatting
+echo "Checking Rust formatting..."
+if ! cargo fmt --all -- --check; then
+    echo ""
+    echo "Error: Rust formatting check failed."
+    echo "Run 'cargo fmt --all' to fix formatting issues."
+    exit 1
+fi
+
+# Check TOML sorting (if toml-sort is installed)
+if command -v toml-sort &> /dev/null; then
+    echo "Checking Cargo.toml sorting..."
+
+    # Find all Cargo.toml files and check if they would be modified
+    UNSORTED_FILES=""
+    while IFS= read -r -d '' file; do
+        # Create a temp file with sorted content
+        SORTED=$(toml-sort "$file" --check 2>&1) || {
+            UNSORTED_FILES="$UNSORTED_FILES\n  $file"
+        }
+    done < <(find . -name "Cargo.toml" -not -path "*/target/*" -print0)
+
+    if [ -n "$UNSORTED_FILES" ]; then
+        echo ""
+        echo "Error: The following Cargo.toml files are not properly sorted:$UNSORTED_FILES"
+        echo ""
+        echo "Run './scripts/toml-sort.sh' to fix sorting issues."
+        exit 1
+    fi
+else
+    echo "Warning: toml-sort not installed, skipping TOML sort check."
+    echo "Install with: cargo install --git https://github.com/4meta5/toml_sort"
+fi
+
+echo "All pre-commit checks passed!"

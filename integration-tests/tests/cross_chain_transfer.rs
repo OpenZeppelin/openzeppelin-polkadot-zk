@@ -19,8 +19,8 @@ use tracing::info;
 #[cfg(feature = "zombienet")]
 mod zombienet_tests {
     use super::*;
-    use integration_tests::{compress_pk, test_accounts};
     use integration_tests::network::{dual_parachain_config, wait_for_blocks};
+    use integration_tests::{compress_pk, test_accounts};
     use zombienet_sdk::NetworkConfigExt;
 
     /// Test: Basic cross-chain confidential transfer

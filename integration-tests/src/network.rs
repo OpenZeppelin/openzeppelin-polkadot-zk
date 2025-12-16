@@ -110,7 +110,8 @@ pub fn stress_test_config(num_collators: usize) -> Result<NetworkConfig, Orchest
             .with_default_command(binaries::parachain().to_string_lossy());
 
         for i in 0..num_collators {
-            para_builder = para_builder.with_collator(|col| col.with_name(format!("collator-{}", i)));
+            para_builder =
+                para_builder.with_collator(|col| col.with_name(format!("collator-{}", i)));
         }
         para_builder
     });

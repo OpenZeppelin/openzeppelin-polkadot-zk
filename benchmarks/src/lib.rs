@@ -17,9 +17,9 @@
 //! cargo run -p confidential-benchmarks --release
 //! ```
 
-pub mod verification;
 pub mod block_sim;
 pub mod tps;
+pub mod verification;
 
 use serde::{Deserialize, Serialize};
 
@@ -108,7 +108,10 @@ pub struct EcosystemComparison {
 impl TpsReport {
     pub fn print_summary(&self) {
         println!("\n========== TPS BENCHMARK REPORT ==========\n");
-        println!("Hardware: {} ({} cores)", self.hardware.cpu, self.hardware.cores);
+        println!(
+            "Hardware: {} ({} cores)",
+            self.hardware.cpu, self.hardware.cores
+        );
         println!("Generated: {}\n", self.timestamp);
 
         println!("--- Verification Benchmarks (Native) ---");
@@ -129,9 +132,18 @@ impl TpsReport {
 
         println!("\n--- TPS Estimates ---");
         let tps = &self.tps_estimates;
-        println!("  Theoretical Max (verify only): {:.0} TPS", tps.theoretical_max_tps);
-        println!("  Realistic (with overhead):     {:.0} TPS", tps.realistic_tps);
-        println!("  Complete Transfer (send+claim): {:.0} TPS", tps.complete_transfer_tps);
+        println!(
+            "  Theoretical Max (verify only): {:.0} TPS",
+            tps.theoretical_max_tps
+        );
+        println!(
+            "  Realistic (with overhead):     {:.0} TPS",
+            tps.realistic_tps
+        );
+        println!(
+            "  Complete Transfer (send+claim): {:.0} TPS",
+            tps.complete_transfer_tps
+        );
 
         println!("\n--- Ecosystem Comparison ---");
         let eco = &tps.ecosystem_comparison;

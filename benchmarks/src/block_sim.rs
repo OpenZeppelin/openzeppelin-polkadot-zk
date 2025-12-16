@@ -5,9 +5,9 @@
 //! 2. Whether verification cost increases as block fills (cache effects, etc.)
 //! 3. Realistic TPS accounting for all overhead
 
+use crate::BlockFillingResult;
 use crate::block_params::*;
 use crate::verification::{verify_transfer_received, verify_transfer_sent};
-use crate::BlockFillingResult;
 use std::time::Instant;
 
 /// Simulate filling a block with transfer verifications
@@ -40,10 +40,9 @@ pub fn simulate_block_filling_transfer(max_txs: usize) -> BlockFillingResult {
 
     // Calculate cost increase from first to last tx
     let cost_increase_pct = if times.len() > 1 {
-        let first_avg = times[..5.min(times.len())].iter().sum::<f64>() / 5.0f64.min(times.len() as f64);
-        let last_avg = times[times.len().saturating_sub(5)..]
-            .iter()
-            .sum::<f64>()
+        let first_avg =
+            times[..5.min(times.len())].iter().sum::<f64>() / 5.0f64.min(times.len() as f64);
+        let last_avg = times[times.len().saturating_sub(5)..].iter().sum::<f64>()
             / 5.0f64.min(times.len() as f64);
         ((last_avg - first_avg) / first_avg) * 100.0
     } else {
@@ -86,10 +85,9 @@ pub fn simulate_block_filling_accept(max_txs: usize) -> BlockFillingResult {
     };
 
     let cost_increase_pct = if times.len() > 1 {
-        let first_avg = times[..5.min(times.len())].iter().sum::<f64>() / 5.0f64.min(times.len() as f64);
-        let last_avg = times[times.len().saturating_sub(5)..]
-            .iter()
-            .sum::<f64>()
+        let first_avg =
+            times[..5.min(times.len())].iter().sum::<f64>() / 5.0f64.min(times.len() as f64);
+        let last_avg = times[times.len().saturating_sub(5)..].iter().sum::<f64>()
             / 5.0f64.min(times.len() as f64);
         ((last_avg - first_avg) / first_avg) * 100.0
     } else {
@@ -134,10 +132,9 @@ pub fn simulate_block_filling_complete_transfer(max_txs: usize) -> BlockFillingR
     };
 
     let cost_increase_pct = if times.len() > 1 {
-        let first_avg = times[..5.min(times.len())].iter().sum::<f64>() / 5.0f64.min(times.len() as f64);
-        let last_avg = times[times.len().saturating_sub(5)..]
-            .iter()
-            .sum::<f64>()
+        let first_avg =
+            times[..5.min(times.len())].iter().sum::<f64>() / 5.0f64.min(times.len() as f64);
+        let last_avg = times[times.len().saturating_sub(5)..].iter().sum::<f64>()
             / 5.0f64.min(times.len() as f64);
         ((last_avg - first_avg) / first_avg) * 100.0
     } else {

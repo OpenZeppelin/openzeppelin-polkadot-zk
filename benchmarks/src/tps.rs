@@ -38,7 +38,9 @@ pub fn calculate_tps_estimates(
 
     let accept_bench = verification_benchmarks
         .iter()
-        .find(|b| b.name.contains("received") || b.name.contains("accept") || b.name.contains("claim"))
+        .find(|b| {
+            b.name.contains("received") || b.name.contains("accept") || b.name.contains("claim")
+        })
         .expect("accept benchmark required");
 
     // Theoretical max: just verification time, no overhead
@@ -59,7 +61,8 @@ pub fn calculate_tps_estimates(
         .unwrap_or(transfer_filling / 2.0);
 
     // Calculate ecosystem comparison
-    let confidential_vs_standard = (transfer_filling / ecosystem_data::POLKADOT_MEASURED_TPS) * 100.0;
+    let confidential_vs_standard =
+        (transfer_filling / ecosystem_data::POLKADOT_MEASURED_TPS) * 100.0;
 
     TpsEstimates {
         theoretical_max_tps: theoretical_transfer_tps,
