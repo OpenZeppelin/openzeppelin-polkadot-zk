@@ -1,0 +1,65 @@
+# Pre-commit hooks configuration
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+#
+# This configuration aligns with the CI workflow in .github/workflows/checks.yaml
+
+repos:
+  # Rust formatting check
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt
+        description: Check Rust code formatting
+        entry: cargo fmt --all -- --check
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+  # TOML sorting check for Cargo.toml files
+  - repo: local
+    hooks:
+      - id: toml-sort-check
+        name: toml-sort check
+        description: Check Cargo.toml files are sorted
+        entry: ./scripts/toml-sort.sh --check
+        language: script
+        files: Cargo\.toml$
+        pass_filenames: false
+
+  # Cargo check for compilation errors (faster than full test)
+  - repo: local
+    hooks:
+      - id: cargo-check
+        name: cargo check
+        description: Check for Rust compilation errors
+        entry: cargo check --all-targets
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+  # Optional: Run tests (can be slow, enable if desired)
+  # - repo: local
+  #   hooks:
+  #     - id: cargo-test
+  #       name: cargo test
+  #       description: Run Rust tests
+  #       entry: cargo nextest run --release
+  #       language: system
+  #       types: [rust]
+  #       pass_filenames: false
+  #       stages: [push]  # Only run on push, not commit
+
+  # Trailing whitespace and end-of-file fixes
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.patch$
+      - id: end-of-file-fixer
+        exclude: \.patch$
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']

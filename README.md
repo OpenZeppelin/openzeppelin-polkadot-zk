@@ -25,6 +25,50 @@ Read [the extension pallets](./book/examples/) for examples leveraging and exten
 * [OpenZeppelin Confidential Contracts Standard](https://github.com/OpenZeppelin/openzeppelin-confidential-contracts/blob/master/contracts/interfaces/IERC7984.sol)
 * [Solana Confidential Balances Overview](https://www.solana-program.com/docs/confidential-balances/overview)
 
+## Development
+
+### Pre-commit Hooks
+
+This project uses [pre-commit](https://pre-commit.com/) to run checks before each commit. The hooks align with the CI workflow.
+
+**Setup:**
+
+```bash
+# Install pre-commit (if not already installed)
+pip install pre-commit
+
+# Install toml-sort for Cargo.toml formatting
+cargo install --git https://github.com/4meta5/toml_sort
+
+# Install the git hooks
+pre-commit install
+
+# (Optional) Run hooks on all files
+pre-commit run --all-files
+```
+
+**Hooks include:**
+- `cargo fmt` - Rust code formatting
+- `toml-sort` - Cargo.toml file sorting
+- `cargo check` - Compilation error checking
+- Standard file checks (trailing whitespace, YAML/TOML validation, etc.)
+
+### Manual Checks
+
+```bash
+# Format Rust code
+cargo fmt --all
+
+# Sort Cargo.toml files
+./scripts/toml-sort.sh
+
+# Run tests
+cargo nextest run --release
+
+# Check documentation
+cargo doc --release --locked --all --no-deps
+```
+
 ## Security Policy
 
 Please report any security issues you find to <security@openzeppelin.com>.

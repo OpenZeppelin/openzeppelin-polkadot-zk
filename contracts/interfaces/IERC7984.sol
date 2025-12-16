@@ -139,14 +139,24 @@ interface IERC7984 {
 /**
  * @title IERC7984Receiver
  * @dev Interface for contracts that want to receive ERC-7984 token transfers.
+ *
+ * Contracts implementing this interface can be notified when they receive
+ * confidential tokens, similar to ERC-721's IERC721Receiver pattern.
  */
 interface IERC7984Receiver {
     /**
      * @dev Called when tokens are transferred to this contract.
+     *
+     * Implementers MUST return the function selector `onConfidentialTokenReceived.selector`
+     * (bytes4(keccak256("onConfidentialTokenReceived(address,bytes32,bytes)"))) = 0x25483763
+     * to indicate successful receipt and acceptance of the transfer.
+     *
+     * Returning any other value or reverting will cause the transfer to be rejected.
+     *
      * @param from The sender address
      * @param amount The encrypted amount pointer
      * @param data Additional data passed with the transfer
-     * @return A magic value indicating successful receipt
+     * @return The magic value `0x25483763` (this function's selector) to accept the transfer
      */
     function onConfidentialTokenReceived(
         address from,

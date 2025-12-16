@@ -19,6 +19,10 @@ pub type Balance = u128;
 pub type Block = frame_system::mocking::MockBlockU32<Runtime>;
 
 // --- Mock verifier that always succeeds ---
+//
+// IMPORTANT: This verifier is for testing only and accepts ANY proof input.
+// In production, the real ZkheVerifier performs cryptographic verification
+// of zero-knowledge proofs. Tests using this mock do NOT verify proof validity.
 #[derive(Default)]
 pub struct AlwaysOkVerifier;
 
