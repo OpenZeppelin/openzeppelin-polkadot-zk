@@ -271,9 +271,11 @@ fn tampered_bundle_rejected() {
 
     // Tamper with the bundle
     let mut tampered_bundle = TRANSFER_BUNDLE.to_vec();
-    if tampered_bundle.len() > 50 {
-        tampered_bundle[50] ^= 0xFF; // Flip some bits
-    }
+    assert!(
+        tampered_bundle.len() > 50,
+        "Test vector TRANSFER_BUNDLE must be longer than 50 bytes"
+    );
+    tampered_bundle[50] ^= 0xFF; // Flip some bits
 
     let result = <TestVerifier as ZkVerifier>::verify_transfer_sent(
         asset_id,

@@ -112,7 +112,9 @@ fn encrypt(value: u64, pk: RistrettoPoint, k: Scalar) -> ElGamalCiphertext {
 
 fn decrypt_commitment(ct: &ElGamalCiphertext, sk: Scalar) -> RistrettoPoint {
     // Returns v·G; caller must solve ECDLP for small v
-    ct.c - sk.invert() * ct.d * sk
+    // d = k·pk = k·sk·G, so d/sk = k·G
+    // When H = G: c - k·G = v·G + k·G - k·G = v·G
+    ct.c - sk.invert() * ct.d
 }
 ```
 

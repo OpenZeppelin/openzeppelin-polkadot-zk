@@ -48,12 +48,20 @@ In your runtime's `lib.rs`:
 pub type AssetId = u128;
 pub type Balance = u128;
 
+// Define a network ID provider for your chain
+pub struct RuntimeNetworkId;
+impl confidential_assets_primitives::NetworkIdProvider for RuntimeNetworkId {
+    fn network_id() -> [u8; 32] {
+        *b"my-chain-unique-identifier!" // Use your chain's unique ID
+    }
+}
+
 // Configure pallet-zkhe (backend)
 impl pallet_zkhe::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type AssetId = AssetId;
     type Balance = Balance;
-    type Verifier = zkhe_verifier::ZkheVerifier;
+    type Verifier = zkhe_verifier::ZkheVerifier<RuntimeNetworkId>;
     type WeightInfo = ();
 }
 

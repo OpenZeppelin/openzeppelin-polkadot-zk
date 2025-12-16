@@ -222,7 +222,7 @@ ConfidentialAssets::confidential_transfer_from(
 
 ## Transfer Flow with ACL & Operators
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    Transfer Request                          │
 │  caller, asset, from, to, encrypted_amount, proof           │

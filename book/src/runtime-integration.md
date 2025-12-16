@@ -61,13 +61,24 @@ use crate::{AccountId, AssetId, Balance, Runtime, RuntimeEvent, RuntimeOrigin};
 use confidential_assets_primitives::Ramp;
 use frame_support::{parameter_types, traits::Get, PalletId};
 
+// ==================== Network ID Provider ====================
+
+/// Network ID provider for this runtime.
+/// In production, use a unique identifier for your chain (e.g., genesis hash).
+pub struct RuntimeNetworkId;
+impl confidential_assets_primitives::NetworkIdProvider for RuntimeNetworkId {
+    fn network_id() -> [u8; 32] {
+        *b"my-chain-unique-identifier!" // Replace with your chain's unique ID
+    }
+}
+
 // ==================== pallet-zkhe ====================
 
 impl pallet_zkhe::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type AssetId = AssetId;
     type Balance = Balance;
-    type Verifier = zkhe_verifier::ZkheVerifier;
+    type Verifier = zkhe_verifier::ZkheVerifier<RuntimeNetworkId>;
     type WeightInfo = ();  // Or use benchmarked weights
 }
 

@@ -44,6 +44,14 @@ use zkhe_primitives::{
     point_to_bytes,
 };
 
+/// Minimum length of a mint proof bundle:
+/// - 64 bytes: minted ElGamal ciphertext (C||D)
+/// - 32 bytes: delta commitment
+/// - 192 bytes: link proof
+/// - 2 bytes: pending range proof length prefix
+/// - 2 bytes: total range proof length prefix
+const MINT_PROOF_MIN_LEN: usize = 64 + 32 + 192 + 2 + 2;
+
 /// Errors that can occur during proof verification.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum VerifierError {
@@ -292,7 +300,7 @@ impl<N: NetworkIdProvider> ZkVerifier for ZkheVerifier<N> {
         let total_old = parse_point32_allow_empty_identity(total_old_bytes)?;
 
         // parse proof blob
-        if proof_bytes.len() < 64 + 32 + 192 + 2 + 2 {
+        if proof_bytes.len() < MINT_PROOF_MIN_LEN {
             return Err(());
         }
         let minted_ct = {
