@@ -1,0 +1,44 @@
+[package]
+name = "confidential-assets-revive-precompile"
+authors = { workspace = true }
+description = "PolkaVM/Revive precompile for confidential assets pallet"
+edition = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+version = "0.1.0"
+
+[dependencies]
+confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
+log = { workspace = true }
+pallet-confidential-assets = { path = "../../pallets/confidential-assets", default-features = false }
+pallet-zkhe = { path = "../../pallets/zkhe", default-features = false }
+parity-scale-codec = { workspace = true, features = [ "derive" ] }
+polkadot-sdk = { workspace = true, default-features = false, features = [
+	"frame-support",
+	"frame-system",
+	"pallet-revive",
+	"sp-core",
+	"sp-io",
+	"sp-runtime",
+] }
+scale-info = { workspace = true, features = [ "derive" ] }
+
+[dev-dependencies]
+sp-keyring = { workspace = true }
+
+[features]
+default = [ "std" ]
+std = [
+	"confidential-assets-primitives/std",
+	"log/std",
+	"pallet-confidential-assets/std",
+	"pallet-zkhe/std",
+	"parity-scale-codec/std",
+	"polkadot-sdk/std",
+	"scale-info/std",
+]
+
+runtime-benchmarks = [
+	"pallet-confidential-assets/runtime-benchmarks",
+	"polkadot-sdk/runtime-benchmarks",
+]

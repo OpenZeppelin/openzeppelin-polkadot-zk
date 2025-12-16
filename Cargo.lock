@@ -2381,26 +2381,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "confidential-asset-hub"
-version = "0.1.0"
-dependencies = [
- "confidential-assets-primitives",
- "cumulus-pallet-parachain-system",
- "docify",
- "hex-literal",
- "log",
- "pallet-confidential-assets",
- "pallet-zkhe",
- "parity-scale-codec",
- "polkadot-sdk",
- "scale-info",
- "serde_json",
- "smallvec",
- "substrate-wasm-builder",
- "zkhe-verifier",
-]
-
-[[package]]
 name = "confidential-assets-primitives"
 version = "0.1.0"
 dependencies = [
@@ -2410,6 +2390,20 @@ dependencies = [
  "scale-info",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "confidential-assets-revive-precompile"
+version = "0.1.0"
+dependencies = [
+ "confidential-assets-primitives",
+ "log",
+ "pallet-confidential-assets",
+ "pallet-zkhe",
+ "parity-scale-codec",
+ "polkadot-sdk",
+ "scale-info",
+ "sp-keyring",
 ]
 
 [[package]]
@@ -12648,6 +12642,27 @@ checksum = "d11f2fedc3b7dafdc2851bc52f277377c5473d378859be234bc7ebb593144d01"
 dependencies = [
  "ar_archive_writer",
  "cc",
+]
+
+[[package]]
+name = "pvm-runtime"
+version = "0.1.0"
+dependencies = [
+ "confidential-assets-primitives",
+ "confidential-assets-revive-precompile",
+ "cumulus-pallet-parachain-system",
+ "docify",
+ "hex-literal",
+ "log",
+ "pallet-confidential-assets",
+ "pallet-zkhe",
+ "parity-scale-codec",
+ "polkadot-sdk",
+ "scale-info",
+ "serde_json",
+ "smallvec",
+ "substrate-wasm-builder",
+ "zkhe-verifier",
 ]
 
 [[package]]

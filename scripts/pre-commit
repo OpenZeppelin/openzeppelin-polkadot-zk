@@ -1,0 +1,88 @@
+#!/bin/bash
+#
+# Pre-commit hook that mirrors CI workflow checks.
+# Install by running: ./scripts/setup-hooks.sh
+#
+# To skip this hook, use: git commit --no-verify
+# To run tests as well, use: RUN_TESTS=1 git commit
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo -e "${YELLOW}Running pre-commit checks...${NC}"
+
+# Get the root of the git repository
+ROOT=$(git rev-parse --show-toplevel)
+cd "$ROOT"
+
+# Mac mappings for WASM compilation
+export CC_wasm32_unknown_unknown="/opt/homebrew/opt/llvm/bin/clang"
+export AR_wasm32_unknown_unknown="/opt/homebrew/opt/llvm/bin/llvm-ar"
+export CC_wasm32v1_none="/opt/homebrew/opt/llvm/bin/clang"
+export AR_wasm32v1_none="/opt/homebrew/opt/llvm/bin/llvm-ar"
+
+# 1. Check cargo fmt
+echo -e "\n${YELLOW}[1/4] Checking code formatting (cargo fmt)...${NC}"
+if ! cargo fmt --all -- --check; then
+    echo -e "${RED}Format check failed!${NC}"
+    echo -e "Run ${YELLOW}cargo fmt --all${NC} to fix formatting issues."
+    exit 1
+fi
+echo -e "${GREEN}Format check passed!${NC}"
+
+# 2. Check toml-sort
+echo -e "\n${YELLOW}[2/4] Checking Cargo.toml formatting (toml-sort)...${NC}"
+if type "toml-sort" > /dev/null 2>&1; then
+    # Run toml-sort in check mode on all Cargo.toml files
+    TOML_CHECK_FAILED=0
+    while IFS= read -r -d '' file; do
+        if ! toml-sort "$file" --check > /dev/null 2>&1; then
+            echo -e "${RED}Unsorted: $file${NC}"
+            TOML_CHECK_FAILED=1
+        fi
+    done < <(find . -name "Cargo.toml" -not -path "*/target/*" -print0)
+
+    if [ $TOML_CHECK_FAILED -eq 1 ]; then
+        echo -e "${RED}TOML sort check failed!${NC}"
+        echo -e "Run ${YELLOW}./scripts/toml-sort.sh${NC} to fix Cargo.toml formatting."
+        exit 1
+    fi
+    echo -e "${GREEN}TOML sort check passed!${NC}"
+else
+    echo -e "${YELLOW}toml-sort not installed, skipping...${NC}"
+    echo -e "Install with: ${YELLOW}cargo install --git https://github.com/4meta5/toml_sort${NC}"
+fi
+
+# 3. Run cargo check
+echo -e "\n${YELLOW}[3/4] Running cargo check...${NC}"
+if ! cargo check --all-targets 2>&1; then
+    echo -e "${RED}Cargo check failed!${NC}"
+    exit 1
+fi
+echo -e "${GREEN}Cargo check passed!${NC}"
+
+# 4. Optionally run tests (controlled by RUN_TESTS env var)
+if [ "$RUN_TESTS" = "1" ]; then
+    echo -e "\n${YELLOW}[4/4] Running tests (RUN_TESTS=1)...${NC}"
+    if type "cargo-nextest" > /dev/null 2>&1; then
+        if ! cargo nextest run; then
+            echo -e "${RED}Tests failed!${NC}"
+            exit 1
+        fi
+    else
+        if ! cargo test; then
+            echo -e "${RED}Tests failed!${NC}"
+            exit 1
+        fi
+    fi
+    echo -e "${GREEN}Tests passed!${NC}"
+else
+    echo -e "\n${YELLOW}[4/4] Skipping tests (set RUN_TESTS=1 to run)${NC}"
+fi
+
+echo -e "\n${GREEN}All pre-commit checks passed!${NC}"
