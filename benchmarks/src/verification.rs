@@ -88,6 +88,19 @@ pub struct TimingStats {
 
 fn compute_stats(times: &[f64]) -> TimingStats {
     let n = times.len();
+    if n == 0 {
+        return TimingStats {
+            mean_ms: 0.0,
+            std_dev_ms: 0.0,
+            min_ms: 0.0,
+            max_ms: 0.0,
+            p50_ms: 0.0,
+            p95_ms: 0.0,
+            p99_ms: 0.0,
+            samples: 0,
+        };
+    }
+
     let mean = times.iter().sum::<f64>() / n as f64;
     let variance = times.iter().map(|t| (t - mean).powi(2)).sum::<f64>() / n as f64;
     let std_dev = variance.sqrt();
@@ -101,8 +114,8 @@ fn compute_stats(times: &[f64]) -> TimingStats {
         min_ms: sorted[0],
         max_ms: sorted[n - 1],
         p50_ms: sorted[n / 2],
-        p95_ms: sorted[(n as f64 * 0.95) as usize],
-        p99_ms: sorted[(n as f64 * 0.99) as usize],
+        p95_ms: sorted[((n as f64 * 0.95) as usize).min(n.saturating_sub(1))],
+        p99_ms: sorted[((n as f64 * 0.99) as usize).min(n.saturating_sub(1))],
         samples: n,
     }
 }
