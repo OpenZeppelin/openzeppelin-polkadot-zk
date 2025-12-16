@@ -717,10 +717,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          target: wasm32-unknown-unknown
+          targets: wasm32-unknown-unknown
 
       - name: Run unit tests
         run: cargo test --workspace --exclude runtime

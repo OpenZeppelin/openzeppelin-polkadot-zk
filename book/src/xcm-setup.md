@@ -10,7 +10,7 @@ Cross-chain confidential transfers work via a two-phase commit:
 2. **Destination chain**: Mint confidential assets, send confirmation
 3. **Source chain**: Release escrow on confirmation (or refund on timeout)
 
-```
+```text
 Source Parachain              Destination Parachain
 ┌─────────────────┐          ┌─────────────────┐
 │ 1. escrow(Δ)    │─── XCM ──▶│ 2. mint(Δ)      │

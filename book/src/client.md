@@ -58,7 +58,7 @@ function storeKeypair(accountId: string, keypair: { secretKey: Uint8Array, publi
   localStorage.setItem(`confidential_pk_${accountId}`, Buffer.from(keypair.publicKey).toString('hex'));
 }
 
-function loadPublicKey(accountId: string): Uint8Array {
+function loadPublicKey(accountId: string): Uint8Array | null {
   const hex = localStorage.getItem(`confidential_pk_${accountId}`);
   return hex ? Buffer.from(hex, 'hex') : null;
 }
@@ -381,7 +381,7 @@ import { useConfidentialAssets } from './ConfidentialAssetsProvider';
 import { web3FromAddress } from '@polkadot/extension-dapp';
 import { zkheProveSenderTransfer } from 'zkhe-prover-wasm';
 
-export function TransferForm({ assetId }: { assetId: number }) {
+export function TransferForm({ assetId, sender }: { assetId: number; sender: string }) {
   const { api, keypair } = useConfidentialAssets();
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');

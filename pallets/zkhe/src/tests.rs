@@ -327,7 +327,7 @@ proptest! {
     #[test]
     fn prop_transfer_succeeds_with_valid_pks(
         sender in arb_account(),
-        receiver in arb_account().prop_filter("receiver != sender", |r| *r != 1),
+        receiver in arb_account(),
         asset in arb_asset(),
         ct_val in any::<u8>()
     ) {

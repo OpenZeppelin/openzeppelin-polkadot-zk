@@ -4,7 +4,7 @@ This document tracks improvements, issues, and development tasks for the ZKHE su
 
 ## Directory Structure
 
-```
+```text
 zkhe/
 ├── prover/     # std-only client-side proof generation
 ├── verifier/   # no_std on-chain verification
@@ -225,7 +225,7 @@ Created comprehensive mdbook documentation at `book/`:
 
 ### Proof Flow
 
-```
+```text
 ┌─────────────────┐      ┌─────────────────┐
 │  Sender (std)   │      │ Receiver (std)  │
 │                 │      │                 │
