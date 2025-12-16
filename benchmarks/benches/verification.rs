@@ -17,7 +17,7 @@ fn bench_verify_transfer_sent(c: &mut Criterion) {
     group.bench_function(BenchmarkId::from_parameter("single"), |b| {
         b.iter(|| {
             let (from_new, to_new) = ZkheVerifier::verify_transfer_sent(
-                black_box(ASSET_ID_BYTES),
+                black_box(&ASSET_ID_BYTES),
                 black_box(&SENDER_PK32),
                 black_box(&RECEIVER_PK32),
                 black_box(&TRANSFER_FROM_OLD_COMM_32),
@@ -41,7 +41,7 @@ fn bench_verify_transfer_received(c: &mut Criterion) {
     group.bench_function(BenchmarkId::from_parameter("single"), |b| {
         b.iter(|| {
             let (avail_new, pending_new) = ZkheVerifier::verify_transfer_received(
-                black_box(ASSET_ID_BYTES),
+                black_box(&ASSET_ID_BYTES),
                 black_box(&RECEIVER_PK32),
                 black_box(&IDENTITY_C32),
                 black_box(&TRANSFER_DELTA_COMM_32),
@@ -65,7 +65,7 @@ fn bench_complete_transfer(c: &mut Criterion) {
         b.iter(|| {
             // Sender phase
             let (from_new, to_new) = ZkheVerifier::verify_transfer_sent(
-                black_box(ASSET_ID_BYTES),
+                black_box(&ASSET_ID_BYTES),
                 black_box(&SENDER_PK32),
                 black_box(&RECEIVER_PK32),
                 black_box(&TRANSFER_FROM_OLD_COMM_32),
@@ -77,7 +77,7 @@ fn bench_complete_transfer(c: &mut Criterion) {
 
             // Receiver phase
             let (avail_new, pending_new) = ZkheVerifier::verify_transfer_received(
-                black_box(ASSET_ID_BYTES),
+                black_box(&ASSET_ID_BYTES),
                 black_box(&RECEIVER_PK32),
                 black_box(&IDENTITY_C32),
                 black_box(&TRANSFER_DELTA_COMM_32),

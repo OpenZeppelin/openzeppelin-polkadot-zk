@@ -9,9 +9,6 @@
 //! cargo test -p integration-tests --features zombienet cross_chain -- --nocapture
 //! ```
 
-use anyhow::Result;
-use tracing::info;
-
 // ==============================================================================
 // Tests that require zombienet (cross-chain needs live network)
 // ==============================================================================

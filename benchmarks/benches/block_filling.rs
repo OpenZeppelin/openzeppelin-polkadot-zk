@@ -24,7 +24,7 @@ fn bench_sequential_verifications(c: &mut Criterion) {
                 b.iter(|| {
                     for _ in 0..batch_size {
                         let (from_new, to_new) = ZkheVerifier::verify_transfer_sent(
-                            black_box(ASSET_ID_BYTES),
+                            black_box(&ASSET_ID_BYTES),
                             black_box(&SENDER_PK32),
                             black_box(&RECEIVER_PK32),
                             black_box(&TRANSFER_FROM_OLD_COMM_32),
@@ -58,7 +58,7 @@ fn bench_interleaved_pattern(c: &mut Criterion) {
                     for _ in 0..pairs {
                         // Sender proof
                         let _ = ZkheVerifier::verify_transfer_sent(
-                            black_box(ASSET_ID_BYTES),
+                            black_box(&ASSET_ID_BYTES),
                             black_box(&SENDER_PK32),
                             black_box(&RECEIVER_PK32),
                             black_box(&TRANSFER_FROM_OLD_COMM_32),
@@ -70,7 +70,7 @@ fn bench_interleaved_pattern(c: &mut Criterion) {
 
                         // Receiver proof (could be for a different transfer)
                         let _ = ZkheVerifier::verify_transfer_received(
-                            black_box(ASSET_ID_BYTES),
+                            black_box(&ASSET_ID_BYTES),
                             black_box(&RECEIVER_PK32),
                             black_box(&IDENTITY_C32),
                             black_box(&TRANSFER_DELTA_COMM_32),
@@ -102,7 +102,7 @@ fn bench_memory_pressure(c: &mut Criterion) {
                 b.iter(|| {
                     for _ in 0..batch_size {
                         let _ = ZkheVerifier::verify_transfer_sent(
-                            black_box(ASSET_ID_BYTES),
+                            black_box(&ASSET_ID_BYTES),
                             black_box(&SENDER_PK32),
                             black_box(&RECEIVER_PK32),
                             black_box(&TRANSFER_FROM_OLD_COMM_32),

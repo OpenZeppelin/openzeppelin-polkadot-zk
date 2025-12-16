@@ -14,7 +14,7 @@
 //! ```
 
 use anyhow::Result;
-use integration_tests::{compress_pk, test_accounts};
+use integration_tests::test_accounts;
 use tracing::info;
 
 // ==============================================================================
