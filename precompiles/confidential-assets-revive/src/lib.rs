@@ -31,6 +31,9 @@ mod tests;
 /// This becomes address: 0x0000000000000000000000000000000C010000
 pub const PRECOMPILE_ADDRESS: u16 = 0x0C01;
 
+// Compile-time assertion that PRECOMPILE_ADDRESS is non-zero
+const _: () = assert!(PRECOMPILE_ADDRESS != 0, "PRECOMPILE_ADDRESS must be non-zero");
+
 /// Confidential Assets Precompile
 ///
 /// Exposes confidential assets functionality via Solidity ABI:
@@ -46,19 +49,10 @@ impl<T> Default for ConfidentialAssetsPrecompile<T> {
 }
 
 // Solidity function selectors (first 4 bytes of keccak256 hash of function signature)
+// Currently only view functions are implemented. State-changing functions are planned for future versions.
 pub mod selectors {
-    /// setPublicKey(bytes32)
-    pub const SET_PUBLIC_KEY: [u8; 4] = [0x8d, 0xa5, 0xcb, 0x5b];
-    /// confidentialTransfer(uint128,address,bytes,bytes)
-    pub const CONFIDENTIAL_TRANSFER: [u8; 4] = [0x7c, 0x02, 0x52, 0x00];
     /// confidentialBalance(uint128,address) -> bytes32
     pub const CONFIDENTIAL_BALANCE: [u8; 4] = [0x4c, 0x5b, 0x3e, 0x9d];
-    /// deposit(uint128,uint128,bytes)
-    pub const DEPOSIT: [u8; 4] = [0xb6, 0xb5, 0x5f, 0x25];
-    /// withdraw(uint128,bytes,bytes)
-    pub const WITHDRAW: [u8; 4] = [0x2e, 0x1a, 0x7d, 0x4d];
-    /// confidentialClaim(uint128,bytes)
-    pub const CONFIDENTIAL_CLAIM: [u8; 4] = [0x9c, 0x5c, 0x4e, 0x3f];
     /// publicKey(address) -> bytes32
     pub const PUBLIC_KEY: [u8; 4] = [0x68, 0x5e, 0x3b, 0x40];
     /// totalSupply(uint128) -> bytes32
@@ -134,12 +128,14 @@ where
                 // Get public key from zkhe pallet using the storage getter
                 let pk = pallet_zkhe::Pallet::<T>::public_key(&account);
 
+                // Returns zero bytes32 if no public key is registered for the account.
+                // Callers should check for zero return to distinguish "no key" from a valid key.
                 let result: [u8; 32] = match pk {
                     Some(key) => key
                         .as_slice()
                         .try_into()
                         .map_err(|_| revert_error("Invalid key length"))?,
-                    None => [0u8; 32], // Return zero bytes if no key set
+                    None => [0u8; 32],
                 };
                 Ok(result.abi_encode())
             }
@@ -159,40 +155,44 @@ where
     }
 }
 
-// Helper functions for tests
+// ABI decoding helper functions for tests
+#[cfg(any(test, feature = "std"))]
+pub mod abi_helpers {
+    use alloc::vec::Vec;
 
-/// Decode a u128 from a 32-byte ABI-encoded slot
-pub fn decode_u128(data: &[u8]) -> Result<u128, ()> {
-    if data.len() < 32 {
-        return Err(());
-    }
-    // u128 is right-aligned in 32 bytes
-    let bytes: [u8; 16] = data[16..32].try_into().map_err(|_| ())?;
-    Ok(u128::from_be_bytes(bytes))
-}
-
-/// Decode a u256 as usize (for offsets)
-pub fn decode_u256_as_usize(data: &[u8]) -> Result<usize, ()> {
-    if data.len() < 32 {
-        return Err(());
-    }
-    // We only care about the last 8 bytes for reasonable offsets
-    let bytes: [u8; 8] = data[24..32].try_into().map_err(|_| ())?;
-    Ok(u64::from_be_bytes(bytes) as usize)
-}
-
-/// Decode dynamic bytes from ABI-encoded data
-pub fn decode_dynamic_bytes(input: &[u8], offset: usize) -> Result<Vec<u8>, ()> {
-    if offset + 32 > input.len() {
-        return Err(());
+    /// Decode a u128 from a 32-byte ABI-encoded slot
+    pub fn decode_u128(data: &[u8]) -> Result<u128, ()> {
+        if data.len() < 32 {
+            return Err(());
+        }
+        // u128 is right-aligned in 32 bytes
+        let bytes: [u8; 16] = data[16..32].try_into().map_err(|_| ())?;
+        Ok(u128::from_be_bytes(bytes))
     }
 
-    // First 32 bytes at offset is the length
-    let length = decode_u256_as_usize(&input[offset..offset + 32])?;
-
-    if offset + 32 + length > input.len() {
-        return Err(());
+    /// Decode a u256 as usize (for offsets)
+    pub fn decode_u256_as_usize(data: &[u8]) -> Result<usize, ()> {
+        if data.len() < 32 {
+            return Err(());
+        }
+        // We only care about the last 8 bytes for reasonable offsets
+        let bytes: [u8; 8] = data[24..32].try_into().map_err(|_| ())?;
+        Ok(u64::from_be_bytes(bytes) as usize)
     }
 
-    Ok(input[offset + 32..offset + 32 + length].to_vec())
+    /// Decode dynamic bytes from ABI-encoded data
+    pub fn decode_dynamic_bytes(input: &[u8], offset: usize) -> Result<Vec<u8>, ()> {
+        if offset + 32 > input.len() {
+            return Err(());
+        }
+
+        // First 32 bytes at offset is the length
+        let length = decode_u256_as_usize(&input[offset..offset + 32])?;
+
+        if offset + 32 + length > input.len() {
+            return Err(());
+        }
+
+        Ok(input[offset + 32..offset + 32 + length].to_vec())
+    }
 }

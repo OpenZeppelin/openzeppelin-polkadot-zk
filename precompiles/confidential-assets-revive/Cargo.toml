@@ -42,3 +42,8 @@ runtime-benchmarks = [
 	"pallet-confidential-assets/runtime-benchmarks",
 	"polkadot-sdk/runtime-benchmarks",
 ]
+
+try-runtime = [
+	"pallet-confidential-assets/try-runtime",
+	"polkadot-sdk/try-runtime",
+]

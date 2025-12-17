@@ -69,7 +69,7 @@ echo -e "${GREEN}Cargo check passed!${NC}"
 # 4. Optionally run tests (controlled by RUN_TESTS env var)
 if [ "$RUN_TESTS" = "1" ]; then
     echo -e "\n${YELLOW}[4/4] Running tests (RUN_TESTS=1)...${NC}"
-    if type "cargo-nextest" > /dev/null 2>&1; then
+    if command -v cargo-nextest > /dev/null 2>&1 || cargo nextest --version > /dev/null 2>&1; then
         if ! cargo nextest run; then
             echo -e "${RED}Tests failed!${NC}"
             exit 1

@@ -381,7 +381,9 @@ impl pallet_revive::Config for Runtime {
     type UnsafeUnstableInterface = ConstBool<false>;
     type PVFMemory = PvfMemory;
     type RuntimeMemory = RuntimeMemory;
+    // TODO: Implement FindAuthor to identify block authors for coinbase address
     type FindAuthor = ();
+    // TODO: Implement EthGasEncoder for proper gas encoding in eth_call responses
     type EthGasEncoder = ();
     type Precompiles = (confidential_assets_revive_precompile::ConfidentialAssetsPrecompile<Self>,);
 }
