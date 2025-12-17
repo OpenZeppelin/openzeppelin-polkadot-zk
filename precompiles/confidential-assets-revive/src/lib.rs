@@ -32,7 +32,10 @@ mod tests;
 pub const PRECOMPILE_ADDRESS: u16 = 0x0C01;
 
 // Compile-time assertion that PRECOMPILE_ADDRESS is non-zero
-const _: () = assert!(PRECOMPILE_ADDRESS != 0, "PRECOMPILE_ADDRESS must be non-zero");
+const _: () = assert!(
+    PRECOMPILE_ADDRESS != 0,
+    "PRECOMPILE_ADDRESS must be non-zero"
+);
 
 /// Confidential Assets Precompile
 ///
