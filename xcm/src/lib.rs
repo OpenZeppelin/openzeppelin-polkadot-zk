@@ -10,6 +10,8 @@ mod relay_chain;
 mod confidential_xcm_transfer;
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod vector_tests;
 
 use sp_runtime::BuildStorage;
 use sp_tracing;

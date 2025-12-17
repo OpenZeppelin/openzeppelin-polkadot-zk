@@ -5,7 +5,7 @@ use crate::parachain::{
     AccountId, Balance, ConfidentialEscrow, MsgQueue, PolkadotXcm, Runtime, RuntimeCall,
     RuntimeEvent, RuntimeOrigin, Zkhe,
 };
-use confidential_assets_primitives::{HrmpMessenger, Ramp};
+use confidential_assets_primitives::{HrmpMessenger, NetworkIdProvider, Ramp};
 use frame_support::traits::{
     AsEnsureOriginWithArg, Currency, ExistenceRequirement,
     tokens::fungibles::Mutate as MultiTransfer,
@@ -63,11 +63,19 @@ impl pallet_assets::Config for Runtime {
     type BenchmarkHelper = ();
 }
 
+/// Test network ID provider - returns zero for XCM tests (matches vector generation).
+pub struct TestNetworkId;
+impl NetworkIdProvider for TestNetworkId {
+    fn network_id() -> [u8; 32] {
+        [0u8; 32]
+    }
+}
+
 impl pallet_zkhe::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type AssetId = AssetId;
     type Balance = Balance;
-    type Verifier = zkhe_verifier::ZkheVerifier;
+    type Verifier = zkhe_verifier::ZkheVerifier<TestNetworkId>;
     type WeightInfo = ();
 }
 impl pallet_confidential_assets::Config for Runtime {

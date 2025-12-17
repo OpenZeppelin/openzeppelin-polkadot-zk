@@ -22,12 +22,11 @@ members = [
 	"runtime",
 	# Confidential XCM Tests
 	"xcm",
-	# client
-	"zkhe-prover",
-	"zkhe-vectors",
-	# no_std on-chain verifier
-	"zkhe-verifier",
-	"zkhe-verifier/per-block",
+	# zkhe client/prover/verifier
+	"zkhe/prover",
+	"zkhe/vectors",
+	"zkhe/verifier",
+	"zkhe/verifier/per-block",
 ]
 resolver = "2"
 

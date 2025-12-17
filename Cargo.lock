@@ -2447,6 +2447,7 @@ dependencies = [
  "staging-xcm-executor",
  "xcm-simulator",
  "zkhe-prover",
+ "zkhe-vectors",
  "zkhe-verifier",
 ]
 
@@ -8644,6 +8645,7 @@ dependencies = [
  "frame-system",
  "pallet-zkhe",
  "parity-scale-codec",
+ "proptest",
  "scale-info",
  "sp-io",
  "sp-runtime",
@@ -10273,6 +10275,7 @@ dependencies = [
  "frame-system",
  "pallet-balances",
  "parity-scale-codec",
+ "proptest",
  "scale-info",
  "sp-io",
  "sp-runtime",
