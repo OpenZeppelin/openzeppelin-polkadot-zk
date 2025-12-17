@@ -3,10 +3,12 @@
 //! Measures how verification cost changes as more txs are added to a block.
 //! This tests for cache effects, memory pressure, and other runtime behaviors.
 
-use confidential_assets_primitives::ZkVerifier;
+use confidential_assets_primitives::{ZeroNetworkId, ZkVerifier};
 use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
 use zkhe_vectors::*;
 use zkhe_verifier::ZkheVerifier;
+
+type Verifier = ZkheVerifier<ZeroNetworkId>;
 
 const IDENTITY_C32: [u8; 32] = [0u8; 32];
 
@@ -23,7 +25,7 @@ fn bench_sequential_verifications(c: &mut Criterion) {
             |b| {
                 b.iter(|| {
                     for _ in 0..batch_size {
-                        let (from_new, to_new) = ZkheVerifier::verify_transfer_sent(
+                        let (from_new, to_new) = Verifier::verify_transfer_sent(
                             black_box(&ASSET_ID_BYTES),
                             black_box(&SENDER_PK32),
                             black_box(&RECEIVER_PK32),
@@ -57,7 +59,7 @@ fn bench_interleaved_pattern(c: &mut Criterion) {
                 b.iter(|| {
                     for _ in 0..pairs {
                         // Sender proof
-                        let _ = ZkheVerifier::verify_transfer_sent(
+                        let _ = Verifier::verify_transfer_sent(
                             black_box(&ASSET_ID_BYTES),
                             black_box(&SENDER_PK32),
                             black_box(&RECEIVER_PK32),
@@ -69,7 +71,7 @@ fn bench_interleaved_pattern(c: &mut Criterion) {
                         .expect("verify");
 
                         // Receiver proof (could be for a different transfer)
-                        let _ = ZkheVerifier::verify_transfer_received(
+                        let _ = Verifier::verify_transfer_received(
                             black_box(&ASSET_ID_BYTES),
                             black_box(&RECEIVER_PK32),
                             black_box(&IDENTITY_C32),
@@ -101,7 +103,7 @@ fn bench_memory_pressure(c: &mut Criterion) {
             |b| {
                 b.iter(|| {
                     for _ in 0..batch_size {
-                        let _ = ZkheVerifier::verify_transfer_sent(
+                        let _ = Verifier::verify_transfer_sent(
                             black_box(&ASSET_ID_BYTES),
                             black_box(&SENDER_PK32),
                             black_box(&RECEIVER_PK32),

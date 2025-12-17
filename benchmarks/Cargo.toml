@@ -14,9 +14,9 @@ path = "src/main.rs"
 # ZK verification
 confidential-assets-primitives = { path = "../primitives/confidential-assets" }
 zkhe-primitives = { path = "../primitives/zkhe" }
-zkhe-prover = { path = "../zkhe-prover" }
-zkhe-vectors = { path = "../zkhe-vectors" }
-zkhe-verifier = { path = "../zkhe-verifier" }
+zkhe-prover = { path = "../zkhe/prover" }
+zkhe-vectors = { path = "../zkhe/vectors" }
+zkhe-verifier = { path = "../zkhe/verifier" }
 
 # Substrate/Frame
 frame-support = { workspace = true, default-features = true }

@@ -3,16 +3,18 @@
 //! Measures raw proof verification time without any Substrate/WASM overhead.
 //! This represents the theoretical minimum time for each operation.
 
-use confidential_assets_primitives::ZkVerifier;
+use confidential_assets_primitives::{ZeroNetworkId, ZkVerifier};
 use zkhe_vectors::*;
 use zkhe_verifier::ZkheVerifier;
+
+type Verifier = ZkheVerifier<ZeroNetworkId>;
 
 const IDENTITY_C32: [u8; 32] = [0u8; 32];
 
 /// Verify a sender transfer proof (Phase 1)
 /// Returns (from_new_commitment, to_new_commitment)
 pub fn verify_transfer_sent() -> (Vec<u8>, Vec<u8>) {
-    ZkheVerifier::verify_transfer_sent(
+    Verifier::verify_transfer_sent(
         &ASSET_ID_BYTES,
         &SENDER_PK32,
         &RECEIVER_PK32,
@@ -27,7 +29,7 @@ pub fn verify_transfer_sent() -> (Vec<u8>, Vec<u8>) {
 /// Verify a receiver acceptance proof (Phase 2)
 /// Returns (avail_new_commitment, pending_new_commitment)
 pub fn verify_transfer_received() -> (Vec<u8>, Vec<u8>) {
-    ZkheVerifier::verify_transfer_received(
+    Verifier::verify_transfer_received(
         &ASSET_ID_BYTES,
         &RECEIVER_PK32,
         &IDENTITY_C32,

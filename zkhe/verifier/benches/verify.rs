@@ -1,4 +1,4 @@
-use confidential_assets_primitives::ZkVerifier as _;
+use confidential_assets_primitives::{ZeroNetworkId, ZkVerifier as _};
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use std::hint::black_box;
 use zkhe_vectors::{
@@ -6,6 +6,8 @@ use zkhe_vectors::{
     TRANSFER_DELTA_COMM_32, TRANSFER_DELTA_CT_64, TRANSFER_FROM_OLD_COMM_32,
 };
 use zkhe_verifier::ZkheVerifier;
+
+type Verifier = ZkheVerifier<ZeroNetworkId>;
 
 const IDENTITY_C32: [u8; 32] = [0u8; 32];
 
@@ -15,7 +17,7 @@ fn bench_transfer_verify(c: &mut Criterion) {
 
     g.bench_function(BenchmarkId::from_parameter("transfer"), |b| {
         b.iter(|| {
-            let (from_new, to_new) = ZkheVerifier::verify_transfer_sent(
+            let (from_new, to_new) = Verifier::verify_transfer_sent(
                 &ASSET_ID_BYTES,
                 &SENDER_PK32,
                 &RECEIVER_PK32,
@@ -38,7 +40,7 @@ fn bench_accept_verify(c: &mut Criterion) {
 
     g.bench_function(BenchmarkId::from_parameter("accept"), |b| {
         b.iter(|| {
-            let (avail_new, pending_new) = ZkheVerifier::verify_transfer_received(
+            let (avail_new, pending_new) = Verifier::verify_transfer_received(
                 &ASSET_ID_BYTES,
                 &RECEIVER_PK32,
                 &IDENTITY_C32,

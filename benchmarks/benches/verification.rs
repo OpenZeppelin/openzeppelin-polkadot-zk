@@ -2,10 +2,12 @@
 //!
 //! Run with: cargo bench -p confidential-benchmarks
 
-use confidential_assets_primitives::ZkVerifier;
+use confidential_assets_primitives::{ZeroNetworkId, ZkVerifier};
 use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
 use zkhe_vectors::*;
 use zkhe_verifier::ZkheVerifier;
+
+type Verifier = ZkheVerifier<ZeroNetworkId>;
 
 const IDENTITY_C32: [u8; 32] = [0u8; 32];
 
@@ -16,7 +18,7 @@ fn bench_verify_transfer_sent(c: &mut Criterion) {
 
     group.bench_function(BenchmarkId::from_parameter("single"), |b| {
         b.iter(|| {
-            let (from_new, to_new) = ZkheVerifier::verify_transfer_sent(
+            let (from_new, to_new) = Verifier::verify_transfer_sent(
                 black_box(&ASSET_ID_BYTES),
                 black_box(&SENDER_PK32),
                 black_box(&RECEIVER_PK32),
@@ -40,7 +42,7 @@ fn bench_verify_transfer_received(c: &mut Criterion) {
 
     group.bench_function(BenchmarkId::from_parameter("single"), |b| {
         b.iter(|| {
-            let (avail_new, pending_new) = ZkheVerifier::verify_transfer_received(
+            let (avail_new, pending_new) = Verifier::verify_transfer_received(
                 black_box(&ASSET_ID_BYTES),
                 black_box(&RECEIVER_PK32),
                 black_box(&IDENTITY_C32),
@@ -64,7 +66,7 @@ fn bench_complete_transfer(c: &mut Criterion) {
     group.bench_function(BenchmarkId::from_parameter("send_plus_claim"), |b| {
         b.iter(|| {
             // Sender phase
-            let (from_new, to_new) = ZkheVerifier::verify_transfer_sent(
+            let (from_new, to_new) = Verifier::verify_transfer_sent(
                 black_box(&ASSET_ID_BYTES),
                 black_box(&SENDER_PK32),
                 black_box(&RECEIVER_PK32),
@@ -76,7 +78,7 @@ fn bench_complete_transfer(c: &mut Criterion) {
             .expect("verify");
 
             // Receiver phase
-            let (avail_new, pending_new) = ZkheVerifier::verify_transfer_received(
+            let (avail_new, pending_new) = Verifier::verify_transfer_received(
                 black_box(&ASSET_ID_BYTES),
                 black_box(&RECEIVER_PK32),
                 black_box(&IDENTITY_C32),
