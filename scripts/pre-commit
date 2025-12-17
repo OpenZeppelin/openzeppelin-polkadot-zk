@@ -24,4 +24,16 @@ if ! cargo fmt --all -- --check; then
   exit 1
 fi
 
+# Check compilation (matches CI)
+echo "Checking compilation..."
+export CC_wasm32_unknown_unknown="/opt/homebrew/opt/llvm/bin/clang"
+export AR_wasm32_unknown_unknown="/opt/homebrew/opt/llvm/bin/llvm-ar"
+export CC_wasm32v1_none="/opt/homebrew/opt/llvm/bin/clang"
+export AR_wasm32v1_none="/opt/homebrew/opt/llvm/bin/llvm-ar"
+if ! cargo check --all-targets 2>&1; then
+  echo ""
+  echo "Compilation check failed!"
+  exit 1
+fi
+
 echo "Pre-commit checks passed!"

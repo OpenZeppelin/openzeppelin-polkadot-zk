@@ -3,7 +3,7 @@
 use super::*;
 
 use confidential_assets_primitives::{
-    ConfidentialBackend, EncryptedAmount, PublicKeyBytes, Ramp, ZkVerifier,
+    ConfidentialBackend, EncryptedAmount, NetworkIdProvider, PublicKeyBytes, Ramp, ZkVerifier,
 };
 use frame_support::{
     construct_runtime, derive_impl, parameter_types, traits::Everything, weights::Weight,
@@ -18,6 +18,16 @@ pub type AssetId = u128;
 pub type Balance = u128;
 pub type Block = frame_system::mocking::MockBlockU32<Runtime>;
 
+// --- Mock Network ID Provider -----------------------------------------------
+// Returns zero network ID for testing (matches the default vector generation).
+
+pub struct MockNetworkId;
+impl NetworkIdProvider for MockNetworkId {
+    fn network_id() -> [u8; 32] {
+        [0u8; 32]
+    }
+}
+
 // --- Mock verifier that always succeeds ---
 //
 // IMPORTANT: This verifier is for testing only and accepts ANY proof input.
@@ -28,6 +38,7 @@ pub struct AlwaysOkVerifier;
 
 impl ZkVerifier for AlwaysOkVerifier {
     type Error = ();
+    type NetworkIdProvider = MockNetworkId;
 
     fn disclose(_asset: &[u8], _pk: &[u8], _cipher: &[u8]) -> Result<u64, ()> {
         Ok(123)
@@ -201,7 +212,6 @@ parameter_types! {
 }
 
 impl pallet_evm::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
     type FeeCalculator = ();
     type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
     type WeightPerGas = WeightPerGas;
