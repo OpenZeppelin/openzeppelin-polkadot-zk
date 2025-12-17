@@ -5,7 +5,7 @@
 //!   3) Range proof only: parse sender bundle, reconstruct transcript context, and verify range proof
 
 use confidential_assets_primitives::ZkVerifier as ZkVerifierTrait;
-use confidential_assets_primitives::{EncryptedAmount, PublicKeyBytes};
+use confidential_assets_primitives::{EncryptedAmount, NetworkIdProvider, PublicKeyBytes};
 use core::convert::TryFrom;
 use curve25519_dalek::{
     ristretto::RistrettoPoint,
@@ -16,6 +16,18 @@ use zkhe_primitives::RangeProofVerifier;
 use crate::{BulletproofRangeVerifier, ZkheVerifier};
 // Pre-generated deterministic vectors
 use zkhe_vectors::*;
+
+/// Test network ID provider - returns all zeros to match the network_id used
+/// when generating test vectors.
+pub struct TestNetworkId;
+impl NetworkIdProvider for TestNetworkId {
+    fn network_id() -> [u8; 32] {
+        [0u8; 32]
+    }
+}
+
+/// Test verifier with zero network ID (matches vector generation)
+type TestVerifier = ZkheVerifier<TestNetworkId>;
 
 // ---------- Bundle parsing (mirrors the on-chain verifier’s parsing logic) ----------
 #[allow(unused)]
@@ -149,7 +161,7 @@ fn verify_sender_and_receiver_happy_path() {
 
     // Sender phase verify
     let (from_new_bytes_v, to_new_pending_bytes_v) =
-        <ZkheVerifier as ZkVerifierTrait>::verify_transfer_sent(
+        <TestVerifier as ZkVerifierTrait>::verify_transfer_sent(
             asset_id,
             &SENDER_PK32,
             &RECEIVER_PK32,
@@ -172,7 +184,7 @@ fn verify_sender_and_receiver_happy_path() {
     let pending_commits: Vec<[u8; 32]> = vec![pending_old_c.compress().to_bytes()];
 
     let (avail_new_bytes_v, pending_new_bytes_v) =
-        <ZkheVerifier as ZkVerifierTrait>::verify_transfer_received(
+        <TestVerifier as ZkVerifierTrait>::verify_transfer_received(
             asset_id,
             &pk_receiver_pt.compress().to_bytes(),
             &avail_old_c.compress().to_bytes(),
@@ -202,7 +214,7 @@ fn rejects_tampered_sender_bundle() {
         bundle[32 + 10] ^= 0x01;
     }
 
-    let err = <ZkheVerifier as ZkVerifierTrait>::verify_transfer_sent(
+    let err = <TestVerifier as ZkVerifierTrait>::verify_transfer_sent(
         asset_id,
         &SENDER_PK32,
         &RECEIVER_PK32,
@@ -272,7 +284,7 @@ fn mint_round_trip() {
     let to_pk_bv = PublicKeyBytes::try_from(RECEIVER_PK32.to_vec()).expect("pk bv");
 
     let (to_new_bytes, total_new_bytes, minted_ct_bytes) =
-        <ZkheVerifier as ZkVerifierTrait>::verify_mint(
+        <TestVerifier as ZkVerifierTrait>::verify_mint(
             &ASSET_ID_BYTES,
             &to_pk_bv,
             &[], // to_old_pending = identity
@@ -301,7 +313,7 @@ fn burn_round_trip() {
     let amount_ct_bv = EncryptedAmount::try_from(BURN_AMOUNT_CT_64.to_vec()).expect("ct bv");
 
     let (from_new_bytes, total_new_bytes, disclosed) =
-        <ZkheVerifier as ZkVerifierTrait>::verify_burn(
+        <TestVerifier as ZkVerifierTrait>::verify_burn(
             &ASSET_ID_BYTES,
             &from_pk_bv,
             &from_old_c.compress().to_bytes(), // from_old_available

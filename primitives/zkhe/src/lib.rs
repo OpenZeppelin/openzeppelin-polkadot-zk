@@ -239,6 +239,22 @@ pub fn scalar_to_bytes(x: &Scalar) -> ScalarBytes {
     x.to_bytes()
 }
 
+/// The canonical Pedersen H generator point used throughout the protocol.
+///
+/// Derived deterministically via hash-to-point: `H = hash_to_ristretto(b"Zether/PedersenH")`.
+/// Both prover and verifier MUST use this same generator to ensure proof compatibility.
+///
+/// # Example
+/// ```
+/// use zkhe_primitives::pedersen_h_generator;
+/// let h = pedersen_h_generator();
+/// // Use H for Pedersen commitments: C = v*G + r*H
+/// ```
+pub fn pedersen_h_generator() -> RistrettoPoint {
+    use sha2::Sha512;
+    RistrettoPoint::hash_from_bytes::<Sha512>(b"Zether/PedersenH")
+}
+
 /// Concatenate two compressed points (e.g., for fixed-size proof parts).
 pub fn concat_points(a: &RistrettoPoint, b: &RistrettoPoint) -> [u8; 64] {
     let mut out = [0u8; 64];
