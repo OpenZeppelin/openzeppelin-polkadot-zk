@@ -2,7 +2,7 @@
 //!
 //! Optional: pallet-acl, pallet-operators
 use crate::{AccountId, AssetId, Balance, Runtime, RuntimeEvent, Zkhe};
-use confidential_assets_primitives::Ramp;
+use confidential_assets_primitives::{NetworkIdProvider, Ramp};
 use frame_support::traits::{
     Currency, ExistenceRequirement, Get,
     tokens::fungibles::Mutate as MultiTransfer,
@@ -11,11 +11,24 @@ use frame_support::traits::{
 use polkadot_sdk::{frame_support, pallet_assets, pallet_balances, sp_runtime};
 use sp_runtime::DispatchError;
 
+/// Network ID provider for this runtime.
+///
+/// In production, this should return a unique identifier for the network (e.g., genesis hash
+/// or a configured chain-specific ID) to provide domain separation for ZK proofs.
+pub struct RuntimeNetworkId;
+impl NetworkIdProvider for RuntimeNetworkId {
+    fn network_id() -> [u8; 32] {
+        // TODO: Replace with actual network identifier (e.g., from genesis config)
+        // For now returns zeros to maintain compatibility with test vectors
+        [0u8; 32]
+    }
+}
+
 impl pallet_zkhe::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type AssetId = AssetId;
     type Balance = Balance;
-    type Verifier = zkhe_verifier::ZkheVerifier;
+    type Verifier = zkhe_verifier::ZkheVerifier<RuntimeNetworkId>;
     type WeightInfo = pallet_zkhe::weights::WeightInfo<Runtime>;
 }
 

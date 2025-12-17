@@ -5,17 +5,19 @@ use core::result::Result;
 use merlin::Transcript;
 use zkhe_primitives::RangeProofVerifier;
 
-// --- DEBUG UTILITIES (enabled under tests or with `std`) ---
-#[cfg(any(test, feature = "std"))]
+// --- DEBUG UTILITIES (enabled only in debug builds with std/test) ---
+// Only output debug info when debug_assertions are enabled AND std feature is available.
+// This prevents debug spam in release builds while allowing debugging during development.
+#[cfg(all(debug_assertions, any(test, feature = "std")))]
 macro_rules! dbgln {
     ($($arg:tt)*) => { println!($($arg)*); }
 }
-#[cfg(not(any(test, feature = "std")))]
+#[cfg(not(all(debug_assertions, any(test, feature = "std"))))]
 macro_rules! dbgln {
     ($($arg:tt)*) => {};
 }
 
-#[cfg(any(test, feature = "std"))]
+#[cfg(all(debug_assertions, any(test, feature = "std")))]
 fn hex(bytes: &[u8]) -> String {
     const TABLE: &[u8; 16] = b"0123456789abcdef";
     let mut out = String::with_capacity(bytes.len() * 2);
@@ -26,7 +28,8 @@ fn hex(bytes: &[u8]) -> String {
     out
 }
 
-#[cfg(not(any(test, feature = "std")))]
+#[cfg(not(all(debug_assertions, any(test, feature = "std"))))]
+#[allow(dead_code)]
 fn hex(_: &[u8]) -> String {
     String::new()
 }

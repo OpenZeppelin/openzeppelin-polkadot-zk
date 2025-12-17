@@ -13,6 +13,11 @@ rand_chacha       = "0.9"
 serde             = { version = "1", features = [ "derive" ] }
 serde_json        = "1"
 sha2 = "0.10.9"
-solana-zk-sdk = { version = "4" }
+solana-zk-sdk = { version = "4", optional = true }
 thiserror         = "2.0.17"
-zkhe-primitives = { path = "../primitives/zkhe" }
+zkhe-primitives = { path = "../../primitives/zkhe" }
+
+[features]
+default = []
+# Enable Solana SDK interop validation (adds ~1MB to binary, useful for testing compatibility)
+solana-interop = [ "dep:solana-zk-sdk" ]
