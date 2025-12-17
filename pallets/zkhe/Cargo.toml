@@ -23,9 +23,10 @@ confidential-assets-primitives = { path = "../../primitives/confidential-assets"
 pallet-balances = { workspace = true, optional = true }
 
 # Benchmarking vectors (deterministic proofs for real verification)
-zkhe-vectors = { path = "../../zkhe-vectors", default-features = false, optional = true }
+zkhe-vectors = { path = "../../zkhe/vectors", default-features = false, optional = true }
 
 [dev-dependencies]
+proptest = "1.5"
 sp-io = { workspace = true }
 
 [features]
