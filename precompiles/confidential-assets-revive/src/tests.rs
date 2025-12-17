@@ -7,6 +7,7 @@ use super::*;
 
 mod helper_tests {
     use super::*;
+    use crate::abi_helpers::{decode_dynamic_bytes, decode_u128, decode_u256_as_usize};
 
     #[test]
     fn test_decode_u128_valid() {
@@ -153,16 +154,7 @@ mod selector_tests {
     #[test]
     fn test_selector_uniqueness() {
         // All selectors should be unique
-        let all_selectors = [
-            SET_PUBLIC_KEY,
-            CONFIDENTIAL_TRANSFER,
-            CONFIDENTIAL_BALANCE,
-            DEPOSIT,
-            WITHDRAW,
-            CONFIDENTIAL_CLAIM,
-            PUBLIC_KEY,
-            TOTAL_SUPPLY,
-        ];
+        let all_selectors = [CONFIDENTIAL_BALANCE, PUBLIC_KEY, TOTAL_SUPPLY];
 
         for (i, sel1) in all_selectors.iter().enumerate() {
             for (j, sel2) in all_selectors.iter().enumerate() {
@@ -176,16 +168,7 @@ mod selector_tests {
     #[test]
     fn test_selector_non_zero() {
         // No selector should be all zeros
-        let all_selectors = [
-            SET_PUBLIC_KEY,
-            CONFIDENTIAL_TRANSFER,
-            CONFIDENTIAL_BALANCE,
-            DEPOSIT,
-            WITHDRAW,
-            CONFIDENTIAL_CLAIM,
-            PUBLIC_KEY,
-            TOTAL_SUPPLY,
-        ];
+        let all_selectors = [CONFIDENTIAL_BALANCE, PUBLIC_KEY, TOTAL_SUPPLY];
 
         for selector in all_selectors.iter() {
             assert_ne!(selector, &[0u8; 4], "Selector should not be zero");
@@ -195,6 +178,7 @@ mod selector_tests {
 
 mod abi_encoding_tests {
     use super::*;
+    use crate::abi_helpers::decode_u128;
 
     /// Helper to create ABI-encoded uint128
     fn abi_encode_u128(value: u128) -> [u8; 32] {
@@ -280,7 +264,7 @@ mod precompile_address_tests {
 }
 
 mod error_handling_tests {
-    use super::*;
+    use crate::abi_helpers::{decode_u128, decode_u256_as_usize};
 
     #[test]
     fn test_empty_input_returns_error() {
