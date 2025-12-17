@@ -31,6 +31,10 @@ use precompile_utils::{
 use sp_core::{H160, H256, U256};
 use sp_runtime::traits::Dispatchable;
 
+// Type aliases for cleaner bounds
+type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+type RuntimeCallOf<T> = <T as frame_system::Config>::RuntimeCall;
+
 /// Size limits for bounded inputs (matching primitives)
 pub const MAX_PROOF_SIZE: u32 = 8192;
 pub const MAX_PUBKEY_SIZE: u32 = 64;
@@ -64,17 +68,11 @@ pub struct ConfidentialAssetsPrecompile<Runtime>(PhantomData<Runtime>);
 #[precompile_utils::precompile]
 impl<Runtime> ConfidentialAssetsPrecompile<Runtime>
 where
-    Runtime: pallet_confidential_assets::Config
-        + pallet_evm::Config
-        + pallet_zkhe::Config
-        + frame_system::Config,
-    <Runtime as frame_system::Config>::RuntimeCall:
-        Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
-    <Runtime as frame_system::Config>::RuntimeCall: From<pallet_confidential_assets::Call<Runtime>>,
-    <<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
-        From<Option<<Runtime as frame_system::Config>::AccountId>>,
-    <Runtime as pallet_evm::Config>::AddressMapping:
-        AddressMapping<<Runtime as frame_system::Config>::AccountId>,
+    Runtime: pallet_confidential_assets::Config + pallet_evm::Config + pallet_zkhe::Config,
+    RuntimeCallOf<Runtime>: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
+    RuntimeCallOf<Runtime>: From<pallet_confidential_assets::Call<Runtime>>,
+    <RuntimeCallOf<Runtime> as Dispatchable>::RuntimeOrigin: From<Option<AccountIdOf<Runtime>>>,
+    <Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<AccountIdOf<Runtime>>,
     <Runtime as pallet_confidential_assets::Config>::AssetId: TryFrom<u128> + Into<u128> + Copy,
     <Runtime as pallet_confidential_assets::Config>::Balance: TryFrom<U256> + Into<U256> + Copy,
 {

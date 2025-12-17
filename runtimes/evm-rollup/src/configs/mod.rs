@@ -157,6 +157,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
         UNINCLUDED_SEGMENT_CAPACITY,
     >;
     type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Runtime>;
+    type RelayParentOffset = sp_core::ConstU32<1>;
 }
 
 parameter_types! {
@@ -390,7 +391,7 @@ impl pallet_zkhe::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type AssetId = u128;
     type Balance = Balance;
-    type Verifier = zkhe_verifier::ZkheVerifier;
+    type Verifier = zkhe_verifier::ZkheVerifier<confidential_assets_primitives::ZeroNetworkId>;
     type WeightInfo = ();
 }
 

@@ -13,7 +13,7 @@ confidential-assets-evm-precompile = { path = "../../precompiles/confidential-as
 confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
 pallet-confidential-assets = { path = "../../pallets/confidential-assets", default-features = false }
 pallet-zkhe = { path = "../../pallets/zkhe", default-features = false }
-zkhe-verifier = { path = "../../zkhe-verifier", default-features = false }
+zkhe-verifier = { path = "../../zkhe/verifier", default-features = false }
 
 # General
 log = { workspace = true }

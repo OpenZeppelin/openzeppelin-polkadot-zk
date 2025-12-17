@@ -36,7 +36,7 @@ parity-scale-codec = { workspace = true, features = [ "max-encoded-len", "std" ]
 precompile-utils = { workspace = true, features = [ "std", "testing" ] }
 scale-info = { workspace = true, features = [ "derive", "std" ] }
 sp-runtime = { workspace = true, features = [ "std" ] }
-zkhe-verifier = { path = "../../zkhe-verifier", default-features = false, features = [ "std" ] }
+zkhe-verifier = { path = "../../zkhe/verifier", default-features = false, features = [ "std" ] }
 
 [features]
 default = [ "std" ]
