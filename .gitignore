@@ -4,5 +4,6 @@ target-install/
 # remove once repo cleaned before merging
 docs/
 
-# Internal brainstorming documents
-BRAINSTORM.md
+# Pre-commit hooks
+.githooks/pre-commit
+scripts/pre-commit
