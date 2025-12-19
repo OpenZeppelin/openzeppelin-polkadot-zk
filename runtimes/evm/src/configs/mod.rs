@@ -10,7 +10,7 @@ use frame_support::{
     derive_impl,
     traits::{AsEnsureOriginWithArg, TransformOrigin},
 };
-use frame_system::EnsureRoot;
+use frame_system::{EnsureRoot, EnsureRootWithSuccess};
 use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
 use polkadot_runtime_common::{BlockHashCount, xcm_sender::NoPriceForMessageDelivery};
 use sp_runtime::traits::AccountIdLookup;
@@ -358,6 +358,8 @@ parameter_types! {
     pub const AssetsStringLimit: u32 = 50;
     pub const MetadataDepositBase: Balance = UNIT;
     pub const MetadataDepositPerByte: Balance = 10 * MICRO_UNIT;
+    // Account that owns assets created via root. Derived from "py/asset" PalletId.
+    pub AssetsPalletAccount: AccountId = PalletId(*b"py/asset").into_account_truncating();
 }
 
 impl pallet_assets::Config for Runtime {
@@ -366,11 +368,12 @@ impl pallet_assets::Config for Runtime {
     type AssetId = u128;
     type AssetIdParameter = parity_scale_codec::Compact<u128>;
     type Currency = Balances;
-    // NOTE: Asset creation is restricted to root to prevent asset ID collisions.
-    // Asset ID 0 is reserved as the native asset sentinel by PublicRamp, so allowing
-    // arbitrary users to create assets could lead to conflicts. Root should avoid
-    // creating asset ID 0 as it would collide with the native asset routing.
-    type CreateOrigin = AsEnsureOriginWithArg<EnsureRoot<AccountId>>;
+    // Asset creation is restricted to root origin only. This prevents unauthorized users
+    // from creating arbitrary asset IDs, which could collide with asset ID 0 (reserved as
+    // the native asset sentinel by PublicRamp). Assets created via root will be owned by
+    // the AssetsPalletAccount. Use `force_create` via sudo for asset creation.
+    type CreateOrigin =
+        AsEnsureOriginWithArg<EnsureRootWithSuccess<AccountId, AssetsPalletAccount>>;
     type ForceOrigin = EnsureRoot<AccountId>;
     type AssetDeposit = AssetDeposit;
     type MetadataDepositBase = MetadataDepositBase;
