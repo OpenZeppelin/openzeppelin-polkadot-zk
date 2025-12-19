@@ -101,9 +101,8 @@ fn compute_stats(times: &[f64]) -> TimingStats {
             p99_ms: 0.0,
             samples: 0,
         };
-fn compute_stats(times: &[f64]) -> TimingStats {
-    let n = times.len();
-    assert!(!times.is_empty(), "compute_stats requires at least one sample");
+    }
+
     let mean = times.iter().sum::<f64>() / n as f64;
     let variance = times.iter().map(|t| (t - mean).powi(2)).sum::<f64>() / n as f64;
     let std_dev = variance.sqrt();
