@@ -21,7 +21,7 @@ members = [
 	"primitives/confidential-assets",
 	"primitives/zkhe",
 	# Runtimes
-	"runtimes/evm-rollup",
+	"runtimes/evm",
 	# Confidential XCM Tests
 	"xcm",
 	# zkhe client/prover/verifier

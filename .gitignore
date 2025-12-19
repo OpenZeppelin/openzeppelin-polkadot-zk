@@ -10,3 +10,7 @@ cache/
 out/
 contracts/cache/
 contracts/out/
+
+# Pre-commit hooks
+.pre-commit-config.yaml
+scripts/pre-commit
