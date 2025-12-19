@@ -366,11 +366,11 @@ impl pallet_assets::Config for Runtime {
     type AssetId = u128;
     type AssetIdParameter = parity_scale_codec::Compact<u128>;
     type Currency = Balances;
-    // NOTE: Asset creation is allowed via signed origin. Root can use ForceOrigin for privileged
-    // asset operations. Asset ID 0 is used as the native asset sentinel by PublicRamp - the pallet
-    // should validate asset IDs to prevent collision, or root should be careful when creating assets.
-    // Consider implementing asset ID validation in the confidential assets integration layer.
-    type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
+    // NOTE: Asset creation is restricted to root to prevent asset ID collisions.
+    // Asset ID 0 is reserved as the native asset sentinel by PublicRamp, so allowing
+    // arbitrary users to create assets could lead to conflicts. Root should avoid
+    // creating asset ID 0 as it would collide with the native asset routing.
+    type CreateOrigin = AsEnsureOriginWithArg<EnsureRoot<AccountId>>;
     type ForceOrigin = EnsureRoot<AccountId>;
     type AssetDeposit = AssetDeposit;
     type MetadataDepositBase = MetadataDepositBase;

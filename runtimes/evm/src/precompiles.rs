@@ -19,6 +19,19 @@ use sp_runtime::traits::Dispatchable;
 /// Address for the confidential assets precompile (0x800 = 2048)
 pub const CONFIDENTIAL_ASSETS_PRECOMPILE: u64 = 2048;
 
+/// Precompile addresses as a const array to avoid allocation on each is_precompile check.
+/// This is a hot path optimization since is_precompile is called frequently.
+const PRECOMPILE_ADDRESSES: [H160; 8] = [
+    H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]), // ECRecover
+    H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]), // Sha256
+    H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]), // Ripemd160
+    H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]), // Identity
+    H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5]), // Modexp
+    H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0]), // Sha3FIPS256 (1024)
+    H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 1]), // ECRecoverPublicKey (1025)
+    H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0]), // Confidential Assets (2048)
+];
+
 /// The precompile set for the EVM runtime.
 #[derive(Default)]
 pub struct FrontierPrecompiles<R>(PhantomData<R>);
@@ -33,16 +46,7 @@ where
 
     /// Returns the list of addresses used by precompiles.
     pub fn used_addresses() -> [H160; 8] {
-        [
-            hash(1),                              // ECRecover
-            hash(2),                              // Sha256
-            hash(3),                              // Ripemd160
-            hash(4),                              // Identity
-            hash(5),                              // Modexp
-            hash(1024),                           // Sha3FIPS256
-            hash(1025),                           // ECRecoverPublicKey
-            hash(CONFIDENTIAL_ASSETS_PRECOMPILE), // Confidential Assets
-        ]
+        PRECOMPILE_ADDRESSES
     }
 }
 
@@ -84,7 +88,7 @@ where
 
     fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
         IsPrecompileResult::Answer {
-            is_precompile: Self::used_addresses().contains(&address),
+            is_precompile: PRECOMPILE_ADDRESSES.contains(&address),
             extra_cost: 0,
         }
     }
