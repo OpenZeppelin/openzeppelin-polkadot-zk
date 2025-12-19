@@ -101,8 +101,9 @@ fn compute_stats(times: &[f64]) -> TimingStats {
             p99_ms: 0.0,
             samples: 0,
         };
-    }
-
+fn compute_stats(times: &[f64]) -> TimingStats {
+    let n = times.len();
+    assert!(!times.is_empty(), "compute_stats requires at least one sample");
     let mean = times.iter().sum::<f64>() / n as f64;
     let variance = times.iter().map(|t| (t - mean).powi(2)).sum::<f64>() / n as f64;
     let std_dev = variance.sqrt();
@@ -110,14 +111,17 @@ fn compute_stats(times: &[f64]) -> TimingStats {
     let mut sorted = times.to_vec();
     sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
+    let p95_idx = ((n as f64 * 0.95) as usize).min(n.saturating_sub(1));
+    let p99_idx = ((n as f64 * 0.99) as usize).min(n.saturating_sub(1));
+
     TimingStats {
         mean_ms: mean,
         std_dev_ms: std_dev,
         min_ms: sorted[0],
         max_ms: sorted[n - 1],
         p50_ms: sorted[n / 2],
-        p95_ms: sorted[((n as f64 * 0.95) as usize).min(n.saturating_sub(1))],
-        p99_ms: sorted[((n as f64 * 0.99) as usize).min(n.saturating_sub(1))],
+        p95_ms: sorted[p95_idx],
+        p99_ms: sorted[p99_idx],
         samples: n,
     }
 }
