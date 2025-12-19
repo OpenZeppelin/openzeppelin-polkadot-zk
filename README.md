@@ -16,6 +16,12 @@ Rust libraries for verifying computation executed on encrypted data directly on-
 1. `zkhe-prover`: client library to run off-chain for generating valid Zero Knowledge Proofs expected by on-chain verifier
 2. `zkhe-verifier`: no_std verifier library to run on-chain for verifying valid Zero Knowledge Proofs expected by off-chain prover
 
+**PolkaVM Precompile**
+1. `confidential-assets-revive-precompile`: Solidity-compatible precompile exposing confidential assets functionality to PolkaVM smart contracts via pallet-revive
+
+**Runtimes**
+1. `runtimes/polkavm`: PolkaVM-based runtime with pallet-revive integration for smart contract execution with confidential assets support
+
 ## Examples
 
 Read [the extension pallets](./book/examples/) for examples leveraging and extending the confidential assets framework.

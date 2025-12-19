@@ -3,3 +3,8 @@ target-install/
 */book/
 # remove once repo cleaned before merging
 docs/
+
+# Git hooks and setup scripts
+.githooks/
+scripts/pre-commit
+scripts/setup-hooks.sh

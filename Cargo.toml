@@ -21,7 +21,7 @@ members = [
 	"primitives/confidential-assets",
 	"primitives/zkhe",
 	# Runtime
-	"pvm-runtime",
+	"runtimes/polkavm",
 	# Confidential XCM Tests
 	"xcm",
 	# zkhe client/prover/verifier
