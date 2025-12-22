@@ -13,7 +13,7 @@ use frame_support::{
 use frame_system::{EnsureRoot, EnsureRootWithSuccess};
 use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
 use polkadot_runtime_common::{BlockHashCount, xcm_sender::NoPriceForMessageDelivery};
-use sp_runtime::traits::AccountIdLookup;
+use sp_runtime::traits::{AccountIdConversion, AccountIdLookup};
 
 // Re-exports
 pub use evm::*;
