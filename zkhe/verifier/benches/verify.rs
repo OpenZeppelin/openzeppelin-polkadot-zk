@@ -18,7 +18,7 @@ fn bench_transfer_verify(c: &mut Criterion) {
     g.bench_function(BenchmarkId::from_parameter("transfer"), |b| {
         b.iter(|| {
             let (from_new, to_new) = Verifier::verify_transfer_sent(
-                ASSET_ID_BYTES,
+                &ASSET_ID_BYTES,
                 &SENDER_PK32,
                 &RECEIVER_PK32,
                 &TRANSFER_FROM_OLD_COMM_32,
@@ -41,7 +41,7 @@ fn bench_accept_verify(c: &mut Criterion) {
     g.bench_function(BenchmarkId::from_parameter("accept"), |b| {
         b.iter(|| {
             let (avail_new, pending_new) = Verifier::verify_transfer_received(
-                ASSET_ID_BYTES,
+                &ASSET_ID_BYTES,
                 &RECEIVER_PK32,
                 &IDENTITY_C32,
                 &TRANSFER_DELTA_COMM_32,

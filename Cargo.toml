@@ -1,5 +1,7 @@
 [workspace]
 members = [
+	# Benchmarks
+	"benchmarks",
 	# Example Extensions
 	"book/examples/confidential-htlc",
 	"book/examples/confidential-intents-dex",
@@ -7,6 +9,8 @@ members = [
 	"book/examples/confidential-xcm-bridge",
 	"book/examples/escrow",
 	"book/examples/htlc",
+	# Integration Tests (zombienet-sdk)
+	"integration-tests",
 	# Backend Pallets
 	"pallets/acl",
 	# Frontend Pallets
@@ -17,11 +21,13 @@ members = [
 	"pallets/zkhe",
 	# Precompiles / Chain Extensions
 	"precompiles/confidential-assets-evm",
+	"precompiles/confidential-assets-revive",
 	# Primitives
 	"primitives/confidential-assets",
 	"primitives/zkhe",
 	# Runtimes
 	"runtimes/evm",
+	"runtimes/polkavm",
 	# Confidential XCM Tests
 	"xcm",
 	# zkhe client/prover/verifier

@@ -11,6 +11,8 @@ out/
 contracts/cache/
 contracts/out/
 
-# Pre-commit hooks
+# Git hooks and setup scripts
+.githooks/
 .pre-commit-config.yaml
 scripts/pre-commit
+scripts/setup-hooks.sh
