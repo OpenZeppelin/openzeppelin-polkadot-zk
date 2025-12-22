@@ -4,6 +4,7 @@ target-install/
 # remove once repo cleaned before merging
 docs/
 
-# Pre-commit hooks
-.githooks/pre-commit
+# Git hooks and setup scripts
+.githooks/
 scripts/pre-commit
+scripts/setup-hooks.sh

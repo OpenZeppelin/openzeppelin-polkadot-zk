@@ -25,6 +25,7 @@
 - [Custom Backends](./custom-backends.md)
 - [ACL & Operators](./acl-operators.md)
 - [Custom Ramps](./custom-ramps.md)
+- [PolkaVM Precompile](./polkavm-precompile.md)
 
 # Recipes
 

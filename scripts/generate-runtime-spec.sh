@@ -11,5 +11,5 @@ cargo build --release
 chain-spec-builder create -t development \
 --relay-chain paseo \
 --para-id 1001 \
---runtime ../../target/release/wbuild/asset-hub-runtime/asset_hub_runtime.compact.compressed.wasm \
+--runtime ../../target/release/wbuild/pvm-runtime/pvm_runtime.compact.compressed.wasm \
 named-preset development

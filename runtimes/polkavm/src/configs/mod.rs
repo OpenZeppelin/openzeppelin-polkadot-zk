@@ -341,3 +341,49 @@ impl pallet_collator_selection::Config for Runtime {
     type ValidatorRegistration = Session;
     type WeightInfo = ();
 }
+
+// ---------- pallet-revive (PolkaVM Smart Contracts) Configuration ----------
+
+parameter_types! {
+    /// Deposit required per byte of code stored.
+    pub const DepositPerByte: Balance = MICRO_UNIT;
+    /// Deposit required per item stored (storage keys).
+    pub const DepositPerItem: Balance = MICRO_UNIT;
+    /// The maximum code size allowed for contracts in bytes.
+    pub const CodeHashLockupDepositPercent: Perbill = Perbill::from_percent(30);
+    /// Chain ID for EVM compatibility.
+    pub const ChainId: u64 = 420_420_420;
+    /// Ratio between native currency (12 decimals) and ETH (18 decimals).
+    /// Native has 12 decimals, ETH has 18, so ratio is 10^6.
+    pub const NativeToEthRatio: u32 = 1_000_000;
+    /// Maximum memory for the PolkaVM runtime (PVF validation).
+    pub const PvfMemory: u32 = 512 * 1024 * 1024;
+    /// Maximum memory for contract execution.
+    pub const RuntimeMemory: u32 = 128 * 1024 * 1024;
+}
+
+impl pallet_revive::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type RuntimeCall = RuntimeCall;
+    type RuntimeHoldReason = RuntimeHoldReason;
+    type Currency = Balances;
+    type Time = pallet_timestamp::Pallet<Self>;
+    type AddressMapper = pallet_revive::AccountId32Mapper<Self>;
+    type ChainId = ChainId;
+    type NativeToEthRatio = NativeToEthRatio;
+    type DepositPerByte = DepositPerByte;
+    type DepositPerItem = DepositPerItem;
+    type CodeHashLockupDepositPercent = CodeHashLockupDepositPercent;
+    type WeightPrice = pallet_transaction_payment::Pallet<Self>;
+    type WeightInfo = pallet_revive::weights::SubstrateWeight<Self>;
+    type UploadOrigin = EnsureSigned<Self::AccountId>;
+    type InstantiateOrigin = EnsureSigned<Self::AccountId>;
+    type UnsafeUnstableInterface = ConstBool<false>;
+    type PVFMemory = PvfMemory;
+    type RuntimeMemory = RuntimeMemory;
+    // TODO: Implement FindAuthor to identify block authors for coinbase address
+    type FindAuthor = ();
+    // TODO: Implement EthGasEncoder for proper gas encoding in eth_call responses
+    type EthGasEncoder = ();
+    type Precompiles = (confidential_assets_revive_precompile::ConfidentialAssetsPrecompile<Self>,);
+}

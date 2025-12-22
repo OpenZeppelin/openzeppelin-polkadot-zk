@@ -12,6 +12,7 @@ Rust libraries for verifying computation executed on encrypted data directly on-
 - [Quick Start](#quick-start)
 - [Usage Examples](#usage-examples)
 - [Cross-Chain Transfers](#cross-chain-transfers)
+- [PolkaVM Precompile](#polkavm-precompile)
 - [Testing](#testing)
 - [References](#references)
 - [Security Policy](#security-policy)
@@ -82,6 +83,12 @@ This framework implements **ERC-7984 Confidential Contracts** for Polkadot, enab
 |-------|-------------|---------|
 | `zkhe-prover` | Off-chain (std) | Generate ZK proofs for transfers |
 | `zkhe-verifier` | On-chain (no_std) | Verify ZK proofs in runtime |
+
+### Runtimes
+
+| Runtime | Purpose |
+|---------|---------|
+| `runtimes/polkavm` | PolkaVM-based runtime with pallet-revive for smart contract execution |
 
 ## Performance Benchmarks
 
@@ -371,6 +378,39 @@ ConfidentialBridge::send_confidential(
 // On source chain - after confirmation:
 // Escrow is burned, transfer is finalized
 ```
+
+## PolkaVM Precompile
+
+The framework includes a Solidity-compatible precompile for PolkaVM smart contracts via `pallet-revive`.
+
+### Precompile Address
+
+```
+0x0000000000000000000000000000000C010000
+```
+
+### Solidity Interface
+
+```solidity
+interface IConfidentialAssets {
+    function confidentialBalance(uint128 assetId, bytes32 account) external view returns (bytes32);
+    function publicKey(bytes32 account) external view returns (bytes32);
+    function totalSupply(uint128 assetId) external view returns (bytes32);
+}
+```
+
+### Usage from Solidity
+
+```solidity
+IConfidentialAssets constant CONFIDENTIAL_ASSETS =
+    IConfidentialAssets(0x0000000000000000000000000000000C010000);
+
+function getBalance(uint128 assetId, bytes32 account) external view returns (bytes32) {
+    return CONFIDENTIAL_ASSETS.confidentialBalance(assetId, account);
+}
+```
+
+See [book/src/polkavm-precompile.md](./book/src/polkavm-precompile.md) for detailed documentation.
 
 ## Testing
 

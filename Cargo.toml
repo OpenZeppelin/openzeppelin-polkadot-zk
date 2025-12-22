@@ -19,11 +19,13 @@ members = [
 	"pallets/confidential-escrow",
 	"pallets/operators",
 	"pallets/zkhe",
+	# Precompiles
+	"precompiles/confidential-assets-revive",
 	# Primitives
 	"primitives/confidential-assets",
 	"primitives/zkhe",
 	# Runtime
-	"runtime",
+	"runtimes/polkavm",
 	# Confidential XCM Tests
 	"xcm",
 	# zkhe client/prover/verifier
