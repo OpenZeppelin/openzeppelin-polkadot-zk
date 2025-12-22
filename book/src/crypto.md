@@ -86,8 +86,8 @@ Where:
 ### Decryption
 
 ```
-v·G = C - (sk⁻¹)·D·sk
-    = C - k·pk·(sk⁻¹)·sk
+v·G = C - (sk⁻¹)·D
+    = C - k·pk·(sk⁻¹)
     = C - k·G
     = v·G + k·H - k·G
     = v·G
