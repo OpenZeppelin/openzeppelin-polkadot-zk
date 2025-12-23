@@ -1,0 +1,56 @@
+[package]
+name = "confidential-assets-evm-precompile"
+authors = { workspace = true }
+description = "Frontier EVM precompile for confidential assets"
+edition = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+version = "0.1.0"
+
+[dependencies]
+# Local
+confidential-assets-primitives = { path = "../../primitives/confidential-assets", default-features = false }
+pallet-confidential-assets = { path = "../../pallets/confidential-assets", default-features = false }
+pallet-zkhe = { path = "../../pallets/zkhe", default-features = false }
+
+# Substrate
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+parity-scale-codec = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+
+# Frontier
+fp-evm = { workspace = true }
+pallet-evm = { workspace = true }
+precompile-utils = { workspace = true }
+
+[dev-dependencies]
+hex-literal = { workspace = true }
+pallet-balances = { workspace = true, features = [ "insecure_zero_ed", "std" ] }
+pallet-timestamp = { workspace = true, features = [ "std" ] }
+parity-scale-codec = { workspace = true, features = [ "max-encoded-len", "std" ] }
+precompile-utils = { workspace = true, features = [ "std", "testing" ] }
+scale-info = { workspace = true, features = [ "derive", "std" ] }
+sp-runtime = { workspace = true, features = [ "std" ] }
+zkhe-verifier = { path = "../../zkhe/verifier", default-features = false, features = [ "std" ] }
+
+[features]
+default = [ "std" ]
+std = [
+	"confidential-assets-primitives/std",
+	"fp-evm/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-confidential-assets/std",
+	"pallet-evm/std",
+	"pallet-zkhe/std",
+	"parity-scale-codec/std",
+	"precompile-utils/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-std/std",
+]

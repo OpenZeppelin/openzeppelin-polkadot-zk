@@ -1,6 +1,9 @@
 # Polkadot Confidential Assets Framework
 
-**WARNING: This is beta software that has NOT been audited and is NOT ready for production. Use at your own risk!**
+[![Lint and Test](https://github.com/OpenZeppelin/openzeppelin-polkadot-zk/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenZeppelin/openzeppelin-polkadot-zk/actions/workflows/ci.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
+> **This project is experimental and has not been audited. Use at your own risk.**
 
 Rust libraries for verifying computation executed on encrypted data directly on-chain, leveraging Polkadot's interoperability and Zero-Knowledge Proofs for privacy and verifiability.
 
@@ -466,6 +469,14 @@ The `book/examples/` directory contains example pallets extending this framework
 * [Polkadot sTPS Benchmarks](https://github.com/paritytech/polkadot-stps)
 * [Zombienet Testing Framework](https://github.com/paritytech/zombienet)
 
-## Security Policy
+## Contributing
 
-Please report any security issues you find to <security@openzeppelin.com>.
+Polkadot Confidential Assets exists thanks to its contributors. If you'd like to contribute, please see our [Contributing Guidelines](CONTRIBUTING.md).
+
+## Security
+
+If you find a security vulnerability, we kindly ask you not to open a public issue. Instead, see our [Security Policy](SECURITY.md).
+
+## License
+
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
