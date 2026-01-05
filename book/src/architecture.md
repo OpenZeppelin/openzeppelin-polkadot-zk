@@ -4,33 +4,33 @@ Understanding the confidential assets system architecture.
 
 ## System Layers
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Client Application                        │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │ User Wallet │  │ Key Mgmt    │  │ zkhe-prover (std)   │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
+```text
+┌───────────────────────────────────────────────────────────────┐
+│                      Client Application                       │
+│  ┌─────────────┐  ┌─────────────┐  ┌───────────────────────┐  │
+│  │ User Wallet │  │  Key Mgmt   │  │  zkhe-prover (std)    │  │
+│  └─────────────┘  └─────────────┘  └───────────────────────┘  │
+└───────────────────────────────────────────────────────────────┘
                               │
                               │ Extrinsics + Proofs
                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Substrate Runtime                         │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │           pallet-confidential-assets                 │    │
-│  │  (ERC-7984 interface: deposit, withdraw, transfer)   │    │
-│  └───────────────────────┬─────────────────────────────┘    │
-│                          │ Backend trait                     │
-│  ┌───────────────────────▼─────────────────────────────┐    │
-│  │                  pallet-zkhe                         │    │
-│  │  (Encrypted balance storage, UTXO management)        │    │
-│  └───────────────────────┬─────────────────────────────┘    │
-│                          │ Verifier trait                    │
-│  ┌───────────────────────▼─────────────────────────────┐    │
-│  │           zkhe-verifier (no_std)                     │    │
-│  │  (ZK proof verification, range checks)               │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│                      Substrate Runtime                        │
+│  ┌─────────────────────────────────────────────────────────┐  │
+│  │             pallet-confidential-assets                  │  │
+│  │    (ERC-7984 interface: deposit, withdraw, transfer)    │  │
+│  └────────────────────────┬────────────────────────────────┘  │
+│                           │ Backend trait                     │
+│  ┌────────────────────────▼────────────────────────────────┐  │
+│  │                    pallet-zkhe                          │  │
+│  │      (Encrypted balance storage, UTXO management)       │  │
+│  └────────────────────────┬────────────────────────────────┘  │
+│                           │ Verifier trait                    │
+│  ┌────────────────────────▼────────────────────────────────┐  │
+│  │              zkhe-verifier (no_std)                     │  │
+│  │         (ZK proof verification, range checks)           │  │
+│  └─────────────────────────────────────────────────────────┘  │
+└───────────────────────────────────────────────────────────────┘
 ```
 
 ## Component Details
@@ -84,57 +84,57 @@ The **cryptographic backend** storing encrypted state:
 
 ## Data Flow: Confidential Transfer
 
-```
+```text
 1. SETUP: Both parties register public keys
    Sender:   set_public_key(pk_sender)
    Receiver: set_public_key(pk_receiver)
 
 2. SEND: Sender creates and submits transfer
-   ┌──────────────────────────────────────────────────────┐
-   │ Client (Sender)                                      │
-   │                                                      │
-   │ prove_sender_transfer() generates:                   │
-   │   - Encrypted transfer amount                        │
-   │   - Balance commitment update                        │
-   │   - Range proof (amount ≥ 0)                        │
-   │   - Link proof (encryption matches commitment)       │
-   └──────────────────────────────────────────────────────┘
+   ┌────────────────────────────────────────────────────────┐
+   │ Client (Sender)                                        │
+   │                                                        │
+   │ prove_sender_transfer() generates:                     │
+   │   - Encrypted transfer amount                          │
+   │   - Balance commitment update                          │
+   │   - Range proof (amount >= 0)                          │
+   │   - Link proof (encryption matches commitment)         │
+   └────────────────────────────────────────────────────────┘
                               │
                               ▼
-   ┌──────────────────────────────────────────────────────┐
-   │ On-chain                                             │
-   │                                                      │
-   │ verify_transfer_sent() checks:                       │
-   │   - All proofs valid                                 │
-   │   - Sender's new balance ≥ 0                        │
-   │                                                      │
-   │ Storage updates:                                     │
-   │   - Sender: available balance reduced                │
-   │   - Receiver: pending balance increased              │
-   │   - UTXO created for receiver                       │
-   └──────────────────────────────────────────────────────┘
+   ┌────────────────────────────────────────────────────────┐
+   │ On-chain                                               │
+   │                                                        │
+   │ verify_transfer_sent() checks:                         │
+   │   - All proofs valid                                   │
+   │   - Sender's new balance >= 0                          │
+   │                                                        │
+   │ Storage updates:                                       │
+   │   - Sender: available balance reduced                  │
+   │   - Receiver: pending balance increased                │
+   │   - UTXO created for receiver                          │
+   └────────────────────────────────────────────────────────┘
 
 3. RECEIVE: Receiver claims pending amount
-   ┌──────────────────────────────────────────────────────┐
-   │ Client (Receiver)                                    │
-   │                                                      │
-   │ prove_receiver_accept() generates:                   │
-   │   - Decryption proof (knows secret key)              │
-   │   - Balance update proof                             │
-   └──────────────────────────────────────────────────────┘
+   ┌────────────────────────────────────────────────────────┐
+   │ Client (Receiver)                                      │
+   │                                                        │
+   │ prove_receiver_accept() generates:                     │
+   │   - Decryption proof (knows secret key)                │
+   │   - Balance update proof                               │
+   └────────────────────────────────────────────────────────┘
                               │
                               ▼
-   ┌──────────────────────────────────────────────────────┐
-   │ On-chain                                             │
-   │                                                      │
-   │ verify_transfer_received() checks:                   │
-   │   - Receiver knows secret key                       │
-   │   - Balance update is correct                       │
-   │                                                      │
-   │ Storage updates:                                     │
-   │   - Receiver: pending → available                   │
-   │   - UTXOs consumed                                  │
-   └──────────────────────────────────────────────────────┘
+   ┌────────────────────────────────────────────────────────┐
+   │ On-chain                                               │
+   │                                                        │
+   │ verify_transfer_received() checks:                     │
+   │   - Receiver knows secret key                          │
+   │   - Balance update is correct                          │
+   │                                                        │
+   │ Storage updates:                                       │
+   │   - Receiver: pending -> available                     │
+   │   - UTXOs consumed                                     │
+   └────────────────────────────────────────────────────────┘
 ```
 
 ## Cryptography
@@ -147,7 +147,7 @@ All balances are stored as Pedersen commitments, and amounts are encrypted using
 |----------|-----------|
 | Amount privacy | Only sender/receiver know transfer amounts |
 | Address transparency | All addresses are public |
-| Balance integrity | ZK proofs ensure balance ≥ 0 |
+| Balance integrity | ZK proofs ensure balance >= 0 |
 | Supply conservation | Sum of all balances = total supply |
 | No double-spend | UTXO consumption is atomic |
 
@@ -155,13 +155,13 @@ All balances are stored as Pedersen commitments, and amounts are encrypted using
 
 For XCM confidential transfers, see [XCM Setup](./xcm-setup.md).
 
-```
-ParaA                           ParaB
-┌─────────────────┐            ┌─────────────────┐
-│ Sender          │            │ Receiver        │
-│                 │            │                 │
-│ escrow(amount)  │─── XCM ───▶│ mint(amount)    │
-│                 │◀── XCM ────│ confirm()       │
-│ release()       │            │                 │
-└─────────────────┘            └─────────────────┘
+```text
+ParaA                              ParaB
+┌───────────────────┐             ┌───────────────────┐
+│ Sender            │             │ Receiver          │
+│                   │             │                   │
+│ escrow(amount)    │──── XCM ───>│ mint(amount)      │
+│                   │<─── XCM ────│ confirm()         │
+│ release()         │             │                   │
+└───────────────────┘             └───────────────────┘
 ```
