@@ -39,22 +39,10 @@ Understanding the confidential assets system architecture.
 
 The **public interface** implementing ERC-7984:
 
-```rust
-pub trait Config: frame_system::Config {
-    type AssetId;           // Asset identifier type
-    type Balance;           // Balance value type
-    type Backend;           // Cryptographic backend (pallet-zkhe)
-    type Ramp;              // Public↔Confidential bridge
-    type Acl;               // Access control (optional)
-    type Operators;         // Operator permissions (optional)
-    type AssetMetadata;     // Asset metadata provider (optional)
-}
-```
-
 **Extrinsics:**
 - `set_public_key(pk)` - Register encryption public key
-- `deposit(asset, amount, proof)` - Convert public → confidential
-- `withdraw(asset, encrypted_amount, proof)` - Convert confidential → public
+- `deposit(asset, amount, proof)` - Convert public to confidential
+- `withdraw(asset, encrypted_amount, proof)` - Convert confidential to public
 - `confidential_transfer(asset, to, encrypted_delta, proof)` - Transfer
 - `confidential_claim(asset, accept_envelope)` - Claim pending transfers
 - `disclose_amount(asset, encrypted_amount)` - Reveal amount (owner only)
@@ -64,13 +52,11 @@ pub trait Config: frame_system::Config {
 The **cryptographic backend** storing encrypted state:
 
 **Storage:**
-```rust
-PublicKeys: Map<AccountId, PublicKeyBytes>
-AvailableBalanceCommit: Map<(AssetId, AccountId), Commitment>
-PendingBalanceCommit: Map<(AssetId, AccountId), Commitment>
-TotalSupplyCommit: Map<AssetId, Commitment>
-PendingDeposits: Map<(AccountId, AssetId, DepositId), EncryptedAmount>
-```
+- `PublicKeys` - Account to public key mapping
+- `AvailableBalanceCommit` - Spendable balance commitments
+- `PendingBalanceCommit` - Incoming transfer commitments
+- `TotalSupplyCommit` - Asset total supply commitment
+- `PendingDeposits` - Individual encrypted pending amounts (UTXOs)
 
 **State Model:**
 - **Available balance**: Spendable funds (Pedersen commitment)
@@ -81,39 +67,20 @@ PendingDeposits: Map<(AccountId, AssetId, DepositId), EncryptedAmount>
 
 **On-chain proof verification** (no_std compatible):
 
-```rust
-pub trait ZkVerifier {
-    fn verify_transfer_sent(...) -> Result<(Commitment, Commitment), Error>;
-    fn verify_transfer_received(...) -> Result<(Commitment, Commitment), Error>;
-    fn verify_mint(...) -> Result<(Commitment, Commitment, EncryptedAmount), Error>;
-    fn verify_burn(...) -> Result<(Commitment, Commitment, u64), Error>;
-    fn disclose(...) -> Result<u64, Error>;
-}
-```
-
-**Cryptographic operations:**
-1. Parse and validate proof bundles
-2. Verify Bulletproof range proofs (0 ≤ amount < 2^64)
-3. Verify link proofs (commitment consistency)
-4. Compute new balance commitments
+- `verify_transfer_sent` - Validates sender's transfer proof
+- `verify_transfer_received` - Validates receiver's acceptance proof
+- `verify_mint` - Validates deposit/mint proof
+- `verify_burn` - Validates withdrawal/burn proof
+- `disclose` - Decrypts amount for authorized disclosure
 
 ### zkhe-prover
 
 **Client-side proof generation** (std only):
 
-```rust
-// Transfer: sender generates proof
-prove_sender_transfer(&SenderInput) -> Result<SenderOutput, ProverError>
-
-// Receive: recipient accepts pending
-prove_receiver_accept(&ReceiverAcceptInput) -> Result<ReceiverOutput, ProverError>
-
-// Deposit: user mints confidential from public
-prove_mint(&MintInput) -> Result<MintOutput, ProverError>
-
-// Withdraw: user burns confidential to public
-prove_burn(&BurnInput) -> Result<BurnOutput, ProverError>
-```
+- `prove_sender_transfer` - Generate sender's transfer proof
+- `prove_receiver_accept` - Generate receiver's acceptance proof
+- `prove_mint` - Generate deposit proof
+- `prove_burn` - Generate withdrawal proof
 
 ## Data Flow: Confidential Transfer
 
@@ -127,11 +94,10 @@ prove_burn(&BurnInput) -> Result<BurnOutput, ProverError>
    │ Client (Sender)                                      │
    │                                                      │
    │ prove_sender_transfer() generates:                   │
-   │   - Δct: ElGamal ciphertext of amount               │
-   │   - ΔC: Pedersen commitment to amount               │
-   │   - Range proof: 0 ≤ amount < 2^64                  │
-   │   - Link proof: Δct encrypts same value as ΔC      │
-   │   - Balance proof: sender has sufficient funds      │
+   │   - Encrypted transfer amount                        │
+   │   - Balance commitment update                        │
+   │   - Range proof (amount ≥ 0)                        │
+   │   - Link proof (encryption matches commitment)       │
    └──────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -143,8 +109,8 @@ prove_burn(&BurnInput) -> Result<BurnOutput, ProverError>
    │   - Sender's new balance ≥ 0                        │
    │                                                      │
    │ Storage updates:                                     │
-   │   - Sender: available -= ΔC                         │
-   │   - Receiver: pending += ΔC                         │
+   │   - Sender: available balance reduced                │
+   │   - Receiver: pending balance increased              │
    │   - UTXO created for receiver                       │
    └──────────────────────────────────────────────────────┘
 
@@ -153,8 +119,8 @@ prove_burn(&BurnInput) -> Result<BurnOutput, ProverError>
    │ Client (Receiver)                                    │
    │                                                      │
    │ prove_receiver_accept() generates:                   │
-   │   - Decryption proof: knows sk to decrypt Δct       │
-   │   - Balance proof: pending → available transfer     │
+   │   - Decryption proof (knows secret key)              │
+   │   - Balance update proof                             │
    └──────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -166,44 +132,14 @@ prove_burn(&BurnInput) -> Result<BurnOutput, ProverError>
    │   - Balance update is correct                       │
    │                                                      │
    │ Storage updates:                                     │
-   │   - Receiver: available += ΔC, pending -= ΔC        │
+   │   - Receiver: pending → available                   │
    │   - UTXOs consumed                                  │
    └──────────────────────────────────────────────────────┘
 ```
 
-## Commitment Scheme
+## Cryptography
 
-All balances are stored as **Pedersen commitments**:
-
-```
-C = v·G + r·H
-
-Where:
-  v = plaintext value (secret)
-  r = randomness (secret)
-  G = generator point (public)
-  H = hash-derived generator (public)
-  C = commitment (public, stored on-chain)
-```
-
-**Properties:**
-- **Hiding**: Cannot determine v from C without r
-- **Binding**: Cannot find different (v', r') producing same C
-- **Homomorphic**: C1 + C2 = (v1+v2)·G + (r1+r2)·H
-
-## Encryption Scheme
-
-Amounts are encrypted using **twisted ElGamal**:
-
-```
-Ciphertext(v) = (C, D) where:
-  C = v·G + r·H     (Pedersen commitment)
-  D = r·pk          (encryption key share)
-
-Decryption with sk:
-  v·G = C - sk·D/sk = C - r·G
-  (Then brute-force v from v·G)
-```
+All balances are stored as Pedersen commitments, and amounts are encrypted using twisted ElGamal. See [Cryptographic Primitives](./crypto.md) for details.
 
 ## Security Model
 
@@ -221,11 +157,11 @@ For XCM confidential transfers, see [XCM Setup](./xcm-setup.md).
 
 ```
 ParaA                           ParaB
-┌─────────────┐                ┌─────────────┐
-│ Sender      │                │ Receiver    │
-│             │                │             │
-│ escrow(Δ)   │───── XCM ─────▶│ mint(Δ)     │
-│             │◀──── XCM ──────│ confirm()   │
-│ release()   │                │             │
-└─────────────┘                └─────────────┘
+┌─────────────────┐            ┌─────────────────┐
+│ Sender          │            │ Receiver        │
+│                 │            │                 │
+│ escrow(amount)  │─── XCM ───▶│ mint(amount)    │
+│                 │◀── XCM ────│ confirm()       │
+│ release()       │            │                 │
+└─────────────────┘            └─────────────────┘
 ```

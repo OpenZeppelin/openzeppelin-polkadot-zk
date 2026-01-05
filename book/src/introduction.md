@@ -1,6 +1,6 @@
-# Confidential Assets for Polkadot
+# Polkadot Confidential Payments
 
-This framework enables **confidential asset transfers** on Polkadot parachains, with a primary focus on **Asset Hub** integration. It implements the [ERC-7984 Confidential Token Standard](https://eips.ethereum.org/EIPS/eip-7984) using Zero-Knowledge proofs based on the ZK-ElGamal scheme.
+A Polkadot implementation supporting multiple confidential assets in a single pallet (like `pallet-assets`), generic over a cryptographic backend. The included ZK-ElGamal backend is a variation on the [Solana Confidential Token](https://solana.com/docs/tokens/extensions/confidential-transfer) standard that uses per-recipient UTXO sets to efficiently queue received funds before they are claimed via `confidential_claim` or spent directly via `accept_pending_and_transfer`.
 
 ## What is This?
 
@@ -11,59 +11,36 @@ A complete solution for adding confidential (private amount) transfers to your S
 - **Fully verified on-chain**: Zero-knowledge proofs ensure correctness without revealing amounts
 - **Cross-chain ready**: Built-in support for confidential XCM transfers between parachains
 
-## Target Use Case: Asset Hub
-
-This framework is designed to integrate with **Polkadot Asset Hub**, enabling:
-
-- Confidential transfers of DOT, USDT, USDC, and other Asset Hub assets
-- Privacy-preserving DeFi applications
-- Cross-chain confidential transfers via XCM
-- Compliance-friendly design (public addresses, private amounts)
-
 ## Key Components
 
 | Component | Description |
 |-----------|-------------|
-| `pallet-confidential-assets` | Main interface following ERC-7984 |
-| `pallet-zkhe` | ZK-ElGamal backend for encrypted balance storage |
+| `pallet-confidential-assets` | User-facing API: `deposit`, `withdraw`, `confidential_transfer`, `confidential_claim` |
+| `pallet-zkhe` | ZK backend with UTXO storage: `accept_pending`, `accept_pending_and_transfer` |
 | `pallet-confidential-bridge` | Cross-chain confidential transfers via XCM |
 | `pallet-confidential-escrow` | Escrow management for cross-chain operations |
 | `zkhe/prover` | Client-side proof generation (std) |
 | `zkhe/verifier` | On-chain proof verification (no_std) |
-| `zkhe/vectors` | Pre-generated test vectors |
 
-## Quick Example
+## Cryptography
 
-```rust
-// Client: Generate transfer proof
-let proof = zkhe_prover::prove_sender_transfer(&SenderInput {
-    asset_id: b"DOT".to_vec(),
-    sender_pk,
-    receiver_pk,
-    from_old_c: sender_balance_commitment,
-    delta_value: 100, // Transfer 100 units (hidden)
-    // ...
-})?;
+This implementation uses the same cryptographic primitives as [Solana Confidential Transfers](https://solana.com/docs/tokens/extensions/confidential-transfer):
 
-// On-chain: Execute confidential transfer
-ConfidentialAssets::confidential_transfer(
-    origin,
-    asset_id,
-    recipient,
-    encrypted_amount,
-    proof,
-)?;
-```
+- **Pedersen Commitments** for balance hiding
+- **Twisted ElGamal** for amount encryption
+- **Bulletproofs** for range proofs
+
+See [Cryptographic Primitives](./crypto.md) for details and links to Solana documentation.
 
 ## Design Principles
 
 1. **Privacy, not anonymity**: Addresses are public, amounts are private
 2. **Separation of concerns**: Confidential and public assets have separate paths
 3. **On-chain verification**: All state changes are ZK-verified
-4. **Extensibility**: Backend-agnostic design supports ZK, FHE, or TEE
+4. **Extensibility**: Backend-agnostic design supports alternative cryptographic schemes
 
 ## Getting Started
 
 - [Quick Start](./quickstart.md) - Get running in 5 minutes
-- [Asset Hub Integration](./asset-hub.md) - Deploy to Asset Hub
 - [Architecture Overview](./architecture.md) - Understand the system design
+- [Asset Hub Integration](./asset-hub.md) - Deploy to Asset Hub
