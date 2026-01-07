@@ -1,4 +1,4 @@
-# Confidential Assets for Polkadot
+# Polkadot Confidential Payments
 
 [Introduction](./introduction.md)
 

@@ -238,28 +238,7 @@ pub const MAX_BRIDGE_TIMEOUT: u32 = 14400;    // ~24 hours
 
 ## Weight Configuration
 
-### Default Weights
-
-```rust
-impl WeightData for () {
-    fn set_public_key() -> Weight {
-        Weight::from_parts(10_000, 0)
-    }
-    fn confidential_transfer() -> Weight {
-        Weight::from_parts(500_000_000, 10_000)  // ~500ms
-    }
-    fn confidential_transfer_from() -> Weight {
-        Weight::from_parts(520_000_000, 10_000)
-    }
-    fn disclose_amount() -> Weight {
-        Weight::from_parts(5_000, 0)
-    }
-}
-```
-
-### Benchmarked Weights
-
-Run benchmarks to generate accurate weights:
+Weights should be generated via benchmarking for production deployments:
 
 ```bash
 cargo build --release --features runtime-benchmarks
